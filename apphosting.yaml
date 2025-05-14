@@ -13,3 +13,27 @@ env:
     availability:
       - BUILD
       - RUNTIME
+
+  - variable: LINE_CHANNEL_ID
+    value: 2007299717
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: LINE_CHANNEL_SECRET
+    value: 7390e875684524299098348a4ebf5558
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: LINE_CHANNEL_ACCESS_TOKEN
+    value: XVGOjcfT/xVSs21yxfbXEdcFp4wP/rGGl1wzwA77xcYDYe5duiagh/N9K4yrLekzDyDBpDd/JCXRlQFf1qEAI1424vFc5tslNyiZH1P+++Z14QTXKF5p4rY7F6vDZZHCEBDhORNWrYiu5QmHcMGCCAdB04t89/1O/w1cDnyilFU=
+    availability:
+      - BUILD
+      - RUNTIME
+      
+  - variable: PUBLIC_LINE_BOT_ID
+    value: 009cnkxi
+    availability:
+      - BUILD
+      - RUNTIME
