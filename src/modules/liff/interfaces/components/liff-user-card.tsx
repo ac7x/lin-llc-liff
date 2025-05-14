@@ -67,7 +67,7 @@ export function LiffUserCard({ showLogoutButton = true, className = '' }: LiffUs
         )}
 
         {userProfile.statusMessage && (
-          <p className="text-sm text-gray-600 mt-2 italic">"{userProfile.statusMessage}"</p>
+          <p className="text-sm text-gray-600 mt-2 italic">&quot;{userProfile.statusMessage}&quot;</p>
         )}
 
         {showLogoutButton && (

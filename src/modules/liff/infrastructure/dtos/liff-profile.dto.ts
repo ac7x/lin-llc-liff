@@ -22,7 +22,7 @@ export interface LiffProfileDto {
  */
 export interface LiffContextDto {
   accessTokenHash?: string;
-  type?: 'utou' | 'room' | 'group' | 'external' | 'none';
+  type?: 'utou' | 'room' | 'group' | 'external' | 'none' | 'square_chat';
   viewType?: 'compact' | 'tall' | 'full';
   userId?: string;
   groupId?: string;

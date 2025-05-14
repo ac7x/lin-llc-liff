@@ -3,6 +3,7 @@
 import { createContext, ReactNode, useCallback, useEffect, useState } from 'react';
 import { LiffProfileDto } from '../../infrastructure/dtos/liff-profile.dto';
 import liffInitializer from '../client/initialize';
+import { LiffSDK } from '../../infrastructure/services/liff-sdk.service';
 
 /**
  * LIFF 上下文介面
@@ -15,7 +16,7 @@ interface LiffContextType {
   error: string | null;
   login: () => Promise<void>;
   logout: () => Promise<void>;
-  liffObject: any;
+  liffObject: LiffSDK | null;
 }
 
 /**
@@ -50,7 +51,7 @@ export function LiffProvider({ liffId, children }: LiffProviderProps) {
   const [userProfile, setUserProfile] = useState<LiffProfileDto | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [liffObject, setLiffObject] = useState<any>(null);
+  const [liffObject, setLiffObject] = useState<LiffSDK | null>(null);
 
   /**
    * 初始化 LIFF SDK

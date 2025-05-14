@@ -1,6 +1,23 @@
 import { LiffConfigDto, LiffContextDto, LiffProfileDto } from '../dtos/liff-profile.dto';
 
 /**
+ * LIFF SDK 類型定義
+ * 這是簡化版的 LIFF SDK 類型，適用於本項目
+ */
+export interface LiffSDK {
+  init(config: { liffId: string; withLoginOnExternalBrowser?: boolean }): Promise<void>;
+  isLoggedIn(): boolean;
+  login(options?: { redirectUri?: string }): void;
+  logout(): void;
+  getProfile(): Promise<LiffProfileDto>;
+  getContext(): LiffContextDto | null;
+  getOS(): string | undefined;
+  isInClient(): boolean;
+  openWindow(options: { url: string; external: boolean }): void;
+  closeWindow(): void;
+}
+
+/**
  * LIFF SDK 服務介面
  * 定義與 LIFF SDK 互動的方法契約
  */
@@ -22,19 +39,19 @@ export interface LiffSdkServiceInterface {
  * 封裝對 LIFF SDK 的呼叫邏輯
  */
 export class LiffSdkService implements LiffSdkServiceInterface {
-  private liff: any = null;
+  private liff: LiffSDK | null = null;
 
   /**
    * 設置 LIFF SDK 實例
    */
-  setLiffInstance(liffInstance: any): void {
+  setLiffInstance(liffInstance: LiffSDK): void {
     this.liff = liffInstance;
   }
 
   /**
    * 獲取 LIFF SDK 實例
    */
-  getLiffInstance(): any {
+  getLiffInstance(): LiffSDK {
     if (!this.liff) {
       throw new Error('LIFF SDK has not been initialized');
     }
@@ -60,7 +77,20 @@ export class LiffSdkService implements LiffSdkServiceInterface {
         withLoginOnExternalBrowser: config.withLoginOnExternalBrowser || false
       });
       
-      this.liff = liff;
+      // 將 LIFF SDK 包裝為符合我們介面的對象
+      this.liff = {
+        init: liff.init.bind(liff),
+        isLoggedIn: liff.isLoggedIn.bind(liff),
+        login: liff.login.bind(liff),
+        logout: liff.logout.bind(liff),
+        getProfile: liff.getProfile.bind(liff),
+        getContext: liff.getContext.bind(liff),
+        getOS: liff.getOS.bind(liff),
+        isInClient: liff.isInClient.bind(liff),
+        openWindow: liff.openWindow.bind(liff),
+        closeWindow: liff.closeWindow.bind(liff)
+      };
+      
       return true;
     } catch (error) {
       console.error('LIFF initialization failed:', error);
@@ -130,7 +160,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liff) return '';
     
     try {
-      return this.liff.getOS();
+      return this.liff.getOS() || '';
     } catch (error) {
       console.error('Error getting OS:', error);
       return '';
