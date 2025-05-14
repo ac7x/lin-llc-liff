@@ -23,7 +23,7 @@ const defaultNavItems: NavItem[] = [
     active: false
   },
   {
-    href: '/client/dashboard',
+    href: '/client/explore',
     icon: '🗺️',
     label: '探索',
     active: false
