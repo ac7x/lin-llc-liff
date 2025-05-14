@@ -4,10 +4,15 @@ import {
   getDoc, 
   addDoc, 
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  DocumentData
 } from 'firebase/firestore';
 import { getAuthClient, getFirestoreClient } from './firebase-client';
-import { IFirebaseClientQueryRepository } from '@/modules/shared/domain/repositories/firebase-client-query-repository.interface';
+import { 
+  IFirebaseClientQueryRepository, 
+  FirebaseTestDocumentData 
+} from '@/modules/shared/domain/repositories/firebase-client-query-repository.interface';
+import { FirebaseTestDocumentDto } from '@/modules/shared/application/queries/dtos/firebase-test-document.dto';
 
 /**
  * Firebase 客戶端查詢儲存庫實現
@@ -19,7 +24,7 @@ export class FirebaseClientQueryRepository implements IFirebaseClientQueryReposi
    * @param data 要寫入的測試數據
    * @returns 寫入的文檔 ID
    */
-  async writeTestDocument(data: any): Promise<string> {
+  async writeTestDocument(data: FirebaseTestDocumentData): Promise<string> {
     try {
       const firestore = getFirestoreClient();
       const auth = getAuthClient();
@@ -49,7 +54,7 @@ export class FirebaseClientQueryRepository implements IFirebaseClientQueryReposi
    * @param docId 文檔ID
    * @returns 文檔數據或 null (如果不存在)
    */
-  async getTestDocument(docId: string): Promise<any | null> {
+  async getTestDocument(docId: string): Promise<FirebaseTestDocumentDto | null> {
     try {
       const firestore = getFirestoreClient();
       const docRef = doc(firestore, 'test_client_writes', docId);
@@ -67,7 +72,7 @@ export class FirebaseClientQueryRepository implements IFirebaseClientQueryReposi
       return {
         id: docSnap.id,
         ...processedData
-      };
+      } as FirebaseTestDocumentDto;
     } catch (error) {
       console.error('Firebase client read repository error:', error);
       throw error;
@@ -79,15 +84,15 @@ export class FirebaseClientQueryRepository implements IFirebaseClientQueryReposi
    * @param data 包含可能的 Timestamp 字段的數據
    * @returns 處理後的數據
    */
-  private processTimestamps(data: any): any {
-    const result: any = {};
+  private processTimestamps(data: DocumentData): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
     
     Object.keys(data).forEach(key => {
       const value = data[key];
       if (value instanceof Timestamp) {
         result[key] = value.toDate().toISOString();
       } else if (typeof value === 'object' && value !== null) {
-        result[key] = this.processTimestamps(value);
+        result[key] = this.processTimestamps(value as DocumentData);
       } else {
         result[key] = value;
       }
