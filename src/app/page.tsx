@@ -1,4 +1,5 @@
 import React from 'react';
+import FirebaseTestPanel from '@/modules/shared/interfaces/components/firebase-test-panel';
 
 export default function HomePage() {
   return (
@@ -23,6 +24,10 @@ export default function HomePage() {
           <li>使用 <b>Infrastructure</b> 層整合資料庫與外部服務</li>
         </ol>
       </div>
+      
+      {/* Firebase 測試面板 */}
+      <FirebaseTestPanel />
+      
       <footer className="text-center text-xs text-gray-400 mt-12">
         &copy; {new Date().getFullYear()} Next.js DDD CQRS Template
       </footer>
