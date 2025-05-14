@@ -1,0 +1,15 @@
+# Settings for Cloud Run
+runConfig:
+  minInstances: 1
+  maxInstances: 5
+  concurrency: 100
+  cpu: 1
+  memoryMiB: 1024
+
+# Environment variables and secrets
+env:
+  - variable: NEXT_PUBLIC_LIFF_ID
+    value: 2007169737-PmkARBMK
+    availability:
+      - BUILD
+      - RUNTIME
