@@ -1,0 +1,7 @@
+# Settings for Cloud Run
+runConfig:
+  minInstances: 1
+  maxInstances: 100
+  concurrency: 100
+  cpu: 1
+  memoryMiB: 1024
