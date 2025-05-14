@@ -129,31 +129,31 @@ env:
       - RUNTIME
 
   - variable: FIREBASE_PROJECT_ID
-    value: next-liff-template
+    value: lin-llc-liff
     availability:
       - BUILD
       - RUNTIME
 
   - variable: FIREBASE_PRIVATE_KEY_ID
-    value: 96f97f5a89e87545bb165689bf04de58877196db
+    value: 31338f6d86e639c084c3b3056f82b465b5eb5d4e
     availability:
       - BUILD
       - RUNTIME
 
   - variable: FIREBASE_PRIVATE_KEY
-    value: "-----BEGIN PRIVATE KEY-----\nMIIEv...snip...\n-----END PRIVATE KEY-----\n"
+    value: "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQDBw/y4fZHoEZAq\n3f9DKiwLb0ZyAJEbB8JK0+yiAtV1W3YrShRiiYG4uWY5GctvDhlYL2MchyGmhZCI\nyy0KOhm5mXFx2wq+De/zZWmwcHaz8u7T6NIStzy8vBWNQo3TjcWt5zDM2bStWant\n59+CUh+kLDOUxhCS/59Rpru+E0tTGrYCfdT2MNO9Wu/R8CkjUGEIKMAbBUS1Gt+e\n0N0b5J6rJI9Y0lYSomlOBF2lJwVwT7PtyXcpzULzfKLZDUx62Jxvxtc2NxCVZMUW\nd5A6FtCIo686u7BwzmoVPbe3Zs8J+EltLbxpcoX7L0FKYuKAIP362CsQyg56Opf9\nGtWIa9pdAgMBAAECgf8jUkFqCs840/rJKwQH5P13wtEUobB8kkLYtnPBv20p94I9\nt0NVXbudRi6xj1eGPGENB5Ze8kMwF9OWcXMZv32brQeruZeRDaQFZSHfB/abga1c\n876tAA9nrYxAM+GmrtwE13VjN6G39/Wsve1V1E1FoB5xqv6vzT6S+SdAKZmRjFBb\nGg7PWT8vMcAOXNH/5qMis8YFyC2oK1iU7S3BPQqaKhvn7t/BXVL7EgooTOOgdNVM\nlFLkg5C0PIDOgs88IC1+8C/Rjp4Imr0Tn9AtmaXXeor6wFN7wbYGsTOFtjQg2lyB\nOlrNEMGM4Oi7QfH1hQeVHYS9Wv3PG6FuzsWTlvECgYEA/u0fQudFEl65sLrbh/Qk\nLkm4/m/sXYMmi1EhgLWJgn7OnM/5ckitt2pWWiOlnACuwHr/w6i42y7w/OLSN8lR\nqtJ3itmDyhiwLFHXpPlty7suOVT9Qz4xXkeS5cnxUcR1eNSE+kZJMOci8a7LCHEP\n+F+IzOy5b+xh7vIkraZhGl8CgYEAwpTq7fiTrCkChQfVTr2Aeduo8ORkmdD2JEww\nrMbPbYEmKQFNS+XndXsdccxwsvqIfBqU6Zm9x3x9ti7WyUmnbGBUskSBV1xnN8ZK\nlJCtoXbSb7oSsWVb+rWDLC3vrbEWEkp0gCZXpdCRGuPST7o7JCHUTKaVwGUSl3Kd\nQwhJvMMCgYEAsPx3w79E2Sgiy2wvlggORoSwhxW1iIbRb8/37qAaxBq932kUyh9j\nW//by+ELzW875C6A+5pcHPBOJ4RiZpDCvlI45JF3Sgwx49M+YC8750IhKXS0EMdR\nBx+yAQ9fF2HKHQWO/SNnFSijvh+YnlfAurO5Cm0foXD/3SEIDfeBWwkCgYAElxK7\nrmN9ajI/BSJJCztepInltN2Sq1VDIfD8AmyePq+xw/AY3EGLie3140a9Uh+qHc5p\nfFD3xb4JcC1s7ine6p7U3bzXXLyqmijkPE18Q5tPO2p5eNSko2eGwUaoKEdHAy6g\nX0cuCC+EHN+3NcNzZMDnVf6uXTQFEpUXIbjrlQKBgHmywV7hKUsQTzQEchK2hMZY\nhe/ea170T0blteS3A/2+UYSWCJKxhgm2ENT6sg+TaC4qnzJuyDT5ORd9q/CpQMla\nA+EdGlbIAIpgQKzFQrz8Ea+aKbR7dHhojdlESTZG5QFUmWR4n/V1qSJMjpkfU5X7\nIpesmNlHq6tBdWU+04R0\n-----END PRIVATE KEY-----\n"
     availability:
       - BUILD
       - RUNTIME
 
   - variable: FIREBASE_CLIENT_EMAIL
-    value: firebase-adminsdk-fbsvc@next-liff-template.iam.gserviceaccount.com
+    value: firebase-adminsdk-fbsvc@lin-llc-liff.iam.gserviceaccount.com
     availability:
       - BUILD
       - RUNTIME
 
   - variable: FIREBASE_CLIENT_ID
-    value: 116675639686779641387
+    value: 103272117525147298959
     availability:
       - BUILD
       - RUNTIME
@@ -177,7 +177,7 @@ env:
       - RUNTIME
 
   - variable: FIREBASE_CLIENT_CERT_URL
-    value: https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40next-liff-template.iam.gserviceaccount.com
+    value: https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40lin-llc-liff.iam.gserviceaccount.com
     availability:
       - BUILD
       - RUNTIME
