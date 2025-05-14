@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { getFirestoreClient } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { FirebaseClientQueryService } from '@/modules/shared/application/queries/firebase-client-query.service';
+import { FirebaseClientRepositoryFactory } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client-repository.factory';
 
 /**
  * Firebase Client 測試寫入按鈕
@@ -17,24 +17,25 @@ export default function FirebaseClientTestButton() {
   }>({ loading: false });
 
   /**
-   * 測試客戶端 Firebase 寫入功能
+   * 測試客戶端 Firebase 寫入功能 - 使用 CQRS 模式
    */
   const testClientWrite = async () => {
     setStatus({ loading: true });
     try {
-      const firestore = getFirestoreClient();
-      const testCollection = collection(firestore, 'test');
+      // 依賴倒置：使用工廠方法獲取儲存庫實例
+      const queryRepository = FirebaseClientRepositoryFactory.createQueryRepository();
+      const queryService = new FirebaseClientQueryService(queryRepository);
       
-      const docRef = await addDoc(testCollection, {
-        message: 'Test from client side (Firebase Client SDK)',
-        timestamp: serverTimestamp(),
-        createdAt: new Date().toISOString(),
+      // 執行測試寫入
+      const result = await queryService.testWrite({
+        message: 'Test from client side (Firebase Client SDK - CQRS Pattern)',
       });
       
       setStatus({
         loading: false,
-        success: true,
-        docId: docRef.id,
+        success: result.success,
+        docId: result.docId,
+        error: result.error,
       });
     } catch (error) {
       console.error('Firebase client write test failed:', error);
