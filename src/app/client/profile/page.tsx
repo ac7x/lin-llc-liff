@@ -15,7 +15,7 @@ const LIFF_ID = process.env.NEXT_PUBLIC_LIFF_ID || '';
  * 展示 LIFF 登入狀態與用戶資訊
  */
 function UserProfileContent() {
-  const { isInitialized, isLoggedIn, userProfile, isLoading, error } = useLiff();
+  const { isInitialized, isLoggedIn, isLoading, error } = useLiff();
 
   return (
     <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6 space-y-4">
