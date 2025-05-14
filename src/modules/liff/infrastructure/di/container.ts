@@ -1,6 +1,8 @@
+import { FirebaseApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { LiffInitializerService } from '../../application/services/liff-initializer.service';
-import { LiffUserFirebaseRepository } from '../repositories/liff-user-firebase-repository';
+import { LiffUserRepository } from '../../domain/repositories/liff-user-repository.interface';
+import { LiffUserRepositoryFactory } from '../persistence/factory/liff-user-repository.factory';
 import { LiffSdkService } from '../services/liff-sdk.service';
 
 /**
@@ -10,7 +12,7 @@ import { LiffSdkService } from '../services/liff-sdk.service';
 
 type ServiceTypes = {
   LiffSdkService: LiffSdkService;
-  LiffUserRepository: LiffUserFirebaseRepository;
+  LiffUserRepository: LiffUserRepository;
   LiffInitializerService: LiffInitializerService;
 };
 
@@ -20,7 +22,7 @@ const instances: Partial<ServiceTypes> = {};
 /**
  * 初始化依賴注入容器
  */
-export function initializeContainer(firebaseApp: any): void {
+export function initializeContainer(firebaseApp: FirebaseApp): void {
   const firestore = getFirestore(firebaseApp);
   
   // 創建 LiffSdkService
@@ -28,7 +30,7 @@ export function initializeContainer(firebaseApp: any): void {
   instances.LiffSdkService = liffSdkService;
   
   // 創建 LiffUserRepository
-  const userRepository = new LiffUserFirebaseRepository(firestore);
+  const userRepository = LiffUserRepositoryFactory.create(firestore);
   instances.LiffUserRepository = userRepository;
   
   // 創建 LiffInitializerService

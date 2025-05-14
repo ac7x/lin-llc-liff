@@ -1,4 +1,4 @@
-import { LiffIdValueObject, LineUserIdValueObject } from '../valueObjects/liff-id.value-object';
+import { LineUserIdValueObject } from '../valueObjects/liff-id.value-object';
 
 /**
  * LIFF 用戶實體
