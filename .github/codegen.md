@@ -757,27 +757,32 @@ export class UserCacheInvalidator implements EventHandler<UserUpdatedEvent> {
 物理分離查詢與命令數據存儲
 
 ```typescript
-// 配置 Firestore
-import { Firestore } from '@google-cloud/firestore';
+import { firestore } from 'firebase-admin';
 
-export const firestore = new Firestore();
+// 初始化 Firestore 示例
+export const initializeFirestore = () => {
+  if (!firestore) {
+    throw new Error('Firestore has not been initialized. Please initialize firebase-admin.');
+  }
+  return firestore();
+};
 
 // 寫入數據示例
 export async function writeData(collection: string, docId: string, data: any): Promise<void> {
-  const docRef = firestore.collection(collection).doc(docId);
+  const docRef = firestore().collection(collection).doc(docId);
   await docRef.set(data);
 }
 
 // 讀取數據示例
 export async function readData(collection: string, docId: string): Promise<any | null> {
-  const docRef = firestore.collection(collection).doc(docId);
+  const docRef = firestore().collection(collection).doc(docId);
   const doc = await docRef.get();
   return doc.exists ? doc.data() : null;
 }
 
 // 查詢數據示例
 export async function queryData(collection: string, field: string, value: any): Promise<any[]> {
-  const querySnapshot = await firestore.collection(collection).where(field, '==', value).get();
+  const querySnapshot = await firestore().collection(collection).where(field, '==', value).get();
   return querySnapshot.docs.map(doc => doc.data());
 }
 ```
