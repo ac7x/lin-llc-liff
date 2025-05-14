@@ -1,11 +1,14 @@
 # Settings for Cloud Run
 runConfig:
   minInstances: 1
-  maxInstances: 100
+  maxInstances: 2
   concurrency: 100
   cpu: 1
   memoryMiB: 1024
-  
-  env:
-    - name: NEXT_PUBLIC_LIFF_ID
-      value: 2007169737-PmkARBMK
+
+env:
+  - variable: NEXT_PUBLIC_LIFF_ID # 注意這裡使用 variable 而非 name，這是慣例
+    value: 2007169737-PmkARBMK
+    availability:
+      - BUILD
+      - RUNTIME # 通常也會讓它在運行時可用
