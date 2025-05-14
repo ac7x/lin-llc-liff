@@ -1,7 +1,6 @@
 import { Firestore } from 'firebase/firestore';
 import { LiffUserRepository } from '../../../domain/repositories/liff-user-repository.interface';
-import { LiffUserFirebaseRepository } from '../commands/liff-user-command.repository';
-import { LiffUserAdminRepository } from '../commands/liff-user-admin-command.repository';
+import { LiffUserFirebaseRepository, LiffUserAdminRepository } from '../commands/liff-user-command.repository';
 
 /**
  * LIFF 用戶儲存庫工廠
