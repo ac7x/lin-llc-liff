@@ -1,0 +1,10 @@
+{
+  // ...existing code...
+  "features": {
+    // ...existing code...
+  },
+  "containerEnv": {
+    "GH_CODESPACES_IDLE_TIMEOUT": "900"
+  }
+  // ...existing code...
+}
