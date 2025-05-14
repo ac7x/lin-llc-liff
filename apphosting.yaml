@@ -5,3 +5,7 @@ runConfig:
   concurrency: 100
   cpu: 1
   memoryMiB: 1024
+  
+  env:
+    - name: NEXT_PUBLIC_LIFF_ID
+      value: 2007169737-PmkARBMK
