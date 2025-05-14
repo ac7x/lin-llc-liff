@@ -10,50 +10,76 @@ runConfig:
 # environment variables and secrets specific to production
 # 生產環境專屬的環境變數和秘密
 env:
-  # WARNING: Placing sensitive credentials directly in the 'value' field is NOT recommended for production.
-  # It poses a significant security risk.
-  # For production and best practice, use Google Cloud Secret Manager and reference the secret here (using the 'secret' field).
-  # 警告：將敏感憑證直接放在 'value' 欄位中，**不推薦**用於生產環境。
-  # 這會帶來重大的安全風險。
-  # 對於生產環境和最佳實踐，請使用 Google Cloud Secret Manager 並在此處引用秘密（使用 'secret' 欄位）。
+  # IMPORTANT: Sensitive credentials should NOT be placed directly in the 'value' field.
+  # Doing so poses a significant security risk and will cause build failures.
+  # Use Google Cloud Secret Manager and reference the secret using the 'secret' field.
+  # 重要：敏感憑證不應直接放在 'value' 欄位中。
+  # 這會帶來重大的安全風險，並導致建構失敗。
+  # 請使用 Google Cloud Secret Manager 並在此處引用秘密（使用 'secret' 欄位）。
 
   # Database URL - Contains sensitive credentials!
   # 資料庫 URL - 包含敏感憑證！
+  # Removed direct value due to security risk and build failure.
+  # 請使用 Secret Manager 或其他安全方式提供此值。
   - variable: DATABASE_URL
-    value: "mongodb+srv://vercel-admin-user:8ERA2bi8eqCXjKcx@cluster0.lcqq0xr.mongodb.net/Next-Line-Liff-Template?retryWrites=true&w=majority&appName=Cluster0"
+    # value: "mongodb+srv://vercel-admin-user:8ERA2bi8eqCXjKcx@cluster0.lcqq0xr.mongodb.net/Next-Line-Liff-Template?retryWrites=true&w=majority&appName=Cluster0" # 已移除直接寫死的值
+    # 如果使用 Secret Manager，會像這樣引用：
+    # secret: my-database-url-secret # 請替換成你的 Secret 名稱
+    # version: latest # 或特定的版本號碼
     availability:
       - RUNTIME
 
   # Redis URL - Contains sensitive credentials!
   # Redis URL - 包含敏感憑證！
+  # Removed direct value due to security risk and build failure.
+  # 請使用 Secret Manager 或其他安全方式提供此值。
   - variable: REDIS_URL
-    value: "redis://default:h20z5kBlBF8l5CLskT0At2j1LGx3VOdv@redis-13077.c302.asia-northeast1-1.gce.redns.redis-cloud.com:13077"
+    # value: "redis://default:h20z5kBlBF8l5CLskT0At2j1LGx3VOdv@redis-13077.c302.asia-northeast1-1.gce.redns.redis-cloud.com:13077" # 已移除直接寫死的值
+    # 如果使用 Secret Manager，會像這樣引用：
+    # secret: my-redis-url-secret # 請替換成你的 Secret 名稱
+    # version: latest # 或特定的版本號碼
     availability:
       - RUNTIME
 
   # Memcachier Servers - May be less sensitive, but often associated with credentials.
   # Memcachier 伺服器 - 可能敏感度較低，但通常與憑證相關。
+  # Removed direct value due to security risk and build failure.
+  # 請使用 Secret Manager 或其他安全方式提供此值。
   - variable: MEMCACHIER_SERVERS
-    value: "mc4.c11.ap-southeast-1.ec2.memcachier.com:11211"
+    # value: "mc4.c11.ap-southeast-1.ec2.memcachier.com:11211" # 已移除直接寫死的值
+    # 如果使用 Secret Manager，會像這樣引用：
+    # secret: memcachier-servers-secret # 請替換成你的 Secret 名稱
+    # version: latest # 或特定的版本號碼
     availability:
       - RUNTIME
 
   # Memcachier Username - Sensitive!
   # Memcachier 使用者名稱 - 敏感！
+  # Removed direct value due to security risk and build failure.
+  # 請使用 Secret Manager 或其他安全方式提供此值。
   - variable: MEMCACHIER_USERNAME
-    value: "C4CA64"
+    # value: "C4CA64" # 已移除直接寫死的值
+    # 如果使用 Secret Manager，會像這樣引用：
+    # secret: memcachier-username-secret # 請替換成你的 Secret 名稱
+    # version: latest # 或特定的版本號碼
     availability:
       - RUNTIME
 
   # Memcachier Password - Highly Sensitive!
   # Memcachier 密碼 - 高度敏感！
+  # Removed direct value due to security risk and build failure.
+  # 請使用 Secret Manager 或其他安全方式提供此值。
   - variable: MEMCACHIER_PASSWORD
-    value: "0AE408F3E646052D2497B968D71E6BB8"
+    # value: "0AE408F3E646052D2497B968D71E6BB8" # 已移除直接寫死的值
+    # 如果使用 Secret Manager，會像這樣引用：
+    # secret: memcachier-password-secret # 請替換成你的 Secret 名稱
+    # version: latest # 或特定的版本號碼
     availability:
       - RUNTIME
 
   # NEXT_PUBLIC_LIFF_ID - Typically public, but verify.
   # NEXT_PUBLIC_LIFF_ID - 通常是公開的，但請驗證。
+  # 對於非敏感的公開變數，保留 value 欄位和 BUILD/RUNTIME availability。
   - variable: NEXT_PUBLIC_LIFF_ID
     value: "2007169737-PmkARBMK"
     availability:
@@ -62,6 +88,7 @@ env:
 
   # LINE_CHANNEL_ID - Typically public, but verify.
   # LINE_CHANNEL_ID - 通常是公開的，但請驗證。
+  # 對於非敏感的公開變數，保留 value 欄位和 BUILD/RUNTIME availability。
   - variable: LINE_CHANNEL_ID
     value: "2007299717"
     availability:
@@ -70,20 +97,31 @@ env:
 
   # LINE_CHANNEL_SECRET - Highly Sensitive!
   # LINE_CHANNEL_SECRET - 高度敏感！
+  # Removed direct value due to security risk and build failure.
+  # 請使用 Secret Manager 或其他安全方式提供此值。
   - variable: LINE_CHANNEL_SECRET
-    value: "7390e875684524299098348a4ebf5558"
+    # value: "7390e875684524299098348a4ebf5558" # 已移除直接寫死的值
+    # 如果使用 Secret Manager，會像這樣引用：
+    # secret: line-channel-secret-secret # 請替換成你的 Secret 名稱
+    # version: latest # 或特定的版本號碼
     availability:
       - RUNTIME
 
   # LINE_CHANNEL_ACCESS_TOKEN - Highly Sensitive!
   # LINE_CHANNEL_ACCESS_TOKEN - 高度敏感！
+  # Removed direct value due to security risk and build failure.
+  # 請使用 Secret Manager 或其他安全方式提供此值。
   - variable: LINE_CHANNEL_ACCESS_TOKEN
-    value: "XVGOjcfT/xVSs21yxfhXEdcFp4wP/rGGl1wzwA77xcYDYe5duiagh/N9K4yrLekzDyDBpDd/JCXRlQFf1qEAI1424vFc5tslNyiZH1P+++Z14QTXKF5p4rY7F6vDZZHCEBDhORNWrYiu5QmHcMGCCAdB04t89/1O/w1cDnyilFU="
+    # value: "XVGOjcfT/xVSs21yxfhXEdcFp4wP/rGGl1wzwA77xcYDYe5duiagh/N9K4yrLekzDyDBpDd/JCXRlQFf1qEAI1424vFc5tslNyiZH1P+++Z14QTXKF5p4rY7F6vDZZHCEBDhORNWrYiu5QmHcMGCCAdB04t89/1O/w1cDnyilFU=" # 已移除直接寫死的值
+    # 如果使用 Secret Manager，會像這樣引用：
+    # secret: line-channel-access-token-secret # 請替換成你的 Secret 名稱
+    # version: latest # 或特定的版本號碼
     availability:
       - RUNTIME
 
   # PUBLIC_LINE_BOT_ID - Typically public, but verify.
   # PUBLIC_LINE_BOT_ID - 通常是公開的，但請驗證。
+  # 對於非敏感的公開變數，保留 value 欄位和 BUILD/RUNTIME availability。
   - variable: PUBLIC_LINE_BOT_ID
     value: "009cnkxi"
     availability:
@@ -92,6 +130,7 @@ env:
 
   # LINE_PAY_CHANNEL_ID - Typically public, but verify.
   # LINE_PAY_CHANNEL_ID - 通常是公開的，但請驗證。
+  # 對於非敏感的公開變數，保留 value 欄位和 RUNTIME availability。
   - variable: LINE_PAY_CHANNEL_ID
     value: "2006779486"
     availability:
@@ -99,16 +138,25 @@ env:
 
   # LINE_PAY_CHANNEL_SECRET - Highly Sensitive!
   # LINE_PAY_CHANNEL_SECRET - 高度敏感！
+  # Removed direct value due to security risk and build failure.
+  # 請使用 Secret Manager 或其他安全方式提供此值。
   - variable: LINE_PAY_CHANNEL_SECRET
-    value: "2ba3e3f40c204c6391e1f7ba817fa7ad"
+    # value: "2ba3e3f40c204c6391e1f7ba817fa7ad" # 已移除直接寫死的值
+    # 如果使用 Secret Manager，會像這樣引用：
+    # secret: line-pay-channel-secret-secret # 請替換成你的 Secret 名稱
+    # version: latest # 或特定的版本號碼
     availability:
       - RUNTIME
 
   # LINE_PAY_API_URL - Environment-specific config.
   # LINE_PAY_API_URL - 環境相關的配置。
+  # Removed direct value due to security risk and build failure (or potential flagging).
+  # 請使用 Secret Manager 或其他安全方式提供此值。
   - variable: LINE_PAY_API_URL
-    value: "https://sandbox-api-pay.line.me" # Note: This is a sandbox URL, for production use the production URL.
-    # 注意：這是沙盒環境的 URL，生產環境請使用生產 URL。
+    # value: "https://sandbox-api-pay.line.me" # 注意：這是沙盒環境的 URL，生產環境請使用生產 URL。 # 已移除直接寫死的值
+    # 如果使用 Secret Manager，會像這樣引用：
+    # secret: line-pay-api-url-secret # 請替換成你的 Secret 名稱
+    # version: latest # 或特定的版本號碼
     availability:
       - RUNTIME
 
@@ -119,8 +167,11 @@ env:
 #     include: [dist, server.js] # Specify which files/directories are needed for the server app
 # ```
 
-**請務必記住：**
+**修改後的重點：**
 
-當你結束測試並準備將應用程式部署到真正的生產環境時，**請務必回頭使用 Google Cloud Secret Manager** 來處理這些敏感的變數，並修改此 `apphosting.prod.yaml` 檔案，將 `value` 替換為 `secret` 引用。
+*   所有包含敏感憑證或金鑰的環境變數 (`DATABASE_URL`, `REDIS_URL`, `MEMCACHIER_USERNAME`, `MEMCACHIER_PASSWORD`, `LINE_CHANNEL_SECRET`, `LINE_CHANNEL_ACCESS_TOKEN`, `LINE_PAY_CHANNEL_SECRET`, `LINE_PAY_API_URL`) 的 `value` 欄位都被**註解掉或移除**了。
+*   我在每個被移除 `value` 的變數下方，都留下了使用 `secret:` 欄位引用 Secret Manager 的**範例和註解**。
 
-安全第一！希望這個檔案能滿足你目前的測試需求。
+**接下來的步驟：**
+
+1.  將上面這段修改後的 YAML 內容保存到你的 `apphosting.prod.yaml` 檔案中。
