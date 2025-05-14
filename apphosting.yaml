@@ -87,37 +87,37 @@ env:
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    value: AIzaSyBH5kKsPOs9va7VDyYWv5UzyqZ6EXxj4zE
+    value: AIzaSyDsJP6_bjWLQ0SQiarhe3UIApnqx60vCqg
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: next-liff-template.firebaseapp.com
+    value: lin-llc-liff.firebaseapp.com
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    value: next-liff-template
+    value: lin-llc-liff
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    value: next-liff-template.firebasestorage.app
+    value: lin-llc-liff.firebasestorage.app
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    value: 135826084285
+    value: 734381604026
     availability:
       - BUILD
       - RUNTIME
 
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    value: 1:135826084285:web:b8db7b737ffd69628002d4
+    value: 1:734381604026:web:a07a50fe85c6c5acd25683
     availability:
       - BUILD
       - RUNTIME
