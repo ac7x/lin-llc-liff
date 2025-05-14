@@ -786,3 +786,75 @@ export async function queryData(collection: string, field: string, value: any): 
   return querySnapshot.docs.map(doc => doc.data());
 }
 ```
+
+## 數據庫選擇與實現
+
+### 前端數據庫：Firebase
+在前端應用中，使用 Firebase 提供的實時數據庫和 Firestore 作為數據存儲解決方案。
+
+```typescript
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { initializeApp } from 'firebase/app';
+
+// 初始化 Firebase 應用
+const firebaseConfig = {
+  apiKey: 'YOUR_API_KEY',
+  authDomain: 'YOUR_AUTH_DOMAIN',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_STORAGE_BUCKET',
+  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+  appId: 'YOUR_APP_ID',
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 寫入數據
+export async function writeData(collection: string, docId: string, data: any): Promise<void> {
+  const docRef = doc(db, collection, docId);
+  await setDoc(docRef, data);
+}
+
+// 讀取數據
+export async function readData(collection: string, docId: string): Promise<any | null> {
+  const docRef = doc(db, collection, docId);
+  const docSnap = await getDoc(docRef);
+  return docSnap.exists() ? docSnap.data() : null;
+}
+```
+
+### 後端數據庫：Firebase Admin SDK
+在後端應用中，使用 Firebase Admin SDK 提供的 Firestore 作為數據存儲解決方案。
+
+```typescript
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+
+// 初始化 Firebase Admin
+const serviceAccount = require('path/to/serviceAccountKey.json');
+
+initializeApp({
+  credential: cert(serviceAccount),
+});
+
+const db = getFirestore();
+
+// 寫入數據
+export async function writeData(collection: string, docId: string, data: any): Promise<void> {
+  const docRef = db.collection(collection).doc(docId);
+  await docRef.set(data);
+}
+
+// 讀取數據
+export async function readData(collection: string, docId: string): Promise<any | null> {
+  const docRef = db.collection(collection).doc(docId);
+  const doc = await docRef.get();
+  return doc.exists ? doc.data() : null;
+}
+
+// 查詢數據
+export async function queryData(collection: string, field: string, value: any): Promise<any[]> {
+  const querySnapshot = await db.collection(collection).where(field, '==', value).get();
+  return querySnapshot.docs.map(doc => doc.data());
+}
+```
