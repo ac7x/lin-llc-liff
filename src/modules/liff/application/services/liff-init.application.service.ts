@@ -1,5 +1,6 @@
 // src/modules/liff/application/services/liff-init.application.service.ts
 import { LiffInitRepository } from '../../domain/repositories/liff-init.repository.interface';
+import { LiffProfile } from '../../domain/models/liff-profile.type';
 
 export class LiffInitApplicationService {
   constructor(private readonly liffInitRepo: LiffInitRepository) {}
@@ -20,7 +21,7 @@ export class LiffInitApplicationService {
     this.liffInitRepo.logout();
   }
 
-  async getProfile(): Promise<any> {
+  async getProfile(): Promise<LiffProfile> {
     return await this.liffInitRepo.getProfile();
   }
 }

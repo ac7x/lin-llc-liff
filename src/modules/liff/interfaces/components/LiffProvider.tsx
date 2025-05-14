@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { createLiffInitRepository } from '../../infrastructure/di/liff-init.di';
 import { LiffInitApplicationService } from '../../application/services/liff-init.application.service';
+import { LiffProfile } from '../../domain/models/liff-profile.type';
 
 const liffId = process.env.NEXT_PUBLIC_LIFF_ID || '';
 const liffInitRepo = createLiffInitRepository(liffId);
@@ -9,14 +10,14 @@ const liffService = new LiffInitApplicationService(liffInitRepo);
 
 interface LiffContextProps {
   liffService: LiffInitApplicationService;
-  profile: any;
+  profile: LiffProfile | null;
   isLoggedIn: boolean;
 }
 
 const LiffContext = createContext<LiffContextProps | undefined>(undefined);
 
 export const LiffProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<LiffProfile | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {

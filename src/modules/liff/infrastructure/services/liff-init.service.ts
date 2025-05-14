@@ -1,5 +1,6 @@
 // src/modules/liff/infrastructure/services/liff-init.service.ts
 import liff from '@line/liff';
+import { LiffProfile } from '../../domain/models/liff-profile.type';
 
 export class LiffInitService {
   private readonly liffId: string;
@@ -45,8 +46,16 @@ export class LiffInitService {
   /**
    * 取得使用者 Profile
    */
-  async getProfile() {
+  async getProfile(): Promise<LiffProfile> {
     if (!liff.isLoggedIn()) throw new Error('Not logged in');
-    return await liff.getProfile();
+    // 先轉型為 unknown，再轉為 Record<string, unknown>，以符合 TypeScript 型別安全
+    const profile = await liff.getProfile() as unknown as Record<string, unknown>;
+    return {
+      userId: profile.userId as string,
+      displayName: profile.displayName as string,
+      pictureUrl: (profile.pictureUrl as string) || '',
+      statusMessage: profile.statusMessage as string | undefined,
+      email: typeof profile["email"] === "string" ? (profile["email"] as string) : undefined,
+    };
   }
 }

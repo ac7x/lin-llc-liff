@@ -1,4 +1,4 @@
-import { VisitorIpRepository } from '../../../domain/repositories/visitor-ip.repository.interface';
+import { VisitorIpRepository, VisitorIpMeta } from '../../../domain/repositories/visitor-ip.repository.interface';
 import { getFirestore } from 'firebase-admin/firestore';
 
 /**
@@ -13,7 +13,7 @@ export class FirestoreVisitorIpRepository implements VisitorIpRepository {
    * @param ip The visitor's IP address.
    * @param meta Optional metadata to store alongside the IP.
    */
-  async saveVisitorIp(ip: string, meta: Record<string, any> = {}): Promise<void> {
+  async saveVisitorIp(ip: string, meta: VisitorIpMeta = {}): Promise<void> {
     try {
       const docRef = this.db.collection('visitor_ips').doc(); // Firestore will auto-generate an ID
       await docRef.set({
