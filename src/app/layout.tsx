@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { FirebaseProvider } from "../modules/shared/interfaces/providers/FirebaseProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,9 +25,7 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 min-h-screen`}>
-        <FirebaseProvider>
           {children}
-        </FirebaseProvider>
       </body>
     </html>
   );

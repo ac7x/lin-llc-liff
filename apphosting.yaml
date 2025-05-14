@@ -79,3 +79,111 @@ env:
     availability:
       - BUILD
       - RUNTIME
+
+  - variable: DATABASE_URL
+    value: mongodb+srv://vercel-admin-user:8ERA2bi8eqCXjKcx@cluster0.lcqq0xr.mongodb.net/Next-Line-Liff-Template?retryWrites=true&w=majority&appName=Cluster0
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyBH5kKsPOs9va7VDyYWv5UzyqZ6EXxj4zE
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: next-liff-template.firebaseapp.com
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: next-liff-template
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: next-liff-template.firebasestorage.app
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: 135826084285
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: 1:135826084285:web:b8db7b737ffd69628002d4
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: G-VEFZLYCV5F
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: FIREBASE_PROJECT_ID
+    value: next-liff-template
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: FIREBASE_PRIVATE_KEY_ID
+    value: 96f97f5a89e87545bb165689bf04de58877196db
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: FIREBASE_PRIVATE_KEY
+    value: "-----BEGIN PRIVATE KEY-----\nMIIEv...snip...\n-----END PRIVATE KEY-----\n"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: FIREBASE_CLIENT_EMAIL
+    value: firebase-adminsdk-fbsvc@next-liff-template.iam.gserviceaccount.com
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: FIREBASE_CLIENT_ID
+    value: 116675639686779641387
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: FIREBASE_AUTH_URI
+    value: https://accounts.google.com/o/oauth2/auth
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: FIREBASE_TOKEN_URI
+    value: https://oauth2.googleapis.com/token
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: FIREBASE_AUTH_PROVIDER_CERT_URL
+    value: https://www.googleapis.com/oauth2/v1/certs
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: FIREBASE_CLIENT_CERT_URL
+    value: https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40next-liff-template.iam.gserviceaccount.com
+    availability:
+      - BUILD
+      - RUNTIME
+
+  - variable: FIREBASE_UNIVERSE_DOMAIN
+    value: googleapis.com
+    availability:
+      - BUILD
+      - RUNTIME
