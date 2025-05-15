@@ -78,7 +78,7 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
             const liff = liffModule.default;
 
             // 檢查 liff 是否已經初始化
-            const isReady = liff.ready;
+            const isReady = await liff.ready;
             if (isReady) {
               console.log("LIFF SDK 已經初始化");
               setIsInitialized(true);
