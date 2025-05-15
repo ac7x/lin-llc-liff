@@ -46,7 +46,7 @@ LIFF 模組遵循 DDD 分層架構：
 
 ### 基本設置
 
-1. 將環境變數 `NEXT_PUBLIC_LIFF_ID` 設置為你的 LIFF ID
+1. 將環境變數 `LIFF_ID` 設置為你的 LIFF ID
 2. 確保在應用程式根層級使用 `LiffProvider` 包裹
 
 ```tsx
