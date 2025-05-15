@@ -1,6 +1,6 @@
 'use client';
 
-import { processLinePayCallback } from '@/modules/c-linePay/application/callbacks/payment.callback';
+import { processLinePayCallback } from '@/modules/linePay/application/callbacks/payment.callback';
 import { useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 import { PaymentEnumMessage } from './payment.status';

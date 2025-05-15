@@ -1,8 +1,8 @@
 
 'use client';
 
-import { fetchUserAssets, initiatePayment } from '@/modules/c-linePay/application/actions/payment.actions';
-import { PaymentEnum, UserAssets } from '@/modules/c-linePay/domain/payment.types';
+import { fetchUserAssets, initiatePayment } from '@/modules/linePay/application/actions/payment.actions';
+import { PaymentEnum, UserAssets } from '@/modules/linePay/domain/payment.types';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 

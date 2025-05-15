@@ -1,13 +1,13 @@
 import {
   LINE_PAY_API_URL,
   LINE_PAY_CHANNEL_ID,
-} from '@/modules/c-linePay/infrastructure/payment.config';
+} from '@/modules/linePay/infrastructure/payment.config';
 import axios from 'axios';
 
 import {
   generateNonce,
   generateSignature,
-} from '@/modules/c-linePay/infrastructure/payment.utils';
+} from '@/modules/linePay/infrastructure/payment.utils';
 
 /**
  * LINE Pay 適配器

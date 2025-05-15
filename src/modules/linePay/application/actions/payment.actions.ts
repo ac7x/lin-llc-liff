@@ -1,12 +1,12 @@
 'use server';
 
-import { getUserAssets } from '@/modules/c-assets/application/assets/user-asset.actions';
-import { paymentService } from '@/modules/c-linePay/application/services/payment.service';
-import { PaymentEventType } from '@/modules/c-linePay/domain/events/payment.events';
-import { PaymentAggregate } from '@/modules/c-linePay/domain/models/payment.aggregate';
-import { Money, OrderId } from '@/modules/c-linePay/domain/models/payment.value-objects';
-import { PaymentResult } from '@/modules/c-linePay/domain/payment.types';
-import { PaymentDomainService } from '@/modules/c-linePay/domain/services/payment.domain.service';
+import { getUserAssets } from '@/modules/assets/application/assets/user-asset.actions';
+import { paymentService } from '@/modules/linePay/application/services/payment.service';
+import { PaymentEventType } from '@/modules/linePay/domain/events/payment.events';
+import { PaymentAggregate } from '@/modules/linePay/domain/models/payment.aggregate';
+import { Money, OrderId } from '@/modules/linePay/domain/models/payment.value-objects';
+import { PaymentResult } from '@/modules/linePay/domain/payment.types';
+import { PaymentDomainService } from '@/modules/linePay/domain/services/payment.domain.service';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function createLinePayRequest(userId: string, amount: number): Promise<string> {

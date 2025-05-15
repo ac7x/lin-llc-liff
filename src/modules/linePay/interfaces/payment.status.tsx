@@ -1,6 +1,6 @@
 'use client';
 
-import { PaymentEnum } from '@/modules/c-linePay/domain/payment.types';
+import { PaymentEnum } from '@/modules/linePay/domain/payment.types';
 
 interface PaymentEnumMessageProps {
   status: PaymentEnum;

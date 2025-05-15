@@ -3,11 +3,11 @@ import {
   CreatePaymentParams,
   PaymentCallbackResult,
   PaymentConfirmResult
-} from '@/modules/c-linePay/domain/models/payment.model';
-import { IPaymentService } from '@/modules/c-linePay/domain/services/payment.service.interface';
-import { linePayAdapter } from '@/modules/c-linePay/infrastructure/adapters/payments.adapter';
-import { paymentRepository } from '@/modules/c-linePay/infrastructure/repositories/payment.repository';
-import { prisma } from '@/modules/c-shared/infrastructure/persistence/prisma/client';
+} from '@/modules/linePay/domain/models/payment.model';
+import { IPaymentService } from '@/modules/linePay/domain/services/payment.service.interface';
+import { linePayAdapter } from '@/modules/linePay/infrastructure/adapters/payments.adapter';
+import { paymentRepository } from '@/modules/linePay/infrastructure/repositories/payment.repository';
+import { prisma } from '@/modules/shared/infrastructure/persistence/prisma/client';
 import { PaymentEnum } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 

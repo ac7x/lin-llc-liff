@@ -1,4 +1,4 @@
-import { safeRedirect } from '@/modules/c-linePay/infrastructure/payment.signature';
+import { safeRedirect } from '@/modules/linePay/infrastructure/payment.signature';
 import { handleLinePayCallback } from '../actions/payment.actions';
 
 export async function processLinePayCallback(transactionId: string, orderId: string) {

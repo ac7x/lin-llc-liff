@@ -1,9 +1,9 @@
-import { PaymentRequestDTO, PaymentResponseDTO } from '@/modules/c-linePay/domain/models/payment.model';
+import { PaymentRequestDTO, PaymentResponseDTO } from '@/modules/linePay/domain/models/payment.model';
 import {
   LINE_PAY_API_URL,
   LINE_PAY_CHANNEL_ID,
-} from '@/modules/c-linePay/infrastructure/payment.config';
-import { generateNonce, generateSignature } from '@/modules/c-linePay/infrastructure/payment.utils';
+} from '@/modules/linePay/infrastructure/payment.config';
+import { generateNonce, generateSignature } from '@/modules/linePay/infrastructure/payment.utils';
 import axios from 'axios';
 
 export class LinePayService {

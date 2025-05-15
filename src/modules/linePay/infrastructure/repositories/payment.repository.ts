@@ -1,6 +1,6 @@
-import { prisma } from '@/modules/c-shared/infrastructure/persistence/prisma/client';
-import { PaymentEntity, PaymentTransaction } from '@/modules/c-linePay/domain/models/payment.model';
-import { IPaymentRepository } from '@/modules/c-linePay/domain/repositories/payment.repository.interface';
+import { prisma } from '@/modules/shared/infrastructure/persistence/prisma/client';
+import { PaymentEntity, PaymentTransaction } from '@/modules/linePay/domain/models/payment.model';
+import { IPaymentRepository } from '@/modules/linePay/domain/repositories/payment.repository.interface';
 import { AssetEnum, PaymentEnum, TransactionEnum } from '@prisma/client';
 
 /**
