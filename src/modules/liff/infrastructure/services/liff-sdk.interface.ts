@@ -1,4 +1,3 @@
-// filepath: /workspaces/next-liff-template/src/modules/liff/infrastructure/services/liff-sdk.interface.ts
 import { LiffContextDto, LiffFriendshipDto, LiffLoginResultDto, LiffMessageDto, LiffShareResultDto, LiffUserDto } from "../../application/dtos/liff-user.dto";
 
 /**
@@ -52,6 +51,7 @@ export interface LiffSDK {
  */
 export interface LiffSdkServiceInterface {
   initialize(liffId?: string): Promise<boolean>;
+  isInitialized: boolean;
   isLoggedIn(): boolean;
   login(): Promise<LiffLoginResultDto>;
   logout(): void;

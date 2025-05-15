@@ -29,7 +29,7 @@ export class LiffCommandService implements LiffCommandServiceInterface {
    * 確認 LIFF SDK 是否已初始化
    */
   isInitialized(): boolean {
-    return this.liffSdkService.isInitialized();
+    return this.liffSdkService.isInitialized;
   }
 
   /**
@@ -37,7 +37,7 @@ export class LiffCommandService implements LiffCommandServiceInterface {
    */
   async login(): Promise<LiffLoginResultDto> {
     // 確保 LIFF SDK 已初始化
-    if (!this.liffSdkService.isInitialized()) {
+    if (!this.liffSdkService.isInitialized) {
       await this.liffSdkService.initialize();
     }
     try {
@@ -68,7 +68,7 @@ export class LiffCommandService implements LiffCommandServiceInterface {
    */
   async logout(): Promise<void> {
     // 確保 LIFF SDK 已初始化
-    if (!this.liffSdkService.isInitialized()) {
+    if (!this.liffSdkService.isInitialized) {
       await this.liffSdkService.initialize();
     }
     try {

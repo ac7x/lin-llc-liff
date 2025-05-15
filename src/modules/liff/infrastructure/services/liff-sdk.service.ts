@@ -8,7 +8,7 @@ import { LiffSDK, LiffSdkServiceInterface } from "./liff-sdk.interface";
  */
 export class LiffSdkService implements LiffSdkServiceInterface {
   private liffSDK: LiffSDK | null = null;
-  private isInitialized: boolean = false;
+  private _isInitialized: boolean = false;
 
   // 實現單例模式，確保只有一個 LIFF SDK 實例
   private static instance: LiffSdkService | null = null;
@@ -27,7 +27,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
    */
   async initialize(liffId?: string): Promise<boolean> {
     // 如果已初始化則直接返回
-    if (this.isInitialized && this.liffSDK) {
+    if (this._isInitialized && this.liffSDK) {
       console.log('LIFF SDK 已初始化，跳過初始化流程');
       return true;
     }
@@ -64,7 +64,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
 
       // 使用類型轉換將 LIFF SDK 賦值給我們的介面變數
       this.liffSDK = liff as unknown as LiffSDK;
-      this.isInitialized = true;
+      this._isInitialized = true;
 
       console.log('LIFF SDK 初始化成功');
       return true;
@@ -72,7 +72,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
       console.error('Failed to initialize LIFF SDK:', error);
       // 確保清除任何部分初始化的狀態
       this.liffSDK = null;
-      this.isInitialized = false;
+      this._isInitialized = false;
       return false;
     }
   }
@@ -94,7 +94,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     }
 
     // 確保 LIFF SDK 已初始化
-    if (!this.isInitialized) {
+    if (!this._isInitialized) {
       await this.initialize();
     }
 
@@ -117,7 +117,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     }
 
     // 確保 LIFF SDK 已初始化
-    if (!this.isInitialized) {
+    if (!this._isInitialized) {
       await this.initialize();
     }
 
@@ -300,5 +300,12 @@ export class LiffSdkService implements LiffSdkServiceInterface {
       console.error('Scan QR code error:', error);
       return null;
     }
+  }
+
+  /**
+   * 確認 LIFF SDK 是否已初始化
+   */
+  get isInitialized(): boolean {
+    return this._isInitialized;
   }
 }
