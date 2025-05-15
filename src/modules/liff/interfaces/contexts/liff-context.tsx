@@ -82,8 +82,12 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
             if (isReady) {
               console.log("LIFF SDK 已經初始化");
               setIsInitialized(true);
-              await fetchLiffInfo();
-              setIsLoading(false);
+              // 修正: 先執行 fetchLiffInfo，再執行後續邏輯
+              try {
+                await fetchLiffInfo();
+              } finally {
+                setIsLoading(false);
+              }
               return;
             }
           } catch (moduleErr) {
