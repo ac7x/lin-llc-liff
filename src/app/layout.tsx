@@ -26,11 +26,11 @@ export default function RootLayout({
   // 原因：1. 關注點分離，LIFF 只在特定路由下使用
   // 2. 避免在不需要 LIFF 的頁面加載其代碼
   // 3. 遵循 DDD 模式，保持模組的獨立性
-  
+
   return (
     <html lang="zh-Hant">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 min-h-screen`}>
-          {children}
+        {children}
       </body>
     </html>
   );
