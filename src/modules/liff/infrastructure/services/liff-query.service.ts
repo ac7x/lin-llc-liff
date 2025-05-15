@@ -1,6 +1,6 @@
-import { LiffContextDto, LiffFriendshipDto, LiffUserDto } from "../dtos/liff-user.dto";
-import { LiffQueryServiceInterface } from "../queries/liff-query.service.interface";
-import { LiffSdkServiceInterface } from "../../infrastructure/services/liff-sdk.interface";
+import { LiffContextDto, LiffFriendshipDto, LiffUserDto } from "@/modules/liff/application/dtos/liff-user.dto";
+import { LiffQueryServiceInterface } from "@/modules/liff/application/queries/liff-query.service.interface";
+import { LiffSdkServiceInterface } from "@/modules/liff/infrastructure/services/liff-sdk.interface";
 
 /**
  * LIFF 查詢服務實現
