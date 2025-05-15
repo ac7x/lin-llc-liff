@@ -44,7 +44,44 @@ export class LiffSdkService implements LiffSdkServiceInterface {
         withLoginOnExternalBrowser: true
       });
       
-      this.liffSDK = liff;
+      // 建立完整的適配器，確保所有方法符合我們的介面
+      this.liffSDK = {
+        init: liff.init.bind(liff),
+        isLoggedIn: liff.isLoggedIn.bind(liff),
+        login: liff.login.bind(liff),
+        logout: liff.logout.bind(liff),
+        getProfile: async (): Promise<LiffUserDto> => {
+          const profile = await liff.getProfile();
+          return {
+            ...profile,
+            isLoggedIn: liff.isLoggedIn()
+          };
+        },
+        getContext: (): LiffContextDto | null => {
+          const context = liff.getContext();
+          if (!context) return null;
+          return {
+            liffId: context.liffId,
+            type: context.type,
+            viewType: context.viewType,
+            userId: context.userId,
+            isInClient: liff.isInClient()
+          };
+        },
+        getOS: liff.getOS.bind(liff),
+        isInClient: liff.isInClient.bind(liff),
+        openWindow: liff.openWindow.bind(liff),
+        closeWindow: liff.closeWindow.bind(liff),
+        getLanguage: liff.getLanguage.bind(liff),
+        getVersion: liff.getVersion.bind(liff),
+        getLineVersion: liff.getLineVersion.bind(liff),
+        getFriendship: async (): Promise<LiffFriendshipDto> => {
+          const friendship = await liff.getFriendship();
+          return friendship;
+        },
+        shareTargetPicker: liff.shareTargetPicker.bind(liff),
+        scanCodeV2: liff.scanCodeV2.bind(liff)
+      };
       this.isInitialized = true;
       
       return true;
