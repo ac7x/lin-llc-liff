@@ -1,4 +1,3 @@
-// filepath: /workspaces/next-liff-template/src/modules/liff/infrastructure/services/liff-sdk.service.ts
 import { LiffContextDto, LiffFriendshipDto, LiffLoginResultDto, LiffMessageDto, LiffShareResultDto, LiffUserDto } from "../../application/dtos/liff-user.dto";
 import { LiffIdValueObject } from "../../domain/valueObjects/liff-id.value-object";
 import { LiffSDK, LiffSdkServiceInterface } from "./liff-sdk.interface";
@@ -94,6 +93,11 @@ export class LiffSdkService implements LiffSdkServiceInterface {
       throw new Error('LIFF SDK not initialized');
     }
 
+    // 確保 LIFF SDK 已初始化
+    if (!this.isInitialized) {
+      await this.initialize();
+    }
+
     this.liffSDK.login();
 
     // 由於 LINE 登入會重新導向，這裡回傳預設值
@@ -110,6 +114,11 @@ export class LiffSdkService implements LiffSdkServiceInterface {
   logout(): void {
     if (!this.liffSDK) {
       throw new Error('LIFF SDK not initialized');
+    }
+
+    // 確保 LIFF SDK 已初始化
+    if (!this.isInitialized) {
+      await this.initialize();
     }
 
     this.liffSDK.logout();
