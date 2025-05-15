@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useLiff } from '../contexts/liff-context';
 
 export interface LiffProfileCardProps {
@@ -47,10 +48,12 @@ export function LiffProfileCard({ className = '' }: LiffProfileCardProps) {
       <div className="flex items-center">
         {userProfile?.pictureUrl && (
           <div className="mr-4">
-            <img
+            <Image
               src={userProfile.pictureUrl}
-              alt={userProfile.displayName}
-              className="w-16 h-16 rounded-full"
+              alt={userProfile.displayName || '使用者頭像'}
+              width={64}
+              height={64}
+              className="rounded-full"
             />
           </div>
         )}
