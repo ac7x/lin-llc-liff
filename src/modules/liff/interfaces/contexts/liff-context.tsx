@@ -77,19 +77,17 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
             const liffModule = await import('@line/liff');
             const liff = liffModule.default;
 
-            // 檢查 liff 是否已經初始化
-            const isReady = await liff.ready;
-            if (isReady) {
-              console.log("LIFF SDK 已經初始化");
-              setIsInitialized(true);
-              // 修正: 先執行 fetchLiffInfo，再執行後續邏輯
-              try {
-                await fetchLiffInfo();
-              } finally {
-                setIsLoading(false);
-              }
-              return;
+            // 修正: 只需等待 liff.ready 完成，不需判斷回傳值
+            await liff.ready;
+            console.log("LIFF SDK 已經初始化");
+            setIsInitialized(true);
+            // 修正: 先執行 fetchLiffInfo，再執行後續邏輯
+            try {
+              await fetchLiffInfo();
+            } finally {
+              setIsLoading(false);
             }
+            return;
           } catch (moduleErr) {
             console.warn("無法直接檢查 LIFF 狀態:", moduleErr);
           }
