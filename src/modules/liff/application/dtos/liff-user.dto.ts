@@ -51,3 +51,16 @@ export interface LiffShareResultDto {
   status: string;
   success: boolean;
 }
+
+/**
+ * LINE消息類型定義
+ */
+export interface LiffMessageDto {
+  type: string;
+  text?: string;
+  originalContentUrl?: string;
+  previewImageUrl?: string;
+  packageId?: string;
+  stickerId?: string;
+  [key: string]: unknown;
+}

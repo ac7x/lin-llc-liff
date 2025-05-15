@@ -1,7 +1,7 @@
 // filepath: /workspaces/next-liff-template/src/modules/liff/infrastructure/services/liff-sdk.service.ts
-import { LiffContextDto, LiffFriendshipDto, LiffLoginResultDto, LiffShareResultDto, LiffUserDto } from "../../application/dtos/liff-user.dto";
+import { LiffContextDto, LiffFriendshipDto, LiffLoginResultDto, LiffMessageDto, LiffShareResultDto, LiffUserDto } from "../../application/dtos/liff-user.dto";
 import { LiffIdValueObject } from "../../domain/valueObjects/liff-id.value-object";
-import { LineContext, LineProfile, LiffSDK, LiffSdkServiceInterface } from "./liff-sdk.interface";
+import { LiffSDK, LiffSdkServiceInterface } from "./liff-sdk.interface";
 
 /**
  * LIFF SDK 服務實作
@@ -10,19 +10,19 @@ import { LineContext, LineProfile, LiffSDK, LiffSdkServiceInterface } from "./li
 export class LiffSdkService implements LiffSdkServiceInterface {
   private liffSDK: LiffSDK | null = null;
   private isInitialized: boolean = false;
-  
+
   // 實現單例模式，確保只有一個 LIFF SDK 實例
   private static instance: LiffSdkService | null = null;
-  
+
   public static getInstance(): LiffSdkService {
     if (!LiffSdkService.instance) {
       LiffSdkService.instance = new LiffSdkService();
     }
     return LiffSdkService.instance;
   }
-  
-  private constructor() {}
-  
+
+  private constructor() { }
+
   /**
    * 初始化 LIFF SDK
    */
@@ -30,32 +30,32 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (this.isInitialized && this.liffSDK) {
       return true;
     }
-    
+
     try {
       // 使用硬編碼的 LIFF ID 或提供的 ID
       const targetLiffId = liffId || LiffIdValueObject.getDefaultLiffId().value;
-      
+
       // 動態引入 LIFF SDK (避免 SSR 問題)
       const liffModule = await import('@line/liff');
       const liff = liffModule.default;
-      
+
       // 初始化 LIFF
       await liff.init({
         liffId: targetLiffId,
         withLoginOnExternalBrowser: true
       });
-      
+
       // 使用類型轉換將 LIFF SDK 賦值給我們的介面變數
       this.liffSDK = liff as unknown as LiffSDK;
       this.isInitialized = true;
-      
+
       return true;
     } catch (error) {
       console.error('Failed to initialize LIFF SDK:', error);
       return false;
     }
   }
-  
+
   /**
    * 檢查用戶是否已登入
    */
@@ -63,7 +63,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) return false;
     return this.liffSDK.isLoggedIn();
   }
-  
+
   /**
    * 執行登入流程
    */
@@ -71,9 +71,9 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) {
       throw new Error('LIFF SDK not initialized');
     }
-    
+
     this.liffSDK.login();
-    
+
     // 由於 LINE 登入會重新導向，這裡回傳預設值
     return {
       isLoggedIn: true,
@@ -81,7 +81,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
       displayName: undefined
     };
   }
-  
+
   /**
    * 執行登出流程
    */
@@ -89,10 +89,10 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) {
       throw new Error('LIFF SDK not initialized');
     }
-    
+
     this.liffSDK.logout();
   }
-  
+
   /**
    * 取得用戶個人資料
    */
@@ -100,15 +100,15 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) {
       throw new Error('LIFF SDK not initialized');
     }
-    
+
     if (!this.isLoggedIn()) {
       throw new Error('User not logged in');
     }
-    
+
     try {
       // 從 LIFF SDK 獲取基本個人資料
       const profile = await this.liffSDK.getProfile();
-      
+
       // 轉換為應用層 DTO，添加所需屬性
       return {
         userId: profile.userId,
@@ -122,16 +122,16 @@ export class LiffSdkService implements LiffSdkServiceInterface {
       throw error;
     }
   }
-  
+
   /**
    * 取得 LIFF 環境上下文
    */
   getContext(): LiffContextDto | null {
     if (!this.liffSDK) return null;
     const context = this.liffSDK.getContext();
-    
+
     if (!context) return null;
-    
+
     // 轉換為應用層 DTO，添加所需屬性
     return {
       liffId: context.liffId,
@@ -141,7 +141,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
       isInClient: this.liffSDK.isInClient()
     };
   }
-  
+
   /**
    * 取得裝置作業系統
    */
@@ -149,7 +149,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) return null;
     return this.liffSDK.getOS() || null;
   }
-  
+
   /**
    * 檢查是否在 LIFF 瀏覽器內
    */
@@ -157,7 +157,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) return false;
     return this.liffSDK.isInClient();
   }
-  
+
   /**
    * 開啟外部窗口
    */
@@ -165,10 +165,10 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) {
       throw new Error('LIFF SDK not initialized');
     }
-    
+
     this.liffSDK.openWindow({ url, external });
   }
-  
+
   /**
    * 關閉 LIFF 窗口
    */
@@ -176,10 +176,10 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) {
       throw new Error('LIFF SDK not initialized');
     }
-    
+
     this.liffSDK.closeWindow();
   }
-  
+
   /**
    * 取得 LINE 語系
    */
@@ -187,7 +187,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) return null;
     return this.liffSDK.getLanguage() || null;
   }
-  
+
   /**
    * 取得 LIFF 版本
    */
@@ -195,7 +195,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) return null;
     return this.liffSDK.getVersion() || null;
   }
-  
+
   /**
    * 取得 LINE 版本
    */
@@ -203,7 +203,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) return null;
     return this.liffSDK.getLineVersion() || null;
   }
-  
+
   /**
    * 取得好友關係狀態
    */
@@ -211,7 +211,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) {
       throw new Error('LIFF SDK not initialized');
     }
-    
+
     try {
       const friendship = await this.liffSDK.getFriendship();
       return {
@@ -222,7 +222,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
       return { friendFlag: false };
     }
   }
-  
+
   /**
    * 打開分享對話框
    */
@@ -230,15 +230,14 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) {
       throw new Error('LIFF SDK not initialized');
     }
-    
+
     try {
-      const result = await this.liffSDK.shareTargetPicker([
-        {
-          type: 'text',
-          text: text
-        } as any  // 使用類型斷言處理 LINE SDK 的消息格式
-      ]);
-      
+      const message: LiffMessageDto = {
+        type: 'text',
+        text: text
+      };
+      const result = await this.liffSDK.shareTargetPicker([message]);
+
       if (result) {
         return {
           status: result.status,
@@ -255,7 +254,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
       throw error;
     }
   }
-  
+
   /**
    * 掃描 QR 碼
    */
@@ -263,7 +262,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     if (!this.liffSDK) {
       throw new Error('LIFF SDK not initialized');
     }
-    
+
     try {
       return await this.liffSDK.scanCodeV2();
     } catch (error) {

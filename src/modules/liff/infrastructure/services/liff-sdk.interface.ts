@@ -1,5 +1,5 @@
 // filepath: /workspaces/next-liff-template/src/modules/liff/infrastructure/services/liff-sdk.interface.ts
-import { LiffContextDto, LiffFriendshipDto, LiffLoginResultDto, LiffShareResultDto, LiffUserDto } from "../../application/dtos/liff-user.dto";
+import { LiffContextDto, LiffFriendshipDto, LiffLoginResultDto, LiffMessageDto, LiffShareResultDto, LiffUserDto } from "../../application/dtos/liff-user.dto";
 
 /**
  * LINE Profile 介面定義
@@ -42,7 +42,7 @@ export interface LiffSDK {
   getVersion(): string | undefined;
   getLineVersion(): string | undefined;
   getFriendship(): Promise<{ friendFlag: boolean }>;
-  shareTargetPicker(messages: any[]): Promise<{ status: string } | undefined>;
+  shareTargetPicker(messages: LiffMessageDto[]): Promise<{ status: string } | undefined>;
   scanCodeV2(): Promise<{ value: string }>;
 }
 

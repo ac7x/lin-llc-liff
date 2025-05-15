@@ -1,0 +1,124 @@
+{
+  // ✅ 啟用 TypeScript / JavaScript 驗證功能
+  "typescript.validate.enable": true,
+  "javascript.validate.enable": true,
+
+  // 🚫 停用 TypeScript 的語法伺服器與伺服器日誌
+  "typescript.tsserver.useSyntaxServer": "never",
+  "typescript.tsserver.log": "off",
+
+  // 🚫 停用自動格式化與儲存修正
+  "editor.formatOnSave": true,
+  "editor.formatOnType": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+
+  // ✅ 檔案操作不跳出確認視窗
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+
+  // 🚫 關閉自動儲存
+  "files.autoSave": "afterDelay",
+
+  // 🗂️ 排除不必要的資料夾
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/.next": true
+  },
+
+  // 🕵️‍♂️ 停用 .next 資料夾的監控與搜尋
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.next/**": true,
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "**/.next": true,
+    "**/node_modules": true,
+    "**/.prisma": true
+  },
+
+  // 🔒 TypeScript 嚴格模式
+  "typescript.strict": true,
+
+  // ✨ JavaScript 自動匯入建議
+  "javascript.suggest.autoImports": true,
+
+  // 🤖 GitHub Copilot 設定
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": true,
+    "plaintext": false,
+    "markdown": true,
+    "typescript": true,
+    "typescriptreact": true,
+    "javascript": true,
+    "javascriptreact": true,
+    "prisma": true
+  },
+
+  // 🔍 IntelliSense 建議精簡
+  "editor.suggest.showWords": false,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+
+  // 🤖 GitHub Copilot Chat 設定
+  "github.copilot.chat.codeGeneration.instructions": [
+    { "file": ".github/.github/copilot-instructions.md" }
+  ],
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.generateTests.codeLens": true,
+
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.suggest.paths": true,
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.useAliasesForRenames": true,
+
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+  ],
+
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+
+  "prisma.fileWatcher": true,
+  "prisma.format.enabled": true,
+
+  "[typescript]": {
+    "editor.suggest.showTypeParameters": true
+  },
+  "[typescriptreact]": {
+  },
+  "[javascript]": {
+  },
+  "[javascriptreact]": {
+  },
+  "[prisma]": {
+    "editor.formatOnSave": true
+  },
+
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#1a1a1a",
+    "titleBar.activeBackground": "#1a1a1a",
+    "titleBar.activeForeground": "#ffffff"
+  },
+
+  "editor.largeFileOptimizations": true,
+
+  "css.lint.unknownAtRules": "ignore"
+}
