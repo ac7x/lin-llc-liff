@@ -1,6 +1,5 @@
 import { LiffIdValueObject } from '@/modules/liff/domain/valueObjects/liff-id.value-object';
 import { LiffProvider } from '@/modules/liff/interfaces/contexts/liff-context';
-import { GlobalBottomNav } from '@/modules/shared/interfaces/navigation/GlobalBottomNav';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import React from "react";
@@ -45,7 +44,6 @@ export default function RootLayout({
         <LiffProvider liffId={LIFF_ID}>
           <div className="pb-16 max-w-lg mx-auto">
             {children}
-            <GlobalBottomNav />
           </div>
         </LiffProvider>
       </body>
