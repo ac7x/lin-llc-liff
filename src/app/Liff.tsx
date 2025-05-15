@@ -15,14 +15,14 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (typeof window === "undefined") return;
         liff
-            .init({ liffId: process.env.NEXT_PUBLIC_LIFF_ID as string })
+            .init({ liffId: process.env.LIFF_ID as string })
             .then(() => {
                 setLiffObject(liff);
             })
             .catch((error: Error) => {
-                if (!process.env.NEXT_PUBLIC_LIFF_ID) {
+                if (!process.env.LIFF_ID) {
                     console.info(
-                        "LIFF Starter: Please make sure that you provided `NEXT_PUBLIC_LIFF_ID` as an environmental variable."
+                        "LIFF Starter: Please make sure that you provided `LIFF_ID` as an environmental variable."
                     );
                 }
                 setLiffError(error.toString());
