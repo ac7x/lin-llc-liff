@@ -1,96 +1,80 @@
-import { LineUserIdValueObject } from '../valueObjects/liff-id.value-object';
+import { LineUserIdValueObject } from "../valueObjects/line-user-id.value-object";
 
 /**
- * LIFF 用戶實體
- * 封裝與 LIFF 用戶相關的屬性與業務邏輯
+ * LINE 用戶實體
+ * 代表 LINE 平台上的用戶
  */
 export class LiffUserEntity {
-  private _id: LineUserIdValueObject;
+  private _userId: LineUserIdValueObject;
   private _displayName: string;
   private _pictureUrl?: string;
-  private _email?: string;
-  private _isLoggedIn: boolean = false;
-  private _createdAt: Date;
-  private _updatedAt: Date;
+  private _statusMessage?: string;
+  private _isLoggedIn: boolean;
 
-  private constructor(props: {
-    id: LineUserIdValueObject;
+  constructor(props: {
+    userId: LineUserIdValueObject;
     displayName: string;
     pictureUrl?: string;
-    email?: string;
-    isLoggedIn?: boolean;
-    createdAt?: Date;
-    updatedAt?: Date;
+    statusMessage?: string;
+    isLoggedIn: boolean;
   }) {
-    this._id = props.id;
+    this._userId = props.userId;
     this._displayName = props.displayName;
     this._pictureUrl = props.pictureUrl;
-    this._email = props.email;
-    this._isLoggedIn = props.isLoggedIn || false;
-    this._createdAt = props.createdAt || new Date();
-    this._updatedAt = props.updatedAt || new Date();
+    this._statusMessage = props.statusMessage;
+    this._isLoggedIn = props.isLoggedIn;
   }
 
-  /**
-   * 創建新的 LIFF 用戶實體
-   */
+  // 靜態工廠方法
   public static create(props: {
-    id: LineUserIdValueObject;
+    userId: string;
     displayName: string;
     pictureUrl?: string;
-    email?: string;
-    isLoggedIn?: boolean;
-  }): LiffUserEntity {
-    return new LiffUserEntity(props);
-  }
-
-  /**
-   * 從儲存數據重構用戶實體
-   */
-  public static reconstitute(props: {
-    id: LineUserIdValueObject;
-    displayName: string;
-    pictureUrl?: string;
-    email?: string;
+    statusMessage?: string;
     isLoggedIn: boolean;
-    createdAt: Date;
-    updatedAt: Date;
   }): LiffUserEntity {
-    return new LiffUserEntity(props);
+    return new LiffUserEntity({
+      userId: new LineUserIdValueObject(props.userId),
+      displayName: props.displayName,
+      pictureUrl: props.pictureUrl,
+      statusMessage: props.statusMessage,
+      isLoggedIn: props.isLoggedIn
+    });
   }
 
-  /**
-   * 設置用戶登入狀態
-   */
+  // 建立未登入的預設用戶
+  public static createDefault(): LiffUserEntity {
+    return new LiffUserEntity({
+      userId: new LineUserIdValueObject("guest"),
+      displayName: "訪客",
+      isLoggedIn: false
+    });
+  }
+
+  // 領域行為 - 登入
   public login(): void {
     this._isLoggedIn = true;
-    this._updatedAt = new Date();
   }
 
-  /**
-   * 設置用戶登出狀態
-   */
+  // 領域行為 - 登出
   public logout(): void {
     this._isLoggedIn = false;
-    this._updatedAt = new Date();
   }
 
-  /**
-   * 更新用戶資料
-   */
+  // 更新個人資料
   public updateProfile(props: {
     displayName?: string;
     pictureUrl?: string;
-    email?: string;
+    statusMessage?: string;
   }): void {
     if (props.displayName) this._displayName = props.displayName;
-    if (props.pictureUrl !== undefined) this._pictureUrl = props.pictureUrl;
-    if (props.email !== undefined) this._email = props.email;
-    this._updatedAt = new Date();
+    if (props.pictureUrl) this._pictureUrl = props.pictureUrl;
+    if (props.statusMessage) this._statusMessage = props.statusMessage;
   }
 
-  get id(): string {
-    return this._id.value;
+  // 取值方法
+  get userId(): string {
+    return this._userId.value;
   }
 
   get displayName(): string {
@@ -101,19 +85,11 @@ export class LiffUserEntity {
     return this._pictureUrl;
   }
 
-  get email(): string | undefined {
-    return this._email;
+  get statusMessage(): string | undefined {
+    return this._statusMessage;
   }
 
   get isLoggedIn(): boolean {
     return this._isLoggedIn;
-  }
-
-  get createdAt(): Date {
-    return this._createdAt;
-  }
-
-  get updatedAt(): Date {
-    return this._updatedAt;
   }
 }

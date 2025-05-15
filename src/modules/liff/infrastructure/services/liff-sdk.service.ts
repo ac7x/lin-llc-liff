@@ -1,211 +1,252 @@
-import { LiffConfigDto, LiffContextDto, LiffProfileDto } from '../dtos/liff-profile.dto';
+import { LiffContextDto, LiffFriendshipDto, LiffLoginResultDto, LiffShareResultDto, LiffUserDto } from "../../application/dtos/liff-user.dto";
+import { LiffIdValueObject } from "../../domain/valueObjects/liff-id.value-object";
+import { LiffSDK, LiffSdkServiceInterface } from "./liff-sdk.interface";
 
 /**
- * LIFF SDK 類型定義
- * 這是簡化版的 LIFF SDK 類型，適用於本項目
- */
-export interface LiffSDK {
-  init(config: { liffId: string; withLoginOnExternalBrowser?: boolean }): Promise<void>;
-  isLoggedIn(): boolean;
-  login(options?: { redirectUri?: string }): void;
-  logout(): void;
-  getProfile(): Promise<LiffProfileDto>;
-  getContext(): LiffContextDto | null;
-  getOS(): string | undefined;
-  isInClient(): boolean;
-  openWindow(options: { url: string; external: boolean }): void;
-  closeWindow(): void;
-}
-
-/**
- * LIFF SDK 服務介面
- * 定義與 LIFF SDK 互動的方法契約
- */
-export interface LiffSdkServiceInterface {
-  initialize(config: LiffConfigDto): Promise<boolean>;
-  isLoggedIn(): boolean;
-  login(): Promise<void>;
-  logout(): Promise<void>;
-  getProfile(): Promise<LiffProfileDto>;
-  getContext(): LiffContextDto | null;
-  getOS(): string;
-  isInClient(): boolean;
-  openWindow(url: string, external?: boolean): void;
-  closeWindow(): void;
-}
-
-/**
- * LIFF SDK 服務實現
- * 封裝對 LIFF SDK 的呼叫邏輯
+ * LIFF SDK 服務實作
+ * 實現與 LIFF SDK 的互動邏輯
  */
 export class LiffSdkService implements LiffSdkServiceInterface {
-  private liff: LiffSDK | null = null;
-
-  /**
-   * 設置 LIFF SDK 實例
-   */
-  setLiffInstance(liffInstance: LiffSDK): void {
-    this.liff = liffInstance;
-  }
-
-  /**
-   * 獲取 LIFF SDK 實例
-   */
-  getLiffInstance(): LiffSDK {
-    if (!this.liff) {
-      throw new Error('LIFF SDK has not been initialized');
+  private liffSDK: LiffSDK | null = null;
+  private isInitialized: boolean = false;
+  
+  // 實現單例模式，確保只有一個 LIFF SDK 實例
+  private static instance: LiffSdkService | null = null;
+  
+  public static getInstance(): LiffSdkService {
+    if (!LiffSdkService.instance) {
+      LiffSdkService.instance = new LiffSdkService();
     }
-    return this.liff;
+    return LiffSdkService.instance;
   }
-
+  
+  private constructor() {}
+  
   /**
    * 初始化 LIFF SDK
    */
-  async initialize(config: LiffConfigDto): Promise<boolean> {
+  async initialize(liffId?: string): Promise<boolean> {
+    if (this.isInitialized && this.liffSDK) {
+      return true;
+    }
+    
     try {
-      if (typeof window === 'undefined') {
-        return false;
-      }
+      // 使用硬編碼的 LIFF ID 或提供的 ID
+      const targetLiffId = liffId || LiffIdValueObject.getDefaultLiffId().value;
       
-      // 動態引入 LIFF SDK
+      // 動態引入 LIFF SDK (避免 SSR 問題)
       const liffModule = await import('@line/liff');
       const liff = liffModule.default;
       
-      // 初始化 LIFF SDK
+      // 初始化 LIFF
       await liff.init({
-        liffId: config.liffId,
-        withLoginOnExternalBrowser: config.withLoginOnExternalBrowser || false
+        liffId: targetLiffId,
+        withLoginOnExternalBrowser: true
       });
       
-      // 將 LIFF SDK 包裝為符合我們介面的對象
-      this.liff = {
-        init: liff.init.bind(liff),
-        isLoggedIn: liff.isLoggedIn.bind(liff),
-        login: liff.login.bind(liff),
-        logout: liff.logout.bind(liff),
-        getProfile: liff.getProfile.bind(liff),
-        getContext: liff.getContext.bind(liff),
-        getOS: liff.getOS.bind(liff),
-        isInClient: liff.isInClient.bind(liff),
-        openWindow: liff.openWindow.bind(liff),
-        closeWindow: liff.closeWindow.bind(liff)
-      };
+      this.liffSDK = liff;
+      this.isInitialized = true;
       
       return true;
     } catch (error) {
-      console.error('LIFF initialization failed:', error);
+      console.error('Failed to initialize LIFF SDK:', error);
       return false;
     }
   }
-
+  
   /**
    * 檢查用戶是否已登入
    */
   isLoggedIn(): boolean {
-    if (!this.liff) return false;
-    return this.liff.isLoggedIn();
+    if (!this.liffSDK) return false;
+    return this.liffSDK.isLoggedIn();
   }
-
+  
   /**
-   * 登入 LIFF
+   * 執行登入流程
    */
-  async login(): Promise<void> {
-    if (!this.liff) throw new Error('LIFF SDK has not been initialized');
-    return this.liff.login();
+  async login(): Promise<LiffLoginResultDto> {
+    if (!this.liffSDK) {
+      throw new Error('LIFF SDK not initialized');
+    }
+    
+    this.liffSDK.login();
+    
+    // 由於 LINE 登入會重新導向，這裡回傳預設值
+    return {
+      isLoggedIn: true,
+      userId: undefined,
+      displayName: undefined
+    };
   }
-
+  
   /**
-   * 登出 LIFF
+   * 執行登出流程
    */
-  async logout(): Promise<void> {
-    if (!this.liff) throw new Error('LIFF SDK has not been initialized');
-    return this.liff.logout();
+  logout(): void {
+    if (!this.liffSDK) {
+      throw new Error('LIFF SDK not initialized');
+    }
+    
+    this.liffSDK.logout();
   }
-
+  
   /**
-   * 取得用戶資料
+   * 取得用戶個人資料
    */
-  async getProfile(): Promise<LiffProfileDto> {
-    if (!this.liff) throw new Error('LIFF SDK has not been initialized');
-    if (!this.liff.isLoggedIn()) {
-      throw new Error('User is not logged in');
+  async getProfile(): Promise<LiffUserDto> {
+    if (!this.liffSDK) {
+      throw new Error('LIFF SDK not initialized');
+    }
+    
+    if (!this.isLoggedIn()) {
+      throw new Error('User not logged in');
     }
     
     try {
-      return await this.liff.getProfile();
+      const profile = await this.liffSDK.getProfile();
+      return {
+        ...profile,
+        isLoggedIn: true
+      };
     } catch (error) {
-      console.error('Error getting profile:', error);
+      console.error('Failed to get user profile:', error);
       throw error;
     }
   }
-
+  
   /**
-   * 取得 LIFF Context 資訊
+   * 取得 LIFF 環境上下文
    */
   getContext(): LiffContextDto | null {
-    if (!this.liff) return null;
-    
-    try {
-      return this.liff.getContext();
-    } catch (error) {
-      console.error('Error getting context:', error);
-      return null;
-    }
+    if (!this.liffSDK) return null;
+    return this.liffSDK.getContext();
   }
-
+  
   /**
-   * 取得作業系統資訊
+   * 取得裝置作業系統
    */
-  getOS(): string {
-    if (!this.liff) return '';
-    
-    try {
-      return this.liff.getOS() || '';
-    } catch (error) {
-      console.error('Error getting OS:', error);
-      return '';
-    }
+  getOS(): string | null {
+    if (!this.liffSDK) return null;
+    return this.liffSDK.getOS() || null;
   }
-
+  
   /**
-   * 檢查是否在 LINE App 內
+   * 檢查是否在 LIFF 瀏覽器內
    */
   isInClient(): boolean {
-    if (!this.liff) return false;
-    
-    try {
-      return this.liff.isInClient();
-    } catch (error) {
-      console.error('Error checking if in client:', error);
-      return false;
-    }
+    if (!this.liffSDK) return false;
+    return this.liffSDK.isInClient();
   }
-
+  
   /**
-   * 開啟網址
+   * 開啟外部窗口
    */
-  openWindow(url: string, external: boolean = false): void {
-    if (!this.liff) throw new Error('LIFF SDK has not been initialized');
-    
-    try {
-      this.liff.openWindow({ url, external });
-    } catch (error) {
-      console.error('Error opening window:', error);
-      throw error;
+  openWindow(url: string, external: boolean): void {
+    if (!this.liffSDK) {
+      throw new Error('LIFF SDK not initialized');
     }
+    
+    this.liffSDK.openWindow({ url, external });
   }
-
+  
   /**
-   * 關閉 LIFF 視窗
+   * 關閉 LIFF 窗口
    */
   closeWindow(): void {
-    if (!this.liff) throw new Error('LIFF SDK has not been initialized');
+    if (!this.liffSDK) {
+      throw new Error('LIFF SDK not initialized');
+    }
+    
+    this.liffSDK.closeWindow();
+  }
+  
+  /**
+   * 取得 LINE 語系
+   */
+  getLanguage(): string | null {
+    if (!this.liffSDK) return null;
+    return this.liffSDK.getLanguage() || null;
+  }
+  
+  /**
+   * 取得 LIFF 版本
+   */
+  getLiffVersion(): string | null {
+    if (!this.liffSDK) return null;
+    return this.liffSDK.getVersion() || null;
+  }
+  
+  /**
+   * 取得 LINE 版本
+   */
+  getLineVersion(): string | null {
+    if (!this.liffSDK) return null;
+    return this.liffSDK.getLineVersion() || null;
+  }
+  
+  /**
+   * 取得好友關係狀態
+   */
+  async getFriendship(): Promise<LiffFriendshipDto> {
+    if (!this.liffSDK) {
+      throw new Error('LIFF SDK not initialized');
+    }
     
     try {
-      this.liff.closeWindow();
+      return await this.liffSDK.getFriendship();
     } catch (error) {
-      console.error('Error closing window:', error);
+      console.error('Failed to get friendship status:', error);
+      return { friendFlag: false };
+    }
+  }
+  
+  /**
+   * 打開分享對話框
+   */
+  async shareTargetPicker(text: string): Promise<LiffShareResultDto> {
+    if (!this.liffSDK) {
+      throw new Error('LIFF SDK not initialized');
+    }
+    
+    try {
+      const result = await this.liffSDK.shareTargetPicker([
+        {
+          type: 'text',
+          text: text
+        }
+      ]);
+      
+      if (result) {
+        return {
+          status: result.status,
+          success: true
+        };
+      } else {
+        return {
+          status: 'canceled',
+          success: false
+        };
+      }
+    } catch (error) {
+      console.error('Share target picker error:', error);
       throw error;
+    }
+  }
+  
+  /**
+   * 掃描 QR 碼
+   */
+  async scanQrCode(): Promise<{ value: string } | null> {
+    if (!this.liffSDK) {
+      throw new Error('LIFF SDK not initialized');
+    }
+    
+    try {
+      return await this.liffSDK.scanCodeV2();
+    } catch (error) {
+      console.error('Scan QR code error:', error);
+      return null;
     }
   }
 }

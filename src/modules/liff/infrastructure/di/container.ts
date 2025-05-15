@@ -1,55 +1,45 @@
-import { FirebaseApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { LiffInitializerService } from '../../application/services/liff-initializer.service';
-import { LiffUserRepository } from '../../domain/repositories/liff-user-repository.interface';
-import { LiffUserRepositoryFactory } from '../persistence/factory/liff-user-repository.factory';
-import { LiffSdkService } from '../services/liff-sdk.service';
+import { LiffCommandServiceInterface } from "../../application/commands/liff-command.service.interface";
+import { LiffQueryServiceInterface } from "../../application/queries/liff-query.service.interface";
+import { LiffCommandService } from "../services/liff-command.service";
+import { LiffQueryService } from "../services/liff-query.service";
+import { LiffSdkService } from "./liff-sdk.service";
 
-/**
- * 依賴注入容器
- * 管理模組內的依賴關係與實例創建
- */
-
-type ServiceTypes = {
-  LiffSdkService: LiffSdkService;
-  LiffUserRepository: LiffUserRepository;
-  LiffInitializerService: LiffInitializerService;
+// 依賴注入容器的類型定義
+type ServiceContainer = {
+  [key: string]: any;
 };
 
-// 服務實例緩存
-const instances: Partial<ServiceTypes> = {};
+// 單例服務容器實例
+const serviceContainer: ServiceContainer = {};
 
 /**
- * 初始化依賴注入容器
+ * 創建或取得已注冊的服務實例
  */
-export function initializeContainer(firebaseApp: FirebaseApp): void {
-  const firestore = getFirestore(firebaseApp);
-  
-  // 創建 LiffSdkService
-  const liffSdkService = new LiffSdkService();
-  instances.LiffSdkService = liffSdkService;
-  
-  // 創建 LiffUserRepository
-  const userRepository = LiffUserRepositoryFactory.create(firestore);
-  instances.LiffUserRepository = userRepository;
-  
-  // 創建 LiffInitializerService
-  const liffInitializer = new LiffInitializerService(
-    liffSdkService,
-    userRepository
-  );
-  instances.LiffInitializerService = liffInitializer;
-}
-
-/**
- * 獲取服務實例
- */
-export function createInstance<T>(serviceName: keyof ServiceTypes): T {
-  const instance = instances[serviceName];
-  
-  if (!instance) {
-    throw new Error(`Service ${serviceName} is not registered in the container`);
+export function createInstance<T>(serviceType: string): T {
+  // 檢查服務是否已經實例化
+  if (serviceContainer[serviceType]) {
+    return serviceContainer[serviceType] as T;
   }
   
-  return instance as T;
+  // 根據服務類型創建新實例
+  switch (serviceType) {
+    case 'LiffSdkService':
+      serviceContainer[serviceType] = LiffSdkService.getInstance();
+      break;
+      
+    case 'LiffQueryService':
+      const liffSdk = createInstance<LiffSdkService>('LiffSdkService');
+      serviceContainer[serviceType] = new LiffQueryService(liffSdk);
+      break;
+      
+    case 'LiffCommandService':
+      const sdkService = createInstance<LiffSdkService>('LiffSdkService');
+      serviceContainer[serviceType] = new LiffCommandService(sdkService);
+      break;
+      
+    default:
+      throw new Error(`Unknown service type: ${serviceType}`);
+  }
+  
+  return serviceContainer[serviceType] as T;
 }
