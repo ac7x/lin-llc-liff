@@ -11,6 +11,11 @@ export interface LiffCommandServiceInterface {
   initialize(liffId?: string): Promise<boolean>;
   
   /**
+   * 確認 LIFF SDK 是否已初始化
+   */
+  isInitialized(): boolean;
+  
+  /**
    * 登入 LIFF
    */
   login(): Promise<LiffLoginResultDto>;
