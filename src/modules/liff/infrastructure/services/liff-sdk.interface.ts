@@ -1,4 +1,27 @@
+// filepath: /workspaces/next-liff-template/src/modules/liff/infrastructure/services/liff-sdk.interface.ts
 import { LiffContextDto, LiffFriendshipDto, LiffLoginResultDto, LiffShareResultDto, LiffUserDto } from "../../application/dtos/liff-user.dto";
+
+/**
+ * LINE Profile 介面定義
+ * 與 LIFF SDK 的 getProfile() 返回值對應
+ */
+export interface LineProfile {
+  userId: string;
+  displayName: string;
+  pictureUrl?: string;
+  statusMessage?: string;
+}
+
+/**
+ * LIFF 環境上下文介面定義
+ * 與 LIFF SDK 的 getContext() 返回值對應
+ */
+export interface LineContext {
+  liffId: string;
+  type: string;
+  viewType: string;
+  userId?: string;
+}
 
 /**
  * LIFF SDK 類型定義
@@ -9,8 +32,8 @@ export interface LiffSDK {
   isLoggedIn(): boolean;
   login(options?: { redirectUri?: string }): void;
   logout(): void;
-  getProfile(): Promise<LiffUserDto>;
-  getContext(): LiffContextDto | null;
+  getProfile(): Promise<LineProfile>;
+  getContext(): LineContext | null;
   getOS(): string | undefined;
   isInClient(): boolean;
   openWindow(options: { url: string; external: boolean }): void;
@@ -18,8 +41,8 @@ export interface LiffSDK {
   getLanguage(): string | undefined;
   getVersion(): string | undefined;
   getLineVersion(): string | undefined;
-  getFriendship(): Promise<LiffFriendshipDto>;
-  shareTargetPicker(messages: Array<{ type: string; text: string }>): Promise<{ status: string } | undefined>;
+  getFriendship(): Promise<{ friendFlag: boolean }>;
+  shareTargetPicker(messages: any[]): Promise<{ status: string } | undefined>;
   scanCodeV2(): Promise<{ value: string }>;
 }
 

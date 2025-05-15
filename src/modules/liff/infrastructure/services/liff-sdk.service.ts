@@ -1,6 +1,7 @@
+// filepath: /workspaces/next-liff-template/src/modules/liff/infrastructure/services/liff-sdk.service.ts
 import { LiffContextDto, LiffFriendshipDto, LiffLoginResultDto, LiffShareResultDto, LiffUserDto } from "../../application/dtos/liff-user.dto";
 import { LiffIdValueObject } from "../../domain/valueObjects/liff-id.value-object";
-import { LiffSDK, LiffSdkServiceInterface } from "./liff-sdk.interface";
+import { LineContext, LineProfile, LiffSDK, LiffSdkServiceInterface } from "./liff-sdk.interface";
 
 /**
  * LIFF SDK 服務實作
@@ -44,44 +45,8 @@ export class LiffSdkService implements LiffSdkServiceInterface {
         withLoginOnExternalBrowser: true
       });
       
-      // 建立完整的適配器，確保所有方法符合我們的介面
-      this.liffSDK = {
-        init: liff.init.bind(liff),
-        isLoggedIn: liff.isLoggedIn.bind(liff),
-        login: liff.login.bind(liff),
-        logout: liff.logout.bind(liff),
-        getProfile: async (): Promise<LiffUserDto> => {
-          const profile = await liff.getProfile();
-          return {
-            ...profile,
-            isLoggedIn: liff.isLoggedIn()
-          };
-        },
-        getContext: (): LiffContextDto | null => {
-          const context = liff.getContext();
-          if (!context) return null;
-          return {
-            liffId: context.liffId,
-            type: context.type,
-            viewType: context.viewType,
-            userId: context.userId,
-            isInClient: liff.isInClient()
-          };
-        },
-        getOS: liff.getOS.bind(liff),
-        isInClient: liff.isInClient.bind(liff),
-        openWindow: liff.openWindow.bind(liff),
-        closeWindow: liff.closeWindow.bind(liff),
-        getLanguage: liff.getLanguage.bind(liff),
-        getVersion: liff.getVersion.bind(liff),
-        getLineVersion: liff.getLineVersion.bind(liff),
-        getFriendship: async (): Promise<LiffFriendshipDto> => {
-          const friendship = await liff.getFriendship();
-          return friendship;
-        },
-        shareTargetPicker: liff.shareTargetPicker.bind(liff),
-        scanCodeV2: liff.scanCodeV2.bind(liff)
-      };
+      // 使用類型轉換將 LIFF SDK 賦值給我們的介面變數
+      this.liffSDK = liff as unknown as LiffSDK;
       this.isInitialized = true;
       
       return true;
@@ -141,9 +106,15 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     }
     
     try {
+      // 從 LIFF SDK 獲取基本個人資料
       const profile = await this.liffSDK.getProfile();
+      
+      // 轉換為應用層 DTO，添加所需屬性
       return {
-        ...profile,
+        userId: profile.userId,
+        displayName: profile.displayName,
+        pictureUrl: profile.pictureUrl,
+        statusMessage: profile.statusMessage,
         isLoggedIn: true
       };
     } catch (error) {
@@ -157,7 +128,18 @@ export class LiffSdkService implements LiffSdkServiceInterface {
    */
   getContext(): LiffContextDto | null {
     if (!this.liffSDK) return null;
-    return this.liffSDK.getContext();
+    const context = this.liffSDK.getContext();
+    
+    if (!context) return null;
+    
+    // 轉換為應用層 DTO，添加所需屬性
+    return {
+      liffId: context.liffId,
+      type: context.type,
+      viewType: context.viewType,
+      userId: context.userId,
+      isInClient: this.liffSDK.isInClient()
+    };
   }
   
   /**
@@ -231,7 +213,10 @@ export class LiffSdkService implements LiffSdkServiceInterface {
     }
     
     try {
-      return await this.liffSDK.getFriendship();
+      const friendship = await this.liffSDK.getFriendship();
+      return {
+        friendFlag: friendship.friendFlag
+      };
     } catch (error) {
       console.error('Failed to get friendship status:', error);
       return { friendFlag: false };
@@ -251,7 +236,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
         {
           type: 'text',
           text: text
-        }
+        } as any  // 使用類型斷言處理 LINE SDK 的消息格式
       ]);
       
       if (result) {
