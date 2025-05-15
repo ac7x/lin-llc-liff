@@ -29,8 +29,10 @@ export class LiffCommandService implements LiffCommandServiceInterface {
    * 登入 LIFF
    */
   async login(): Promise<LiffLoginResultDto> {
-    // 強制初始化，確保不會未初始化就登入
-    await this.liffSdkService.initialize();
+    // 確保 LIFF SDK 已初始化
+    if (!this.liffSdkService.isInitialized()) {
+      await this.liffSdkService.initialize();
+    }
     try {
       const result = await this.liffSdkService.login();
       // 登入後獲取用戶資料
@@ -58,8 +60,10 @@ export class LiffCommandService implements LiffCommandServiceInterface {
    * 登出 LIFF
    */
   async logout(): Promise<void> {
-    // 強制初始化，確保不會未初始化就登出
-    await this.liffSdkService.initialize();
+    // 確保 LIFF SDK 已初始化
+    if (!this.liffSdkService.isInitialized()) {
+      await this.liffSdkService.initialize();
+    }
     try {
       this.liffSdkService.logout();
     } catch (error) {

@@ -46,6 +46,12 @@ export async function loginAction(): Promise<{
 }> {
   try {
     const liffService = createInstance<LiffCommandServiceInterface>('LiffCommandService');
+    
+    // 確保 LIFF SDK 已初始化
+    if (!liffService.isInitialized()) {
+      await liffService.initialize();
+    }
+    
     const result = await liffService.login();
     
     return {
@@ -71,6 +77,12 @@ export async function logoutAction(): Promise<{
 }> {
   try {
     const liffService = createInstance<LiffCommandServiceInterface>('LiffCommandService');
+    
+    // 確保 LIFF SDK 已初始化
+    if (!liffService.isInitialized()) {
+      await liffService.initialize();
+    }
+    
     await liffService.logout();
     return { success: true };
   } catch (error) {
