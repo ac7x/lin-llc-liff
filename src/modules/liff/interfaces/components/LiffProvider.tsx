@@ -22,7 +22,7 @@ interface LiffProviderProps {
  */
 export const LiffProvider: React.FC<LiffProviderProps> = ({
     children,
-    liffId = process.env.NEXT_PUBLIC_LIFF_ID
+    liffId = process.env.LIFF_ID
 }) => {
     // 初始化 LIFF Context 狀態
     const [liffContext, setLiffContext] = useState<LiffContextType>({
