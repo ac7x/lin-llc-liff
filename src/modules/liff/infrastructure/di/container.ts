@@ -1,12 +1,10 @@
-import { LiffCommandServiceInterface } from "../../application/commands/liff-command.service.interface";
-import { LiffQueryServiceInterface } from "../../application/queries/liff-query.service.interface";
 import { LiffCommandService } from "../services/liff-command.service";
 import { LiffQueryService } from "../services/liff-query.service";
 import { LiffSdkService } from "@/modules/liff/infrastructure/services/liff-sdk.service";
 
 // 依賴注入容器的類型定義
 type ServiceContainer = {
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 // 單例服務容器實例
