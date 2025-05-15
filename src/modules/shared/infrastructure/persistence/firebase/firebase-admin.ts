@@ -96,9 +96,18 @@ export const getStorageAdmin = (): Storage => {
 
 /**
  * 使用 Firestore Admin 寫入數據
+ * 若集合不存在會自動建立（Firestore 實際上自動建立，但可初始化結構或保證冪等）
  */
 export async function writeData(collection: string, docId: string, data: Record<string, unknown>): Promise<void> {
   const db = getFirestoreAdmin();
   const docRef = db.collection(collection).doc(docId);
-  await docRef.set(data);
+  // Firestore 實際上集合不存在時會自動建立
+  // 若需初始化集合結構，可於此加上初始化邏輯（如建立一個特殊的 meta doc 或 index）
+  // 這裡保證冪等與現代化封裝
+  try {
+    await docRef.set(data, { merge: true }); // merge: true 保證冪等
+  } catch (err) {
+    // 若遇到特殊錯誤可於此自動重試或初始化
+    throw err;
+  }
 }

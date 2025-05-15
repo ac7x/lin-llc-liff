@@ -18,7 +18,13 @@ export class FirebaseWalletRepository implements WalletRepository {
     }
 
     async save(wallet: WalletAggregate): Promise<void> {
-        await this.db.collection('wallets').doc(wallet.userId).set({
+        const walletsCollection = this.db.collection('wallets');
+        const snapshot = await walletsCollection.limit(1).get();
+        if (snapshot.empty) {
+            // 集合尚未存在，先寫入一個初始化文件
+            await walletsCollection.doc('__init__').set({ initialized: true });
+        }
+        await walletsCollection.doc(wallet.userId).set({
             userId: wallet.userId,
             balance: wallet.balance,
         });
