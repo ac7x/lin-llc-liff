@@ -1,15 +1,15 @@
 
 'use client'
 
-import { useContext, useEffect, useState } from "react";
-import { LiffContext } from "./Liff";
+import { useLiff } from "@/modules/liff/interfaces";
+import { useEffect, useState } from "react";
 
 export default function HomePage() {
-  const { isLiffInitialized } = useContext(LiffContext);
+  const { state } = useLiff();
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
-    if (isLiffInitialized) {
+    if (state.isInitialized) {
       // 當 LIFF 初始化後，顯示提示
       setShowToast(true);
 
@@ -21,7 +21,7 @@ export default function HomePage() {
       // 清理計時器
       return () => clearTimeout(timer);
     }
-  }, [isLiffInitialized]);
+  }, [state.isInitialized]);
 
   return (
     <main className="relative">
