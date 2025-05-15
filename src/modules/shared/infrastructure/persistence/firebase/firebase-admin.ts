@@ -1,6 +1,6 @@
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
-import { getFirestore, Firestore } from 'firebase-admin/firestore';
-import { getAuth, Auth } from 'firebase-admin/auth';
+import { Auth, getAuth } from 'firebase-admin/auth';
+import { Firestore, getFirestore } from 'firebase-admin/firestore';
 import { getStorage, Storage } from 'firebase-admin/storage';
 
 /**
@@ -12,7 +12,7 @@ export class FirebaseAdmin {
   private _firestore: Firestore;
   private _auth: Auth;
   private _storage: Storage;
-  
+
   private constructor() {
     // 檢查是否已經初始化過
     if (getApps().length === 0) {
@@ -29,18 +29,18 @@ export class FirebaseAdmin {
           console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY:', error);
           throw error;
         }
-      } 
+      }
       // 初始化方式 2：使用 Google Cloud 環境中的默認憑證
       else {
         initializeApp();
       }
     }
-    
+
     this._firestore = getFirestore();
     this._auth = getAuth();
     this._storage = getStorage();
   }
-  
+
   /**
    * 獲取 Firebase Admin 單例
    */
@@ -50,21 +50,21 @@ export class FirebaseAdmin {
     }
     return FirebaseAdmin.instance;
   }
-  
+
   /**
    * 獲取 Firestore 實例
    */
   get firestore(): Firestore {
     return this._firestore;
   }
-  
+
   /**
    * 獲取 Auth 實例
    */
   get auth(): Auth {
     return this._auth;
   }
-  
+
   /**
    * 獲取 Storage 實例
    */
@@ -93,3 +93,12 @@ export const getAuthAdmin = (): Auth => {
 export const getStorageAdmin = (): Storage => {
   return FirebaseAdmin.getInstance().storage;
 };
+
+/**
+ * 使用 Firestore Admin 寫入數據
+ */
+export async function writeData(collection: string, docId: string, data: Record<string, unknown>): Promise<void> {
+  const db = getFirestoreAdmin();
+  const docRef = db.collection(collection).doc(docId);
+  await docRef.set(data);
+}
