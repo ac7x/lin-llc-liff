@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { LiffContextDto, LiffFriendshipDto, LiffUserDto } from '../../application/dtos/liff-user.dto';
 import { initializeLiffAction, loginAction, logoutAction } from '../../application/actions/liff-actions';
+import { LiffContextDto, LiffFriendshipDto, LiffUserDto } from '../../application/dtos/liff-user.dto';
 
 // LIFF 上下文類型定義
 interface LiffContextType {
@@ -33,13 +33,13 @@ const defaultContextValue: LiffContextType = {
   isLoading: true,
   isInClient: false,
   error: null,
-  login: async () => {},
-  logout: async () => {},
-  openWindow: () => {},
-  closeWindow: () => {},
+  login: async () => { },
+  logout: async () => { },
+  openWindow: () => { },
+  closeWindow: () => { },
   shareText: async () => false,
   scanQrCode: async () => null,
-  refresh: async () => {},
+  refresh: async () => { },
 };
 
 // 創建 LIFF Context
@@ -70,10 +70,10 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
     async function initLiff() {
       try {
         setIsLoading(true);
-        
+
         // 初始化 LIFF SDK
         const { success, error } = await initializeLiffAction(liffId);
-        
+
         if (!success) {
           setError(error || '初始化失敗');
           setIsLoading(false);
@@ -82,7 +82,7 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
 
         setIsInitialized(true);
         await fetchLiffInfo();
-        
+
       } catch (err) {
         setError(err instanceof Error ? err.message : '未知錯誤');
       } finally {
@@ -100,21 +100,21 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
       // 這裡我們模擬對客戶端 SDK 的直接訪問
       const liffModule = await import('@line/liff');
       const liff = liffModule.default;
-      
-      // 檢查是否已初始化
-      if (!liff.isReady()) return;
-      
+
+      // 檢查是否已初始化，LIFF SDK 沒有 isReady() 方法，應該檢查 liff 對象是否存在
+      if (!liff) return;
+
       // 獲取登入狀態
       const loggedIn = liff.isLoggedIn();
       setIsLoggedIn(loggedIn);
-      
+
       // 獲取上下文
       const ctx = liff.getContext();
       setLiffContext(ctx);
-      
+
       // 檢查是否在 LIFF 瀏覽器內
       setIsInClient(liff.isInClient());
-      
+
       // 如果已登入，獲取用戶資料和好友狀態
       if (loggedIn) {
         try {
@@ -123,7 +123,7 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
             ...profile,
             isLoggedIn: true
           });
-          
+
           try {
             const friendStatus = await liff.getFriendship();
             setFriendship(friendStatus);
@@ -172,11 +172,11 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
     try {
       const liffModule = await import('@line/liff');
       const liff = liffModule.default;
-      
-      if (!liff.isReady()) {
+
+      if (!liff) {
         throw new Error('LIFF not initialized');
       }
-      
+
       liff.openWindow({ url, external });
     } catch (err) {
       setError(err instanceof Error ? err.message : '無法開啟視窗');
@@ -188,11 +188,11 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
     try {
       const liffModule = await import('@line/liff');
       const liff = liffModule.default;
-      
-      if (!liff.isReady()) {
+
+      if (!liff) {
         throw new Error('LIFF not initialized');
       }
-      
+
       liff.closeWindow();
     } catch (err) {
       setError(err instanceof Error ? err.message : '無法關閉視窗');
@@ -204,18 +204,18 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
     try {
       const liffModule = await import('@line/liff');
       const liff = liffModule.default;
-      
-      if (!liff.isReady()) {
+
+      if (!liff) {
         throw new Error('LIFF not initialized');
       }
-      
+
       const result = await liff.shareTargetPicker([
         {
           type: 'text',
           text: text
         }
       ]);
-      
+
       return !!result;
     } catch (err) {
       setError(err instanceof Error ? err.message : '分享失敗');
@@ -228,11 +228,11 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
     try {
       const liffModule = await import('@line/liff');
       const liff = liffModule.default;
-      
-      if (!liff.isReady()) {
+
+      if (!liff) {
         throw new Error('LIFF not initialized');
       }
-      
+
       return await liff.scanCodeV2();
     } catch (err) {
       setError(err instanceof Error ? err.message : '掃描 QR 碼失敗');
