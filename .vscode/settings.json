@@ -1,0 +1,82 @@
+{
+  "typescript.validate.enable": true,
+  "javascript.validate.enable": true,
+  "typescript.tsserver.useSyntaxServer": "never",
+  "typescript.tsserver.log": "off",
+  "editor.formatOnSave": true,
+  "editor.formatOnType": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "files.autoSave": "afterDelay",
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/.next": true
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.next/**": true,
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "**/.next": true,
+    "**/node_modules": true
+  },
+  "typescript.strict": true,
+  "javascript.suggest.autoImports": true,
+  "github.copilot.enable": {
+    "*": true,
+    "yaml": true,
+    "plaintext": false,
+    "markdown": true,
+    "typescript": true,
+    "typescriptreact": true,
+    "javascript": true,
+    "javascriptreact": true
+  },
+  "editor.suggest.showWords": false,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "github.copilot.chat.codeGeneration.instructions": [
+    { "file": ".github/.github/copilot-instructions.md" }
+  ],
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.generateTests.codeLens": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.suggest.paths": true,
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.useAliasesForRenames": true,
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+  ],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+  "[typescript]": {
+    "editor.suggest.showTypeParameters": true
+  },
+  "[typescriptreact]": {},
+  "[javascript]": {},
+  "[javascriptreact]": {},
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#1a1a1a",
+    "titleBar.activeBackground": "#1a1a1a",
+    "titleBar.activeForeground": "#ffffff"
+  },
+  "editor.largeFileOptimizations": true,
+  "css.lint.unknownAtRules": "ignore"
+}
