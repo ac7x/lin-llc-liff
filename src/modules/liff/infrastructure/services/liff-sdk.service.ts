@@ -111,7 +111,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
   /**
    * 執行登出流程
    */
-  logout(): void {
+  async logout(): Promise<void> {
     if (!this.liffSDK) {
       throw new Error('LIFF SDK not initialized');
     }
@@ -121,7 +121,7 @@ export class LiffSdkService implements LiffSdkServiceInterface {
       await this.initialize();
     }
 
-    this.liffSDK.logout();
+    await this.liffSDK.logout();
   }
 
   /**
