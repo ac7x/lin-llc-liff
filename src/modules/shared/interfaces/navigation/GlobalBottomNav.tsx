@@ -33,18 +33,6 @@ const defaultNavItems: NavItem[] = [
     icon: '🧳',
     label: '我的',
     active: false
-  },
-  {
-    href: '/client/profile',
-    icon: '🧳',
-    label: '我的',
-    active: false
-  },
-  {
-    href: '/client/liff',
-    icon: '🧳',
-    label: 'liff',
-    active: false
   }
 ];
 
