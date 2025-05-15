@@ -12,25 +12,23 @@ export default function ProfilePage() {
   const LIFF_ID = LiffIdValueObject.getDefaultLiffId().value;
   
   return (
-    <main className="max-w-lg mx-auto py-8 px-4">
+    <main className="py-8 px-4">
       <h1 className="text-2xl font-bold mb-6 text-center">LINE 用戶資料</h1>
       
-      <LiffProvider liffId={LIFF_ID}>
-        <div className="space-y-6">
-          <LiffProfileCard />
-          <LiffInfoCard />
-          <LiffActionButtons />
-          
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <h3 className="font-medium text-lg mb-2">關於此頁面</h3>
-            <p className="text-sm text-gray-600">
-              此頁面使用了 Next.js + DDD + CQRS 架構實現 LIFF 功能。
-              透過將 LIFF ID 硬編碼為 <code className="bg-gray-100 p-1 rounded text-xs">{LIFF_ID}</code>，
-              簡化了配置過程，不需要依賴環境變數。
-            </p>
-          </div>
+      <div className="space-y-6">
+        <LiffProfileCard />
+        <LiffInfoCard />
+        <LiffActionButtons />
+        
+        <div className="bg-white rounded-lg p-6 shadow-md">
+          <h3 className="font-medium text-lg mb-2">關於此頁面</h3>
+          <p className="text-sm text-gray-600">
+            此頁面使用了 Next.js + DDD + CQRS 架構實現 LIFF 功能。
+            透過將 LIFF ID 硬編碼為 <code className="bg-gray-100 p-1 rounded text-xs">{LIFF_ID}</code>，
+            簡化了配置過程，不需要依賴環境變數。
+          </p>
         </div>
-      </LiffProvider>
+      </div>
     </main>
   );
 }
