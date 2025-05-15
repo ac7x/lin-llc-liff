@@ -71,19 +71,42 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
       try {
         setIsLoading(true);
 
-        // 初始化 LIFF SDK
+        // 嘗試直接獲取 LIFF 模組，確保它可以在客戶端環境中被載入
+        if (typeof window !== 'undefined') {
+          try {
+            const liffModule = await import('@line/liff');
+            const liff = liffModule.default;
+            
+            // 檢查 liff 是否已經初始化
+            const isReady = liff.ready;
+            if (isReady) {
+              console.log("LIFF SDK 已經初始化");
+              setIsInitialized(true);
+              await fetchLiffInfo();
+              setIsLoading(false);
+              return;
+            }
+          } catch (moduleErr) {
+            console.warn("無法直接檢查 LIFF 狀態:", moduleErr);
+          }
+        }
+
+        // 使用 Server Action 初始化 LIFF SDK
         const { success, error } = await initializeLiffAction(liffId);
 
         if (!success) {
+          console.error('LIFF 初始化失敗:', error);
           setError(error || '初始化失敗');
           setIsLoading(false);
           return;
         }
 
+        console.log("LIFF SDK 初始化成功");
         setIsInitialized(true);
         await fetchLiffInfo();
 
       } catch (err) {
+        console.error('LIFF 初始化錯誤:', err);
         setError(err instanceof Error ? err.message : '未知錯誤');
       } finally {
         setIsLoading(false);

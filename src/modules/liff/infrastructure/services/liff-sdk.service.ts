@@ -27,17 +27,30 @@ export class LiffSdkService implements LiffSdkServiceInterface {
    * 初始化 LIFF SDK
    */
   async initialize(liffId?: string): Promise<boolean> {
+    // 如果已初始化則直接返回
     if (this.isInitialized && this.liffSDK) {
+      console.log('LIFF SDK 已初始化，跳過初始化流程');
       return true;
     }
 
     try {
+      // 檢查是否在瀏覽器環境
+      if (typeof window === 'undefined') {
+        console.warn('嘗試在非瀏覽器環境初始化 LIFF SDK，這可能導致問題');
+      }
+
       // 使用硬編碼的 LIFF ID 或提供的 ID
       const targetLiffId = liffId || LiffIdValueObject.getDefaultLiffId().value;
+      console.log(`嘗試初始化 LIFF SDK，使用 LIFF ID: ${targetLiffId}`);
 
       // 動態引入 LIFF SDK (避免 SSR 問題)
       const liffModule = await import('@line/liff');
       const liff = liffModule.default;
+
+      if (!liff) {
+        console.error('無法載入 LIFF SDK');
+        return false;
+      }
 
       // 初始化 LIFF
       await liff.init({
@@ -45,13 +58,22 @@ export class LiffSdkService implements LiffSdkServiceInterface {
         withLoginOnExternalBrowser: true
       });
 
+      // 檢查初始化狀態
+      if (!liff.isInClient() && !liff.isLoggedIn()) {
+        console.log('LIFF SDK 已初始化，但用戶尚未登入且不在 LINE 內建瀏覽器中');
+      }
+
       // 使用類型轉換將 LIFF SDK 賦值給我們的介面變數
       this.liffSDK = liff as unknown as LiffSDK;
       this.isInitialized = true;
 
+      console.log('LIFF SDK 初始化成功');
       return true;
     } catch (error) {
       console.error('Failed to initialize LIFF SDK:', error);
+      // 確保清除任何部分初始化的狀態
+      this.liffSDK = null;
+      this.isInitialized = false;
       return false;
     }
   }
