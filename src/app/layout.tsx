@@ -1,5 +1,3 @@
-'use client';
-
 import { LiffIdValueObject } from '@/modules/liff/domain/valueObjects/liff-id.value-object';
 import { LiffProvider } from '@/modules/liff/interfaces/contexts/liff-context';
 import { GlobalBottomNav } from '@/modules/shared/interfaces/navigation/GlobalBottomNav';
