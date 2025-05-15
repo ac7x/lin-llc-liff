@@ -76,7 +76,7 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
           try {
             const liffModule = await import('@line/liff');
             const liff = liffModule.default;
-            
+
             // 檢查 liff 是否已經初始化
             const isReady = liff.ready;
             if (isReady) {
