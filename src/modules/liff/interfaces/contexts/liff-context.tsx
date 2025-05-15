@@ -106,14 +106,23 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
 
       // 獲取登入狀態
       const loggedIn = liff.isLoggedIn();
-      setIsLoggedIn(loggedIn);
-
-      // 獲取上下文
+      setIsLoggedIn(loggedIn);      // 獲取上下文
       const ctx = liff.getContext();
-      setLiffContext(ctx);
+      const isInClientEnv = liff.isInClient();
+
+      // 設置上下文，確保所有必需屬性都存在並添加 isInClient 屬性
+      if (ctx) {
+        setLiffContext({
+          liffId: ctx.liffId || '',     // 確保 liffId 有值
+          type: ctx.type || '',         // 確保 type 有值
+          viewType: ctx.viewType || '', // 確保 viewType 有值
+          userId: ctx.userId,           // 可選屬性
+          isInClient: isInClientEnv     // 添加 isInClient 屬性
+        });
+      }
 
       // 檢查是否在 LIFF 瀏覽器內
-      setIsInClient(liff.isInClient());
+      setIsInClient(isInClientEnv);
 
       // 如果已登入，獲取用戶資料和好友狀態
       if (loggedIn) {
@@ -233,7 +242,14 @@ export function LiffProvider({ children, liffId }: LiffProviderProps) {
         throw new Error('LIFF not initialized');
       }
 
-      return await liff.scanCodeV2();
+      // scanCodeV2 可能返回 value 為 null
+      const result = await liff.scanCodeV2();
+      // 如果 value 為 null 或未定義，返回 null
+      if (!result || result.value === null) {
+        return null;
+      }
+      // 否則返回有效的結果
+      return { value: result.value };
     } catch (err) {
       setError(err instanceof Error ? err.message : '掃描 QR 碼失敗');
       return null;
