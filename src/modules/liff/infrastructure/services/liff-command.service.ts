@@ -26,6 +26,13 @@ export class LiffCommandService implements LiffCommandServiceInterface {
   }
 
   /**
+   * 確認 LIFF SDK 是否已初始化
+   */
+  isInitialized(): boolean {
+    return this.liffSdkService.isInitialized();
+  }
+
+  /**
    * 登入 LIFF
    */
   async login(): Promise<LiffLoginResultDto> {
