@@ -33,6 +33,18 @@ const defaultNavItems: NavItem[] = [
     icon: '🧳',
     label: '我的',
     active: false
+  },
+  {
+    href: '/client/profile',
+    icon: '🧳',
+    label: '我的',
+    active: false
+  },
+  {
+    href: '/client/liff',
+    icon: '🧳',
+    label: 'liff',
+    active: false
   }
 ];
 
@@ -52,9 +64,8 @@ export function GlobalBottomNav({ items = defaultNavItems }: GlobalBottomNavProp
           <Link
             key={index}
             href={item.href}
-            className={`flex-1 inline-flex flex-col items-center justify-center px-5 max-w-[120px] ${
-              item.active ? 'text-[#00B900]' : 'text-gray-500 hover:text-[#00B900]'
-            }`}
+            className={`flex-1 inline-flex flex-col items-center justify-center px-5 max-w-[120px] ${item.active ? 'text-[#00B900]' : 'text-gray-500 hover:text-[#00B900]'
+              }`}
           >
             <div className="text-2xl">{item.icon}</div>
             <span className="text-xs">{item.label}</span>
