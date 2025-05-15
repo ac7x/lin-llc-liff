@@ -1,7 +1,7 @@
-
 'use client'
 
 import { useLiff } from "@/modules/liff/interfaces";
+import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav"; // 引入 GlobalBottomNav
 import { useEffect, useState } from "react";
 
 export default function HomePage() {
@@ -24,7 +24,7 @@ export default function HomePage() {
   }, [state.isInitialized]);
 
   return (
-    <main className="relative">
+    <main className="relative pb-16">
       <h1>Home Page</h1>
 
       {/* 初始化成功提示 */}
@@ -33,6 +33,7 @@ export default function HomePage() {
           LIFF 初始化成功
         </div>
       )}
+      <GlobalBottomNav /> {/* 添加 GlobalBottomNav */}
     </main>
   );
 }
