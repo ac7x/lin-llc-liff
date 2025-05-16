@@ -30,6 +30,12 @@ export const useLiffProfile = () => {
         try {
             const userProfile = await liff.getProfile();
             setProfile(userProfile);
+            // 新增：呼叫 API 寫入 Firebase
+            fetch('/api/user/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userProfile)
+            });
             setLoading(false);
             return userProfile;
         } catch (err) {
