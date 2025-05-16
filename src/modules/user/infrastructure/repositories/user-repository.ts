@@ -8,7 +8,7 @@ export class FirebaseUserRepository implements UserRepository {
             userId: user.userId,
             displayName: user.displayName,
             pictureUrl: user.pictureUrl,
-            email: user.email,
+            statusMessage: user.statusMessage,
         });
     }
 }

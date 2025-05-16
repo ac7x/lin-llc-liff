@@ -3,5 +3,5 @@ export interface SaveUserProfileCommand {
     userId: string;
     displayName: string;
     pictureUrl?: string;
-    email?: string;
+    statusMessage?: string;
 }

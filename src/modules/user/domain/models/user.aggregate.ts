@@ -4,13 +4,13 @@ export class UserAggregate {
     public readonly userId: string;
     public readonly displayName: string;
     public readonly pictureUrl?: string;
-    public readonly email?: string;
+    public readonly statusMessage?: string;
 
     private constructor(props: SaveUserProfileCommand) {
         this.userId = props.userId;
         this.displayName = props.displayName;
         this.pictureUrl = props.pictureUrl;
-        this.email = props.email;
+        this.statusMessage = props.statusMessage;
     }
 
     static create(props: SaveUserProfileCommand): UserAggregate {
