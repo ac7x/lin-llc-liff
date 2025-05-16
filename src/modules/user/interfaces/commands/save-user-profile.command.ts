@@ -8,3 +8,10 @@ export async function saveUserProfileCommand(cmd: SaveUserProfileCommand) {
     const service = new UserCommandService(repo);
     await service.saveUserProfile(cmd);
 }
+
+// 新增 saveUserProfileCommand 函數
+export async function saveUserProfileCommand(cmd: SaveUserProfileCommand) {
+    const repo = new FirebaseUserRepository();
+    const service = new UserCommandService(repo);
+    await service.saveUserProfile(cmd);
+}

@@ -1,9 +1,9 @@
-// src/modules/liff/interfaces/hooks/useLiffProfile.ts
 'use client'
 
 import { Profile } from "@liff/get-profile";
 import { useCallback, useEffect, useState } from "react";
 import { useLiff } from "../components/LiffContext";
+import { saveUserProfileCommand } from "../../user/interfaces/commands/save-user-profile.command";
 
 /**
  * LIFF 個人資料 Hook
@@ -30,11 +30,12 @@ export const useLiffProfile = () => {
         try {
             const userProfile = await liff.getProfile();
             setProfile(userProfile);
-            // 新增：呼叫 API 寫入 Firebase
-            fetch('/api/user/profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userProfile)
+            // 呼叫 saveUserProfileCommand 寫入 Firebase
+            await saveUserProfileCommand({
+                userId: userProfile.userId,
+                displayName: userProfile.displayName,
+                pictureUrl: userProfile.pictureUrl,
+                statusMessage: userProfile.statusMessage
             });
             setLoading(false);
             return userProfile;
