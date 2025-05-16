@@ -111,3 +111,22 @@ export async function writeData(collection: string, docId: string, data: Record<
     throw err;
   }
 }
+
+/**
+ * 使用 Firestore Admin 讀取數據
+ * 讀取指定集合與文件的內容
+ */
+export async function readData(collection: string, docId: string): Promise<Record<string, unknown> | null> {
+  const db = getFirestoreAdmin();
+  const docRef = db.collection(collection).doc(docId);
+  try {
+    const docSnap = await docRef.get();
+    if (docSnap.exists) {
+      return docSnap.data() as Record<string, unknown>;
+    } else {
+      return null;
+    }
+  } catch (err) {
+    throw err;
+  }
+}
