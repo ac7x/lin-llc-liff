@@ -116,8 +116,8 @@ export async function createLinePayCharge(amount: number) {
             }]
         }],
         redirectUrls: {
-            confirmUrl: `${BASE_URL}/webhook/linepay/confirm`,
-            cancelUrl: `${BASE_URL}/webhook/linepay/cancel`
+            confirmUrl: `${BASE_URL}/webhook/linePay/confirm`,
+            cancelUrl: `${BASE_URL}/webhook/linePay/cancel`
         }
     };
 
