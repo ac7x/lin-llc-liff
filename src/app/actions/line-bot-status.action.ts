@@ -15,13 +15,13 @@ export async function getLineBotStatus() {
         const botUserId = process.env.PUBLIC_LINE_BOT_ID;
         if (!botUserId) throw new Error('缺少 PUBLIC_LINE_BOT_ID');
         // LINE Bot API 不需要 "@" 前綴
-        const profile = await client.getProfile(botUserId);
+        const botInfo = await client.getBotInfo();
         return {
             ok: true,
-            displayName: profile.displayName,
-            userId: profile.userId,
-            statusMessage: profile.statusMessage,
-            pictureUrl: profile.pictureUrl,
+            userId: botInfo.userId,
+            basicId: botInfo.basicId,
+            displayName: botInfo.displayName,
+            pictureUrl: botInfo.pictureUrl,
         };
     } catch (err) {
         console.error('[LINE Bot] 取得狀態失敗:', {
