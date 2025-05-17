@@ -54,7 +54,7 @@
 - `ActualQuantity` (實際完成量)  
 - `Unit` (單位)  
 - `Notes` (備註)：記錄異常或說明  
-
+- `PlannedStartTime` (計劃開始時間)
 ---
 
 ### WorkMember［工作人員］  
@@ -67,9 +67,6 @@
 - `Availability` (可用狀態)：`空閒` / `忙碌` / `請假` / `離線` 等
 - `AssignedEpicIDs` (關聯的 WorkEpic ID 列表，可選)
 - `ContactInfo` (聯絡資訊)：如 email、電話、LINE ID 等（結構可彈性）
-- `Location` (常駐地點)：
-  - `LocationText`（地名，例如「高雄市」）
-  - `GeoPoint`（經緯度，供距離查詢）
 - `Status` (身分狀態)：`在職` / `離職` / `暫停合作` / `黑名單`
 - `IsActive` (帳號是否啟用中)：對應 Firebase Auth enable 狀態
 - `LastActiveTime` (最後登入或作業時間)：可用於排班與提醒）
