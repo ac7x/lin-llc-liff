@@ -50,14 +50,16 @@ function logTransactionStatus(orderId: string, status: TransactionStatus, detail
     });
 }
 
-function createSignature(secret: string, body: string, nonce: string): string {
-    const message = secret + body + nonce;
+function createSignature(secret: string, requestUrl: string, body: string, nonce: string): string {
+    // LINE Pay API 要求的簽章格式為: ${channelSecret}${requestUrl}${requestBody}${nonce}
+    const message = secret + requestUrl + body + nonce;
 
     console.log("[LINE Pay] 準備計算簽章:", {
         timestamp: new Date().toISOString(),
         nonceTimestamp: nonce,
         bodyLength: body.length,
-        // 不記錄敏感資訊
+        // 不記錄敏感資訊，但保留 URL 資訊供偵錯
+        requestUrl,
         headerPreview: body.slice(0, 50) + "..."
     });
 
@@ -90,6 +92,7 @@ export async function createLinePayCharge(amount: number) {
     }
 
     const orderId = `order_${Date.now()}`;
+    const requestUrl = `${API_URL}/v3/payments/request`;
     logTransactionStatus(orderId, 'PREPARING');
 
     const body = {
@@ -123,14 +126,14 @@ export async function createLinePayCharge(amount: number) {
 
     const nonce = Date.now().toString();
     const bodyString = JSON.stringify(body);
-    const signature = createSignature(CHANNEL_SECRET, bodyString, nonce);
+    const signature = createSignature(CHANNEL_SECRET, requestUrl, bodyString, nonce);
 
     let res: Response | undefined;
     let data: LinePayResponse | string | null = null;
 
     try {
         logTransactionStatus(orderId, 'REQUEST_SENT', {
-            endpoint: `${API_URL}/v3/payments/request`,
+            endpoint: requestUrl,
             headers: {
                 "X-LINE-ChannelId": CHANNEL_ID,
                 "X-LINE-Authorization-Nonce": nonce,
@@ -139,7 +142,7 @@ export async function createLinePayCharge(amount: number) {
             }
         });
 
-        res = await fetch(`${API_URL}/v3/payments/request`, {
+        res = await fetch(requestUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
