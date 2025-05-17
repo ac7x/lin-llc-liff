@@ -18,6 +18,9 @@ export function LinePayChargeBox() {
 
         try {
             const res = await createLinePayCharge(data.amount);
+            if (!res.paymentUrl) {
+                throw new Error("無法取得付款連結");
+            }
             window.location.href = res.paymentUrl;
         } catch (err) {
             setError(err instanceof Error ? err.message : "儲值請求失敗");
