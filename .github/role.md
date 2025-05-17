@@ -71,6 +71,9 @@
 - `Status` (身分狀態)：`在職` / `離職` / `暫停合作` / `黑名單`
 - `IsActive` (帳號是否啟用中)：對應 Firebase Auth enable 狀態
 - `LastActiveTime` (最後登入或作業時間)：可用於排班與提醒）
+- `Skills.Level` 
+- `SkillScore` 
+- `TaskCompletionRate` 
 
 ### **關聯與補充說明**
 1. **階層關係**：  
