@@ -122,16 +122,15 @@ export async function createLinePayCharge(amount: number) {
     };
 
     const headers = {
+        "Content-Type": "application/json",
         "X-LINE-ChannelId": CHANNEL_ID,
-        "X-LINE-MerchantDeviceProfileId": "Default",
-        "X-LINE-AuthKey": createSignature(
+        "X-LINE-Authorization-Nonce": nonce,
+        "X-LINE-Authorization": createSignature(
             CHANNEL_SECRET,
             "/v3/payments/request",
             JSON.stringify(requestBody),
             nonce
-        ),
-        "X-LINE-ChannelSecret": CHANNEL_SECRET,
-        "Content-Type": "application/json"
+        )
     };
 
     try {
