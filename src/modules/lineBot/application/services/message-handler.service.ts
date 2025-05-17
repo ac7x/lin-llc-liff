@@ -50,8 +50,33 @@ export class MessageHandlerService {
             case 'text':
                 await this.handleTextMessage(event.replyToken, event.message);
                 break;
+            case 'image':
+                console.log('[MessageHandler] 收到圖片訊息');
+                await this.client.replyMessage(event.replyToken, {
+                    type: 'text',
+                    text: '已收到您的圖片！'
+                });
+                break;
+            case 'video':
+                console.log('[MessageHandler] 收到影片訊息');
+                await this.client.replyMessage(event.replyToken, {
+                    type: 'text',
+                    text: '已收到您的影片！'
+                });
+                break;
+            case 'location':
+                console.log('[MessageHandler] 收到位置訊息');
+                await this.client.replyMessage(event.replyToken, {
+                    type: 'text',
+                    text: '已收到您的位置訊息！'
+                });
+                break;
             default:
                 console.log('[MessageHandler] 未處理的訊息類型:', event.message.type);
+                await this.client.replyMessage(event.replyToken, {
+                    type: 'text',
+                    text: '抱歉，我還不能處理這種類型的訊息。'
+                });
         }
     }
 
@@ -62,18 +87,34 @@ export class MessageHandlerService {
         let replyMessage: Message;
 
         // 根據不同的文字內容回覆不同的訊息
-        switch (message.text) {
+        switch (message.text.toLowerCase()) {
             case '你好':
             case 'hello':
                 replyMessage = {
                     type: 'text',
-                    text: '你好！很高興見到你 👋'
+                    text: `嗨！很高興見到您 👋`
+                };
+                break;
+            case 'help':
+            case '說明':
+            case '幫助':
+                replyMessage = {
+                    type: 'text',
+                    text: '您可以試試以下指令：\n1. 你好 - 打招呼\n2. 時間 - 查看現在時間\n3. help - 查看說明'
+                };
+                break;
+            case '時間':
+            case 'time':
+                const now = new Date();
+                replyMessage = {
+                    type: 'text',
+                    text: `現在時間是：${now.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`
                 };
                 break;
             default:
                 replyMessage = {
                     type: 'text',
-                    text: `收到您的訊息：${message.text}`
+                    text: `收到您的訊息：${message.text}\n您可以輸入 "help" 查看可用指令。`
                 };
         }
 
