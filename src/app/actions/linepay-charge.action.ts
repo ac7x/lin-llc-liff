@@ -1,7 +1,5 @@
 "use server";
-
-import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
-import { createHmac } from "crypto";
+import crypto from 'crypto';
 
 const CHANNEL_ID = process.env.LINE_PAY_CHANNEL_ID;
 const CHANNEL_SECRET = process.env.LINE_PAY_CHANNEL_SECRET;
@@ -28,10 +26,6 @@ interface TransactionLogDetails {
     transactionId?: string;
     message?: string | unknown;  // 用於錯誤訊息
     data?: unknown;  // 用於記錄其他未定義的資料
-    paymentUrl?: {
-        web?: string;
-        app?: string;
-    };
 }
 
 interface LinePayResponse {
@@ -69,7 +63,7 @@ function createSignature(secret: string, requestUrl: string, body: string, nonce
         headerPreview: body.slice(0, 50) + "..."
     });
 
-    const signature = createHmac('sha256', secret).update(message).digest('base64');
+    const signature = crypto.createHmac('sha256', secret).update(message).digest('base64');
 
     console.log("[LINE Pay] 簽章計算完成:", {
         timestamp: new Date().toISOString(),
@@ -94,132 +88,63 @@ export async function createLinePayCharge(amount: number) {
             hasChannelId: !!CHANNEL_ID,
             hasChannelSecret: !!CHANNEL_SECRET
         });
-        throw new Error("LINE Pay 設定錯誤：缺少必要的環境變數");
-    }
-
-    const orderId = `order_${Date.now()}`;
-    const nonce = Date.now().toString();
-    const requestUrl = `${API_URL}/v3/payments/request`;
-
-    const requestBody = {
-        amount,
-        currency: "TWD",
-        orderId,
-        packages: [{
-            id: "pkg_" + orderId,
-            amount,
-            name: "儲值",
-            products: [{
-                name: "點數儲值",
-                quantity: 1,
-                price: amount
-            }]
-        }],
-        redirectUrls: {
-            confirmUrl: `${BASE_URL}/webhook/linePay/confirm`,
-            cancelUrl: `${BASE_URL}/webhook/linePay/cancel`
-        }
-    };
-
-    const headers = {
-        "Content-Type": "application/json",
-        "X-LINE-ChannelId": CHANNEL_ID,
-        "X-LINE-Authorization-Nonce": nonce,
-        "X-LINE-Authorization": createSignature(
-            CHANNEL_SECRET,
-            "/v3/payments/request",
-            JSON.stringify(requestBody),
-            nonce
-        )
-    };
-
-    try {
-        logTransactionStatus(orderId, 'REQUEST_SENT', {
-            orderId,
-            amount,
-            currency: "TWD",
-            endpoint: requestUrl,
-            headers
-        });
-
-        const response = await fetch(requestUrl, {
-            method: "POST",
-            headers,
-            body: JSON.stringify(requestBody)
-        });
-
-        const result = await response.json() as LinePayResponse;
-
-        logTransactionStatus(orderId, 'RESPONSE_RECEIVED', {
-            orderId,
-            status: response.status,
-            returnCode: result.returnCode,
-            returnMessage: result.returnMessage
-        });
-
-        if (!response.ok || result.returnCode !== "0000") {
-            throw new Error(result.returnMessage || "LINE Pay API 回應錯誤");
-        }
-
-        // 記錄成功狀態
-        logTransactionStatus(orderId, 'SUCCESS', {
-            orderId,
-            transactionId: result.info?.transactionId,
-            paymentUrl: result.info?.paymentUrl
-        });
-
-        return {
-            paymentUrl: result.info?.paymentUrl?.web || result.info?.paymentUrl?.app,
-            transactionId: result.info?.transactionId,
-            orderId
-        };
-
-    } catch (error) {
-        logTransactionStatus(orderId, 'ERROR', {
-            orderId,
-            error: error instanceof Error ? error.message : String(error)
-        });
-        throw error;
-    }
-}
-
-export async function confirmLinePayCharge(transactionId: string, orderId: string) {
-    console.log("[LINE Pay] 開始確認交易:", {
-        timestamp: new Date().toISOString(),
-        transactionId,
-        orderId,
-        environment: API_URL.includes('sandbox') ? 'sandbox' : 'production'
-    });
-
-    if (!CHANNEL_ID || !CHANNEL_SECRET) {
-        console.error("[LINE Pay] 環境變數缺失:", {
-            timestamp: new Date().toISOString(),
-            hasChannelId: !!CHANNEL_ID,
-            hasChannelSecret: !!CHANNEL_SECRET
-        });
         throw new Error("LINE Pay 環境變數未設定");
     }
 
-    const requestPath = `/v3/payments/${transactionId}/confirm`;
+    const orderId = `order_${Date.now()}`;
+    const requestPath = '/v3/payments/request'; // 修正: 只取 path
     const requestUrl = `${API_URL}${requestPath}`;
-    logTransactionStatus(orderId, 'PREPARING', { transactionId });
+    logTransactionStatus(orderId, 'PREPARING');
 
     const body = {
+        amount,
         currency: "TWD",
-        amount: await getOrderAmount(orderId)
+        orderId,
+        packages: [
+            {
+                id: "package-1",
+                amount,
+                name: "儲值",
+                products: [
+                    { name: "LINE Pay 儲值", quantity: 1, price: amount }
+                ]
+            }
+        ],
+        redirectUrls: {
+            confirmUrl: `${BASE_URL}/linepay/confirm`,
+            cancelUrl: `${BASE_URL}/linepay/cancel`
+        }
     };
+
+    console.log("[LINE Pay] 請求內容準備完成:", {
+        timestamp: new Date().toISOString(),
+        orderId,
+        amount,
+        currency: body.currency,
+        confirmUrl: body.redirectUrls.confirmUrl,
+        cancelUrl: body.redirectUrls.cancelUrl
+    });
 
     const nonce = Date.now().toString();
     const bodyString = JSON.stringify(body);
+    // 修正: 傳入 path 給 createSignature
     const signature = createSignature(CHANNEL_SECRET, requestPath, bodyString, nonce);
+
+    let res: Response | undefined;
+    let data: LinePayResponse | string | null = null;
 
     try {
         logTransactionStatus(orderId, 'REQUEST_SENT', {
             endpoint: requestUrl,
-            transactionId
+            headers: {
+                "X-LINE-ChannelId": CHANNEL_ID,
+                "X-LINE-Authorization-Nonce": nonce,
+                // 不記錄實際簽章
+                "X-LINE-Authorization": "********"
+            }
         });
 
-        const res = await fetch(requestUrl, {
+        res = await fetch(requestUrl, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -230,7 +155,37 @@ export async function confirmLinePayCharge(transactionId: string, orderId: strin
             body: bodyString
         });
 
-        const data = await res.json();
+        const text = await res.text();
+        const headers = Object.fromEntries(res.headers.entries());
+
+        logTransactionStatus(orderId, 'RESPONSE_RECEIVED', {
+            status: res.status,
+            headers: {
+                ...headers,
+                // 過濾掉可能的敏感標頭
+                authorization: undefined,
+                cookie: undefined
+            }
+        });
+
+        try {
+            data = JSON.parse(text);
+            console.log("[LINE Pay] 回應解析成功:", {
+                timestamp: new Date().toISOString(),
+                orderId,
+                returnCode: (data as LinePayResponse).returnCode,
+                returnMessage: (data as LinePayResponse).returnMessage,
+                hasPaymentUrl: !!(data as LinePayResponse).info?.paymentUrl?.web
+            });
+        } catch (parseError) {
+            console.error("[LINE Pay] 回應解析失敗:", {
+                timestamp: new Date().toISOString(),
+                orderId,
+                error: parseError instanceof Error ? parseError.message : String(parseError),
+                responseText: text.slice(0, 100) + "..."
+            });
+            data = text;
+        }
 
         if (!res.ok) {
             logTransactionStatus(orderId, 'ERROR', {
@@ -238,75 +193,36 @@ export async function confirmLinePayCharge(transactionId: string, orderId: strin
                 message: data
             });
             throw new Error(
-                `LINE Pay 確認交易失敗 (狀態碼: ${res.status})\n` +
-                `Response: ${JSON.stringify(data)}`
+                `LINE Pay 請求失敗 (狀態碼: ${res.status})\n` +
+                `Response: ${typeof data === "object" ? JSON.stringify(data) : data}`
             );
+        }
+
+        if (typeof data !== 'object' || data === null || !data.info?.paymentUrl?.web) {
+            logTransactionStatus(orderId, 'ERROR', {
+                error: 'Invalid response format',
+                data
+            });
+            throw new Error('LINE Pay 回傳格式錯誤');
         }
 
         logTransactionStatus(orderId, 'SUCCESS', {
             returnCode: data.returnCode,
             returnMessage: data.returnMessage,
-            transactionId
+            transactionId: data.info.transactionId
         });
 
-        // TODO: 更新用戶資產
-        await updateUserAssets(orderId, body.amount);
-
-        return data;
+        return { paymentUrl: data.info.paymentUrl.web };
     } catch (err) {
-        console.error("[LINE Pay] 確認交易異常:", {
+        console.error("[LINE Pay] 處理異常:", {
             timestamp: new Date().toISOString(),
             orderId,
-            transactionId,
-            error: err instanceof Error ? err.message : String(err)
+            error: err instanceof Error ? err.message : String(err),
+            status: res?.status,
+            response: data
         });
         throw new Error(
-            `LINE Pay 確認交易異常: ${err instanceof Error ? err.message : String(err)}`
+            `LINE Pay 請求異常: ${(err instanceof Error ? err.message : String(err))}`
         );
     }
-}
-
-// 從訂單 ID 取得交易金額
-async function getOrderAmount(orderId: string): Promise<number> {
-    try {
-        // 從 Firestore 查詢訂單
-        const orderDoc = await firestoreAdmin.collection('orders').doc(orderId).get();
-
-        if (!orderDoc.exists) {
-            console.error('[LINE Pay] 找不到訂單:', {
-                timestamp: new Date().toISOString(),
-                orderId
-            });
-            throw new Error('找不到訂單資訊');
-        }
-
-        const orderData = orderDoc.data();
-        if (!orderData?.amount) {
-            console.error('[LINE Pay] 訂單金額無效:', {
-                timestamp: new Date().toISOString(),
-                orderId,
-                orderData
-            });
-            throw new Error('訂單金額無效');
-        }
-
-        return orderData.amount;
-    } catch (err) {
-        console.error('[LINE Pay] 取得訂單金額失敗:', {
-            timestamp: new Date().toISOString(),
-            orderId,
-            error: err instanceof Error ? err.message : String(err)
-        });
-        throw new Error(`取得訂單金額失敗: ${err instanceof Error ? err.message : String(err)}`);
-    }
-}
-
-// 更新用戶資產
-async function updateUserAssets(orderId: string, amount: number): Promise<void> {
-    // TODO: 實作用戶資產更新邏輯
-    console.log("[LINE Pay] 更新用戶資產:", {
-        timestamp: new Date().toISOString(),
-        orderId,
-        amount
-    });
 }
