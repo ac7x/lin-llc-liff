@@ -226,3 +226,125 @@ export async function createLinePayCharge(amount: number) {
         );
     }
 }
+
+export async function confirmLinePayCharge(transactionId: string, orderId: string) {
+    console.log("[LINE Pay] 開始確認交易:", {
+        timestamp: new Date().toISOString(),
+        transactionId,
+        orderId,
+        environment: API_URL.includes('sandbox') ? 'sandbox' : 'production'
+    });
+
+    if (!CHANNEL_ID || !CHANNEL_SECRET) {
+        console.error("[LINE Pay] 環境變數缺失:", {
+            timestamp: new Date().toISOString(),
+            hasChannelId: !!CHANNEL_ID,
+            hasChannelSecret: !!CHANNEL_SECRET
+        });
+        throw new Error("LINE Pay 環境變數未設定");
+    }
+
+    const requestPath = `/v3/payments/${transactionId}/confirm`;
+    const requestUrl = `${API_URL}${requestPath}`;
+    logTransactionStatus(orderId, 'PREPARING', { transactionId });
+
+    const body = {
+        amount: 1,  // 這個值應該從資料庫中取得原始訂單金額
+        currency: "TWD"
+    };
+
+    const bodyString = JSON.stringify(body);
+    const nonce = Date.now().toString();
+    const signature = createSignature(CHANNEL_SECRET, requestPath, bodyString, nonce);
+
+    let res: Response | undefined;
+    let data: LinePayResponse | string | null = null;
+
+    try {
+        logTransactionStatus(orderId, 'REQUEST_SENT', {
+            endpoint: requestUrl,
+            transactionId,
+            headers: {
+                "X-LINE-ChannelId": CHANNEL_ID,
+                "X-LINE-Authorization-Nonce": nonce,
+                "X-LINE-Authorization": "********"
+            }
+        });
+
+        res = await fetch(requestUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-LINE-ChannelId": CHANNEL_ID,
+                "X-LINE-Authorization-Nonce": nonce,
+                "X-LINE-Authorization": signature
+            },
+            body: bodyString
+        });
+
+        const text = await res.text();
+        const headers = Object.fromEntries(res.headers.entries());
+
+        logTransactionStatus(orderId, 'RESPONSE_RECEIVED', {
+            status: res.status,
+            transactionId,
+            headers: {
+                ...headers,
+                authorization: undefined,
+                cookie: undefined
+            }
+        });
+
+        try {
+            data = JSON.parse(text);
+            console.log("[LINE Pay] 確認交易回應解析成功:", {
+                timestamp: new Date().toISOString(),
+                orderId,
+                transactionId,
+                returnCode: (data as LinePayResponse).returnCode,
+                returnMessage: (data as LinePayResponse).returnMessage
+            });
+        } catch (parseError) {
+            console.error("[LINE Pay] 確認交易回應解析失敗:", {
+                timestamp: new Date().toISOString(),
+                orderId,
+                transactionId,
+                error: parseError instanceof Error ? parseError.message : String(parseError),
+                responseText: text.slice(0, 100) + "..."
+            });
+            data = text;
+        }
+
+        if (!res.ok) {
+            logTransactionStatus(orderId, 'ERROR', {
+                status: res.status,
+                message: data,
+                transactionId
+            });
+            throw new Error(
+                `LINE Pay 確認交易失敗 (狀態碼: ${res.status})\n` +
+                `Response: ${typeof data === "object" ? JSON.stringify(data) : data}`
+            );
+        }
+
+        logTransactionStatus(orderId, 'SUCCESS', {
+            transactionId,
+            returnCode: (data as LinePayResponse).returnCode,
+            returnMessage: (data as LinePayResponse).returnMessage
+        });
+
+        return true;
+    } catch (err) {
+        console.error("[LINE Pay] 確認交易處理異常:", {
+            timestamp: new Date().toISOString(),
+            orderId,
+            transactionId,
+            error: err instanceof Error ? err.message : String(err),
+            status: res?.status,
+            response: data
+        });
+        throw new Error(
+            `LINE Pay 確認交易異常: ${(err instanceof Error ? err.message : String(err))}`
+        );
+    }
+}
