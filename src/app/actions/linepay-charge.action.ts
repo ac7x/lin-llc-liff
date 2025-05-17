@@ -92,7 +92,8 @@ export async function createLinePayCharge(amount: number) {
     }
 
     const orderId = `order_${Date.now()}`;
-    const requestUrl = `${API_URL}/v3/payments/request`;
+    const requestPath = '/v3/payments/request'; // 修正: 只取 path
+    const requestUrl = `${API_URL}${requestPath}`;
     logTransactionStatus(orderId, 'PREPARING');
 
     const body = {
@@ -126,7 +127,8 @@ export async function createLinePayCharge(amount: number) {
 
     const nonce = Date.now().toString();
     const bodyString = JSON.stringify(body);
-    const signature = createSignature(CHANNEL_SECRET, requestUrl, bodyString, nonce);
+    // 修正: 傳入 path 給 createSignature
+    const signature = createSignature(CHANNEL_SECRET, requestPath, bodyString, nonce);
 
     let res: Response | undefined;
     let data: LinePayResponse | string | null = null;
