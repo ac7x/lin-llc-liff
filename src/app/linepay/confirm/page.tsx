@@ -3,9 +3,9 @@
 import { confirmLinePayCharge } from '@/app/actions/linepay-charge.action';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
-export default function LinePayConfirmPage() {
+function LinePayConfirmContent() {
     const searchParams = useSearchParams();
     const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
     const [message, setMessage] = useState('正在處理您的交易...');
@@ -52,5 +52,20 @@ export default function LinePayConfirmPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function LinePayConfirmPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
+                    <h1 className="text-2xl font-bold mb-4 text-center">載入中</h1>
+                    <p className="text-center text-gray-600">請稍候...</p>
+                </div>
+            </div>
+        }>
+            <LinePayConfirmContent />
+        </Suspense>
     );
 }
