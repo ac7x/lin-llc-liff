@@ -1,0 +1,213 @@
+{
+  // ------------------------
+  // 一般編輯器與語言設定
+  // ------------------------
+  "typescript.validate.enable": true,
+  "javascript.validate.enable": true,
+  "typescript.tsserver.useSyntaxServer": "never",
+  "typescript.tsserver.log": "off",
+  "typescript.strict": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.suggest.paths": true,
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.useAliasesForRenames": true,
+  "javascript.suggest.autoImports": true,
+  "javascript.preferences.importModuleSpecifier": "non-relative",
+  "editor.formatOnSave": true,
+  "editor.formatOnType": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.suggest.showWords": false,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "[typescript]": {
+    "editor.suggest.showTypeParameters": true
+  },
+  "[typescriptreact]": {},
+  "[javascript]": {},
+  "[javascriptreact]": {},
+  // ------------------------
+  // 檔案與資料夾排除設定
+  // ------------------------
+  "files.autoSave": "afterDelay",
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/.next": true
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.next/**": true,
+    "**/node_modules/**": true
+  },
+  "search.exclude": {
+    "**/.next": true,
+    "**/node_modules": true
+  },
+  // ------------------------
+  // Explorer 操作
+  // ------------------------
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  // ------------------------
+  // TailwindCSS 相關
+  // ------------------------
+  "tailwindCSS.experimental.classRegex": [
+    [
+      "cva\\(([^)]*)\\)",
+      "[\"'`]([^\"'`]*).*?[\"'`]"
+    ]
+  ],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "css.lint.unknownAtRules": "ignore",
+  // ------------------------
+  // GitHub Copilot 設定
+  // ------------------------
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": true,
+    "scminput": true,
+    "yaml": true,
+    "html": true,
+    "powershell": true,
+    "javascript": true,
+    "aspnetcorerazor": true,
+    "typescript": true,
+    "typescriptreact": true,
+    "javascriptreact": true
+  },
+  "github.copilot.selectedCompletionModel": "gpt-4o-copilot",
+  "github.copilot.editor.enableCodeActions": true,
+  "github.copilot.renameSuggestions.triggerAutomatically": true,
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "text": "When outputing any text, use the following term mappings: create = 建立, object = 物件, queue = 佇列, stack = 堆疊, information = 資訊, invocation = 呼叫, code = 程式碼, running = 執行, library = 函式庫, schematics = 原理圖, building = 建構, Setting up = 設定, package = 套件, video = 影片, for loop = for 迴圈, class = 類別, Concurrency = 平行處理, Transaction = 交易, Transactional = 交易式, Code Snippet = 程式碼片段, Code Generation = 程式碼產生器, Any Class = 任意類別, Scalability = 延展性, Dependency Package = 相依套件, Dependency Injection = 相依性注入, Reserved Keywords = 保留字, Metadata =  Metadata, Clone = 複製, Memory = 記憶體, Built-in = 內建, Global = 全域, Compatibility = 相容性, Function = 函式, Refresh = 重新整理, document = 文件, example = 範例, demo = 展示, quality = 品質, tutorial = 指南, recipes = 秘訣, byte = 位元組, bit = 位元"
+    },
+    {
+      "text": "Always response in #zh-tw."
+    },
+    {
+      "file": ".copilot-instructions.md"
+    }
+  ],
+  "github.copilot.chat.generateTests.codeLens": true,
+  "github.copilot.chat.setupTests.enabled": true,
+  "github.copilot.chat.testGeneration.instructions": [
+    {
+      "file": ".copilot-test-instructions.md"
+    },
+    {
+      "text": "Always try uniting related tests in a suite."
+    }
+  ],
+  "github.copilot.chat.reviewSelection.enabled": true,
+  "github.copilot.chat.reviewSelection.instructions": [
+    {
+      "text": "Always response in #zh-tw."
+    },
+    {
+      "file": ".copilot-review-instructions.md"
+    }
+  ],
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "# Use Conventional Commits 1.0.0 for commit messages."
+    },
+    {
+      "text": "請一律使用正體中文來撰寫記錄"
+    },
+    {
+      "file": ".copilot-commit-message-instructions.md"
+    }
+  ],
+  "github.copilot.chat.pullRequestDescriptionGeneration.instructions": [
+    {
+      "text": "請一律使用正體中文來撰寫記錄"
+    },
+    {
+      "file": ".copilot-pull-request-description-instructions.md"
+    }
+  ],
+  "github.copilot.chat.edits.suggestRelatedFilesForTests": true,
+  "github.copilot.chat.edits.suggestRelatedFilesFromGitHistory": true,
+  "github.copilot.chat.languageContext.typescript.enabled": true,
+  "github.copilot.chat.agent.thinkingTool": true,
+  "github.copilot.chat.editor.temporalContext.enabled": true,
+  "github.copilot.chat.edits.temporalContext.enabled": false,
+  "github.copilot.chat.startDebugging.enabled": true,
+  "github.copilot.chat.copilotDebugCommand.enabled": true,
+  "github.copilot.chat.followUps": "always",
+  "github.copilot.chat.localeOverride": "zh-TW",
+  "github.copilot.chat.useProjectTemplates": true,
+  "github.copilot.chat.scopeSelection": true,
+  "github.copilot.chat.codesearch.enabled": true,
+  "github.copilot.chat.newWorkspaceCreation.enabled": true,
+  "github.copilot.chat.agent.runTasks": true,
+  // ------------------------
+  // Chat 及 Agent 相關設定
+  // ------------------------
+  "chat.editing.confirmEditRequestRemoval": true,
+  "chat.editing.confirmEditRequestRetry": true,
+  "chat.commandCenter.enabled": true,
+  "window.commandCenter": true,
+  "chat.detectParticipant.enabled": false,
+  "chat.promptFiles": true,
+  "chat.promptFilesLocations": {
+    ".github/prompts": true
+  },
+  "chat.agent.enabled": true,
+  "chat.agent.maxRequests": 50,
+  "chat.mcp.enabled": true,
+  "chat.mcp.discovery.enabled": false,
+  "mcp": {
+    "servers": {}
+  },
+  "inlineChat.holdToSpeech": true,
+  "inlineChat.finishOnType": false,
+  // ------------------------
+  // Workbench & UI 自訂顏色
+  // ------------------------
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#1a1a1a",
+    "titleBar.activeBackground": "#1a1a1a",
+    "titleBar.activeForeground": "#ffffff"
+  },
+  // ------------------------
+  // Terminal 設定
+  // ------------------------
+  "terminal.integrated.scrollback": 50000,
+  // ------------------------
+  // Accessibility 無障礙設定
+  // ------------------------
+  "accessibility.voice.speechLanguage": "zh-TW",
+  "accessibility.voice.autoSynthesize": "off",
+  "accessibility.voice.speechTimeout": 1200,
+  "accessibility.voice.ignoreCodeBlocks": true,
+  // ------------------------
+  // Live Preview 設定
+  // ------------------------
+  "livePreview.autoRefreshPreview": "On Changes to Saved Files",
+  // ------------------------
+  // Telemetry 關閉
+  // ------------------------
+  "telemetry.telemetryLevel": "off",
+  // ------------------------
+  // 其他建議
+  // ------------------------
+  "editor.largeFileOptimizations": true
+}
