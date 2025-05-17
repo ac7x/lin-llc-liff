@@ -21,7 +21,12 @@ export function LineBotStatus() {
                 const res = await getLineBotStatus();
                 if (res.ok) {
                     setStatus("Bot 運作正常");
-                    setServerStatus(`DisplayName: ${res.displayName}\nUserId: ${res.userId}`);
+                    setServerStatus(
+                        Object.entries(res)
+                            .filter(([key]) => key !== 'ok')
+                            .map(([key, value]) => `${key}: ${value}`)
+                            .join('\n')
+                    );
                 } else {
                     setStatus("Bot 狀態異常");
                     setError(res.error || "未知錯誤");

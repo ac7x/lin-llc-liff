@@ -1,61 +1,102 @@
 "use server";
 import "@/modules/shared/infrastructure/persistence/firebase-admin/client";
-
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
-import { getAuth } from "firebase-admin/auth";
+import { Auth, getAuth, UserRecord } from "firebase-admin/auth";
+
+// 定義錯誤類別
+class LineLoginError extends Error {
+    constructor(message: string, public readonly code?: string) {
+        super(message);
+        this.name = 'LineLoginError';
+    }
+}
+
+// LINE Profile 介面
+interface LineProfile {
+    userId: string;
+    displayName: string;
+    pictureUrl?: string;
+    statusMessage?: string;
+}
+
+// 使用者資料介面
+interface UserProfile {
+    displayName: string;
+    pictureUrl?: string;
+}
 
 export async function loginWithLine(accessToken: string): Promise<string> {
     try {
-        // 1. 呼叫 Line Profile API
-        const profileRes = await fetch("https://api.line.me/v2/profile", {
-            headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (!profileRes.ok) throw new Error("Line accessToken 無效");
-        const profile = await profileRes.json();
-        const { userId, displayName, pictureUrl } = profile;
-
-        // 2. 用 userId 產生 Firebase custom token
+        const profile = await fetchLineProfile(accessToken);
         const auth = getAuth();
-        // 可根據需求同步 user profile 到 Firebase
-        await auth.updateUser(userId, {
-            displayName,
-            photoURL: pictureUrl,
-        }).catch(async (err) => {
-            if (err.code === "auth/user-not-found") {
-                await auth.createUser({
-                    uid: userId,
-                    displayName,
-                    photoURL: pictureUrl,
-                });
-            } else {
-                throw err;
-            }
-        });
-        // 新增：記錄登入時間到 Firestore
-        console.log("[loginWithLine] 準備寫入 Firestore", { userId });
-        await firestoreAdmin.collection("users").doc(userId).set({
-            lastLoginAt: new Date().toISOString()
-        }, { merge: true });
-        console.log("[loginWithLine] Firestore 寫入成功", { userId });
 
-        // 新增：初始化 assets 集合（若不存在）
-        const assetRef = firestoreAdmin.collection("assets").doc(userId);
-        const assetSnap = await assetRef.get();
-        if (!assetSnap.exists) {
-            await assetRef.set({
-                userId,
-                coin: 0,
-                diamond: 0,
-                updatedAt: new Date().toISOString()
-            });
-            console.log("[loginWithLine] Assets 初始化成功", { userId });
-        }
-        const customToken = await auth.createCustomToken(userId);
+        // 平行處理用戶資料更新和初始化
+        await Promise.all([
+            updateUserProfile(auth, profile.userId, {
+                displayName: profile.displayName,
+                pictureUrl: profile.pictureUrl
+            }),
+            initializeUserData(profile.userId)
+        ]);
 
-        // 3. 回傳 custom token
-        return customToken;
+        return auth.createCustomToken(profile.userId);
     } catch (err) {
-        console.error("loginWithLine error:", err);
-        throw new Error("loginWithLine 伺服器端錯誤: " + (err instanceof Error ? err.message : String(err)));
+        console.error("登入失敗:", err);
+        if (err instanceof LineLoginError) {
+            throw new Error(`LINE 登入錯誤: ${err.message}`);
+        }
+        throw new Error(`伺服器端錯誤: ${err instanceof Error ? err.message : String(err)}`);
     }
+}
+
+async function fetchLineProfile(accessToken: string): Promise<LineProfile> {
+    const res = await fetch("https://api.line.me/v2/profile", {
+        headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!res.ok) {
+        throw new LineLoginError("LINE Token 無效", "INVALID_TOKEN");
+    }
+
+    return res.json();
+}
+
+async function updateUserProfile(auth: Auth, userId: string, profile: UserProfile): Promise<UserRecord> {
+    try {
+        return await auth.updateUser(userId, {
+            displayName: profile.displayName,
+            photoURL: profile.pictureUrl
+        });
+    } catch (err) {
+        if (err instanceof Error && 'code' in err && err.code === "auth/user-not-found") {
+            return await auth.createUser({
+                uid: userId,
+                displayName: profile.displayName,
+                photoURL: profile.pictureUrl
+            });
+        }
+        throw err;
+    }
+}
+
+async function initializeUserData(userId: string): Promise<void> {
+    const batch = firestoreAdmin.batch();
+    const userRef = firestoreAdmin.collection("users").doc(userId);
+    const assetRef = firestoreAdmin.collection("assets").doc(userId);
+
+    batch.set(userRef, {
+        lastLoginAt: new Date().toISOString()
+    }, { merge: true });
+
+    const assetSnap = await assetRef.get();
+    if (!assetSnap.exists) {
+        batch.set(assetRef, {
+            userId,
+            coin: 0,
+            diamond: 0,
+            updatedAt: new Date().toISOString()
+        });
+    }
+
+    await batch.commit();
 }
