@@ -55,6 +55,7 @@
 - `Unit` (單位)  
 - `Notes` (備註)：記錄異常或說明  
 - `PlannedStartTime` (計劃開始時間)
+- `PlannedEndTime` (計劃結束時間)
 ---
 
 ### WorkMember［工作人員］  
