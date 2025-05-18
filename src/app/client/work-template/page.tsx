@@ -72,6 +72,10 @@ const WorkTemplatePage: React.FC = () => {
         setNewStepSkills("");
     };
 
+    const filteredWorkFlows = selectedWorkTypeId
+        ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId)
+        : workFlows;
+
     return (
         <>
             <main className="p-4">
@@ -167,7 +171,7 @@ const WorkTemplatePage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {workFlows.map(flow =>
+                            {filteredWorkFlows.map(flow =>
                                 flow.steps.map(step => (
                                     <tr key={`${flow.flowId}-${step.order}`}>
                                         <td className="border border-gray-300 px-4 py-2">
