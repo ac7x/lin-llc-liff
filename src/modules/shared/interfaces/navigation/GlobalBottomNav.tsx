@@ -35,15 +35,9 @@ const defaultNavItems: NavItem[] = [
     active: false
   },
   {
-    href: '/client/members',
-    icon: '👥',
-    label: '成員',
-    active: false
-  },
-  {
-    href: '/client/profile',
-    icon: '🧳',
-    label: '用戶',
+    href: '/client/work-tasks',
+    icon: '📝',
+    label: '工作任務',
     active: false
   },
   {
@@ -53,9 +47,15 @@ const defaultNavItems: NavItem[] = [
     active: false
   },
   {
-    href: '/client/work-tasks',
-    icon: '📝',
-    label: '工作任務',
+    href: '/client/members',
+    icon: '👥',
+    label: '成員',
+    active: false
+  },
+  {
+    href: '/client/profile',
+    icon: '🧳',
+    label: '用戶',
     active: false
   }
 ];
