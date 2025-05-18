@@ -3,7 +3,7 @@
 import { addWorkFlow, getAllWorkFlows, WorkFlow } from "@/app/actions/workflow.action";
 import { getAllWorkItems, WorkItemTemplate } from "@/app/actions/workitem.action";
 import { WorkLoad } from "@/app/actions/workload.action";
-import { WorkTask } from "@/app/actions/worktask.action";
+import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action"; // 更新匯入，取代 WorkTask
 import { addWorkType, getAllWorkTypes, WorkType } from "@/app/actions/worktype.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import React, { useEffect, useState } from "react";
@@ -17,7 +17,7 @@ const WorkTemplatePage: React.FC = () => {
     const [newStepOrder, setNewStepOrder] = useState<number>(1);
     const [newStepSkills, setNewStepSkills] = useState<string>("");
     const [workItems, setWorkItems] = useState<WorkItemTemplate[]>([]);
-    const [workTasks, setWorkTasks] = useState<WorkTask[]>([]);
+    const [workTasks, setWorkTasks] = useState<WorkTaskEntity[]>([]);
     const [workLoads, setWorkLoads] = useState<WorkLoad[]>([]);
 
     useEffect(() => {
@@ -54,6 +54,18 @@ const WorkTemplatePage: React.FC = () => {
             }
         };
         fetchWorkItems();
+    }, []);
+
+    useEffect(() => {
+        const fetchWorkTasks = async () => {
+            try {
+                const tasks = await getAllWorkTasks(false); // 傳入 false 表示實體階段
+                setWorkTasks(tasks as WorkTaskEntity[]);
+            } catch (error) {
+                console.error("無法載入工作任務資料:", error);
+            }
+        };
+        fetchWorkTasks();
     }, []);
 
     const handleAddWorkType = async () => {
@@ -123,7 +135,7 @@ const WorkTemplatePage: React.FC = () => {
     };
 
     const handleAddWorkTask = () => {
-        const newTask: WorkTask = {
+        const newTask: WorkTaskEntity = {
             taskId: `task-${Date.now()}`,
             itemId: "item-1", // 假設關聯的 ItemID
             targetQuantity: 100,
