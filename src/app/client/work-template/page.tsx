@@ -20,6 +20,10 @@ const WorkTemplatePage: React.FC = () => {
     const [selectedWorkEpicId, setSelectedWorkEpicId] = useState<string | null>(null);
     const [workTasks, setWorkTasks] = useState<WorkTaskEntity[]>([]);
     const [workLoads, setWorkLoads] = useState<WorkLoadEntity[]>([]);
+    const [selectedWorkFlowId, setSelectedWorkFlowId] = useState<string | null>(null);
+    const [selectedWorkTaskId, setSelectedWorkTaskId] = useState<string | null>(null);
+    const [selectedWorkLoadId, setSelectedWorkLoadId] = useState<string | null>(null);
+    const [showValidationError, setShowValidationError] = useState(false);
 
     useEffect(() => {
         const fetchWorkTypes = async () => {
@@ -131,25 +135,25 @@ const WorkTemplatePage: React.FC = () => {
     };
 
     const handleAddToWorkEpic = async () => {
-        if (!selectedWorkEpicId) {
-            alert("請選擇一個工作標的！");
+        if (!selectedWorkEpicId || !selectedWorkTypeId || !selectedWorkFlowId || !selectedWorkTaskId || !selectedWorkLoadId) {
+            setShowValidationError(true);
             return;
         }
 
         const selectedWorkType = workTypes.find(type => type.typeId === selectedWorkTypeId);
-        const selectedWorkFlow = workFlows.find(flow => flow.workTypeId === selectedWorkTypeId);
-        const selectedWorkTask = workTasks.find(task => task.itemId === selectedWorkTypeId);
-        const selectedWorkLoad = workLoads.find(load => load.taskId === selectedWorkTask?.taskId);
+        const selectedWorkFlow = workFlows.find(flow => flow.flowId === selectedWorkFlowId);
+        const selectedWorkTask = workTasks.find(task => task.taskId === selectedWorkTaskId);
+        const selectedWorkLoad = workLoads.find(load => load.loadId === selectedWorkLoadId);
 
         if (!selectedWorkType || !selectedWorkFlow || !selectedWorkTask || !selectedWorkLoad) {
-            alert("請確保所有項目都已選擇！");
+            setShowValidationError(true);
             return;
         }
 
         const existingEpic = workEpics.find(epic => epic.epicId === selectedWorkEpicId);
 
         if (!existingEpic) {
-            alert("無法找到選定的工作標的！");
+            setShowValidationError(true);
             return;
         }
 
@@ -162,6 +166,7 @@ const WorkTemplatePage: React.FC = () => {
 
         await updateWorkEpic(selectedWorkEpicId, updates);
         setWorkEpics(prev => prev.map(epic => epic.epicId === selectedWorkEpicId ? { ...epic, ...updates } : epic));
+        setShowValidationError(false);
     };
 
     return (
@@ -277,10 +282,11 @@ const WorkTemplatePage: React.FC = () => {
 
                 <div className="mt-8">
                     <h2 className="text-xl font-bold mb-4">將工作種類、工作流程、工作任務和工作量加入現有的工作標的</h2>
+                    {/* 新增選擇欄位 */}
                     <select
                         value={selectedWorkEpicId || ""}
                         onChange={e => setSelectedWorkEpicId(e.target.value)}
-                        className="border p-2 mb-4"
+                        className="border p-2 mb-4 block"
                     >
                         <option value="">選擇工作標的</option>
                         {workEpics.map(epic => (
@@ -289,6 +295,60 @@ const WorkTemplatePage: React.FC = () => {
                             </option>
                         ))}
                     </select>
+                    <select
+                        value={selectedWorkTypeId || ""}
+                        onChange={e => setSelectedWorkTypeId(e.target.value)}
+                        className="border p-2 mb-4 block"
+                    >
+                        <option value="">選擇工作種類</option>
+                        {workTypes.map(type => (
+                            <option key={type.typeId} value={type.typeId}>
+                                {type.title}
+                            </option>
+                        ))}
+                    </select>
+                    <select
+                        value={selectedWorkFlowId || ""}
+                        onChange={e => setSelectedWorkFlowId(e.target.value)}
+                        className="border p-2 mb-4 block"
+                    >
+                        <option value="">選擇工作流程</option>
+                        {workFlows
+                            .filter(flow => !selectedWorkTypeId || flow.workTypeId === selectedWorkTypeId)
+                            .map(flow => (
+                                <option key={flow.flowId} value={flow.flowId}>
+                                    {flow.flowId}
+                                </option>
+                            ))}
+                    </select>
+                    <select
+                        value={selectedWorkTaskId || ""}
+                        onChange={e => setSelectedWorkTaskId(e.target.value)}
+                        className="border p-2 mb-4 block"
+                    >
+                        <option value="">選擇工作任務</option>
+                        {workTasks.map(task => (
+                            <option key={task.taskId} value={task.taskId}>
+                                {task.taskId}
+                            </option>
+                        ))}
+                    </select>
+                    <select
+                        value={selectedWorkLoadId || ""}
+                        onChange={e => setSelectedWorkLoadId(e.target.value)}
+                        className="border p-2 mb-4 block"
+                    >
+                        <option value="">選擇工作量</option>
+                        {workLoads.map(load => (
+                            <option key={load.loadId} value={load.loadId}>
+                                {load.loadId}
+                            </option>
+                        ))}
+                    </select>
+                    {/* 驗證提示訊息 */}
+                    {showValidationError && (
+                        <div className="text-red-500 mb-2">請確保所有項目都已選擇！</div>
+                    )}
                     <button
                         onClick={handleAddToWorkEpic}
                         className="bg-green-500 text-white px-4 py-2"
