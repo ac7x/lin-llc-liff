@@ -27,13 +27,16 @@
 - `RequiredSkills` (所需技能)
 
 ### WorkTask[工作任務］
-定義：某個 WorkItem 的具體任務，包含應完成的數量
+定義：某個 WorkFlow 的具體任務，包含應完成的數量
 - `TaskID` (唯一識別碼)
-- `ItemID` (關聯的 WorkItem)  
+- `FlowID` (關聯的 WorkFlow)
 - `TargetQuantity` (應完成數量)
 - `CompletedQuantity`（已完成數量）
 - `Unit` (單位)
 - `Status` (狀態)：`待分配`/`執行中`/`已完成`  
+- `PlannedStartDate` (計劃開始日期)
+- `PlannedEndDate` (計劃結束日期)
+- `Progress` (進度)：以百分比表示（例如 0-100）
 
 ### WorkLoad［工作量］  
 定義：WorkTask 的拆分工作量，拆分成不同日期與數量。
