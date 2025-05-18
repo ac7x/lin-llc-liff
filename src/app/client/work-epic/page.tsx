@@ -61,6 +61,14 @@ export default function WorkEpicPage() {
                     </button>
                 </div>
 
+                {/* 新增按鈕 */}
+                <button
+                    onClick={handleAddEpic}
+                    className="bg-green-500 text-white px-4 py-2 mb-4"
+                >
+                    新增標的
+                </button>
+
                 <table className="table-auto w-full border-collapse border border-gray-300">
                     <thead>
                         <tr>
