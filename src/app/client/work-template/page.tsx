@@ -72,6 +72,11 @@ const WorkTemplatePage: React.FC = () => {
         setNewStepSkills("");
     };
 
+    // ✅ 過濾流程，只顯示所選工作種類的流程
+    const filteredFlows = selectedWorkTypeId
+        ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId)
+        : [];
+
     return (
         <>
             <main className="p-4">
@@ -167,7 +172,7 @@ const WorkTemplatePage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {workFlows.map(flow =>
+                            {filteredFlows.map(flow =>
                                 flow.steps.map(step => (
                                     <tr key={`${flow.flowId}-${step.order}`}>
                                         <td className="border border-gray-300 px-4 py-2">

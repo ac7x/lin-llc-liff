@@ -3,7 +3,7 @@
 import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getWorkSchedules } from "@/app/actions/workschedule.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useReducer, useRef } from "react";
 
 type WorkAssignment = {
     location: string;
@@ -17,6 +17,46 @@ type DailyWorkSchedule = {
 };
 
 type Axis = "date" | "location";
+
+type State = {
+    offset: number;
+    range: number;
+    schedules: DailyWorkSchedule[];
+    workLoads: WorkLoadEntity[];
+    horizontalAxis: Axis;
+};
+
+type Action =
+    | { type: "SET_OFFSET"; payload: number }
+    | { type: "SET_RANGE"; payload: number }
+    | { type: "SET_SCHEDULES"; payload: DailyWorkSchedule[] }
+    | { type: "SET_WORKLOADS"; payload: WorkLoadEntity[] }
+    | { type: "SET_HORIZONTAL_AXIS"; payload: Axis };
+
+const initialState: State = {
+    offset: 0,
+    range: 7,
+    schedules: [],
+    workLoads: [],
+    horizontalAxis: "date",
+};
+
+const reducer = (state: State, action: Action): State => {
+    switch (action.type) {
+        case "SET_OFFSET":
+            return { ...state, offset: action.payload };
+        case "SET_RANGE":
+            return { ...state, range: action.payload };
+        case "SET_SCHEDULES":
+            return { ...state, schedules: action.payload };
+        case "SET_WORKLOADS":
+            return { ...state, workLoads: action.payload };
+        case "SET_HORIZONTAL_AXIS":
+            return { ...state, horizontalAxis: action.payload };
+        default:
+            return state;
+    }
+};
 
 const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) => {
     const horizontalLabels =
@@ -34,20 +74,14 @@ const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) =
 
 const WorkSchedulePage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [state, setState] = useState({
-        offset: 0,
-        range: 7,
-        schedules: [] as DailyWorkSchedule[],
-        workLoads: [] as WorkLoadEntity[],
-        horizontalAxis: "date" as Axis,
-    });
+    const [state, dispatch] = useReducer(reducer, initialState);
 
     useEffect(() => {
         const updateRange = () => {
             const containerWidth = containerRef.current?.offsetWidth ?? 0;
             const approxCellWidth = 120;
             const maxCols = Math.max(1, Math.floor((containerWidth - 100) / approxCellWidth));
-            setState(prev => ({ ...prev, range: maxCols }));
+            dispatch({ type: "SET_RANGE", payload: maxCols });
         };
 
         const observer = new ResizeObserver(updateRange);
@@ -60,7 +94,7 @@ const WorkSchedulePage: React.FC = () => {
     useEffect(() => {
         const fetchSchedules = async () => {
             const data = await getWorkSchedules(state.offset, state.range, state.horizontalAxis);
-            setState(prev => ({ ...prev, schedules: data }));
+            dispatch({ type: "SET_SCHEDULES", payload: data });
         };
         fetchSchedules();
     }, [state.offset, state.range, state.horizontalAxis]);
@@ -68,7 +102,7 @@ const WorkSchedulePage: React.FC = () => {
     useEffect(() => {
         const fetchWorkLoads = async () => {
             const loads = await getAllWorkLoads(false);
-            setState(prev => ({ ...prev, workLoads: loads as WorkLoadEntity[] }));
+            dispatch({ type: "SET_WORKLOADS", payload: loads as WorkLoadEntity[] });
         };
         fetchWorkLoads();
     }, []);
@@ -91,7 +125,7 @@ const WorkSchedulePage: React.FC = () => {
                         <select
                             className="border px-2 py-1 rounded"
                             value={state.horizontalAxis}
-                            onChange={(e) => setState(prev => ({ ...prev, horizontalAxis: e.target.value as Axis }))}
+                            onChange={(e) => dispatch({ type: "SET_HORIZONTAL_AXIS", payload: e.target.value as Axis })}
                         >
                             <option value="date">橫向：日期</option>
                             <option value="location">橫向：地點</option>
@@ -175,7 +209,7 @@ const WorkSchedulePage: React.FC = () => {
                             actualQuantity: 0,
                             executor: "user-1",
                         };
-                        setState(prev => ({ ...prev, workLoads: [...prev.workLoads, newLoad] }));
+                        dispatch({ type: "SET_WORKLOADS", payload: [...state.workLoads, newLoad] });
                     }}
                 >
                     新增工作負載
