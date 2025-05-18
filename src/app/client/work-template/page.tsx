@@ -1,7 +1,7 @@
 "use client";
 
 import { addWorkFlow, getAllWorkFlows, WorkFlow } from "@/app/actions/workflow.action";
-import { WorkItem } from "@/app/actions/workitem.action";
+import { getAllWorkItems, WorkItemTemplate } from "@/app/actions/workitem.action";
 import { WorkLoad } from "@/app/actions/workload.action";
 import { WorkTask } from "@/app/actions/worktask.action";
 import { addWorkType, getAllWorkTypes, WorkType } from "@/app/actions/worktype.action";
@@ -16,24 +16,44 @@ const WorkTemplatePage: React.FC = () => {
     const [newStepName, setNewStepName] = useState("");
     const [newStepOrder, setNewStepOrder] = useState<number>(1);
     const [newStepSkills, setNewStepSkills] = useState<string>("");
-    const [workItems, setWorkItems] = useState<WorkItem[]>([]);
+    const [workItems, setWorkItems] = useState<WorkItemTemplate[]>([]);
     const [workTasks, setWorkTasks] = useState<WorkTask[]>([]);
     const [workLoads, setWorkLoads] = useState<WorkLoad[]>([]);
 
     useEffect(() => {
         const fetchWorkTypes = async () => {
-            const types = await getAllWorkTypes();
-            setWorkTypes(types);
+            try {
+                const types = await getAllWorkTypes();
+                setWorkTypes(types);
+            } catch (error) {
+                console.error("無法載入工作種類資料:", error);
+            }
         };
         fetchWorkTypes();
     }, []);
 
     useEffect(() => {
         const fetchWorkFlows = async () => {
-            const flows = await getAllWorkFlows();
-            setWorkFlows(flows);
+            try {
+                const flows = await getAllWorkFlows();
+                setWorkFlows(flows);
+            } catch (error) {
+                console.error("無法載入工作流程資料:", error);
+            }
         };
         fetchWorkFlows();
+    }, []);
+
+    useEffect(() => {
+        const fetchWorkItems = async () => {
+            try {
+                const items = await getAllWorkItems(true); // 傳入 true 表示模板階段
+                setWorkItems(items as WorkItemTemplate[]);
+            } catch (error) {
+                console.error("無法載入工作項目資料:", error);
+            }
+        };
+        fetchWorkItems();
     }, []);
 
     const handleAddWorkType = async () => {
@@ -93,13 +113,11 @@ const WorkTemplatePage: React.FC = () => {
     };
 
     const handleAddWorkItem = () => {
-        const newItem: WorkItem = {
+        const newItem: WorkItemTemplate = {
             itemId: `item-${Date.now()}`,
             epicId: "epic-1", // 假設關聯的 EpicID
             flowId: selectedWorkTypeId || "", // 假設關聯的 FlowID
             currentStep: "步驟1", // 假設當前步驟
-            assignedTo: "member-1", // 假設指派對象
-            status: "未開始"
         };
         setWorkItems(prev => [...prev, newItem]);
     };
@@ -132,19 +150,21 @@ const WorkTemplatePage: React.FC = () => {
     };
 
     const getAvailableStepOrders = (): number[] => {
-        if (!selectedWorkTypeId) return [];
+        if (!selectedWorkTypeId) return [1];
+
         const usedOrders = new Set(
             workFlows
                 .filter(flow => flow.workTypeId === selectedWorkTypeId)
                 .flatMap(flow => flow.steps.map(step => step.order))
         );
-        // 確保返回的順序範圍正確，避免因資料庫中不存在的順序導致錯誤
-        return Array.from({ length: 10 }, (_, i) => i + 1).filter(order => !usedOrders.has(order));
+
+        const maxOrder = Math.max(0, ...Array.from(usedOrders));
+        return [maxOrder + 1];
     };
 
     const filteredWorkFlows = selectedWorkTypeId
-        ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId) // 選擇工作種類時，顯示相關流程
-        : []; // 未選擇時，不顯示任何流程內容
+        ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId)
+        : [];
 
     return (
         <>
@@ -278,8 +298,6 @@ const WorkTemplatePage: React.FC = () => {
                             <tr>
                                 <th className="border border-gray-300 px-4 py-2">項目 ID</th>
                                 <th className="border border-gray-300 px-4 py-2">當前步驟</th>
-                                <th className="border border-gray-300 px-4 py-2">指派對象</th>
-                                <th className="border border-gray-300 px-4 py-2">狀態</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -287,8 +305,6 @@ const WorkTemplatePage: React.FC = () => {
                                 <tr key={item.itemId}>
                                     <td className="border border-gray-300 px-4 py-2">{item.itemId}</td>
                                     <td className="border border-gray-300 px-4 py-2">{item.currentStep}</td>
-                                    <td className="border border-gray-300 px-4 py-2">{item.assignedTo}</td>
-                                    <td className="border border-gray-300 px-4 py-2">{item.status}</td>
                                 </tr>
                             ))}
                         </tbody>
