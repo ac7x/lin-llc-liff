@@ -1,4 +1,5 @@
 "use server";
+import { WorkMember } from "@/app/actions/members.action";
 import "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 import { Auth, getAuth, UserRecord } from "firebase-admin/auth";
@@ -38,6 +39,23 @@ export async function loginWithLine(accessToken: string): Promise<string> {
             }),
             initializeUserData(profile.userId)
         ]);
+
+        // 檢查並建立 workMembers 條目
+        const workMemberDoc = await firestoreAdmin.collection("workMembers").doc(profile.userId).get();
+        if (!workMemberDoc.exists) {
+            const newWorkMember: WorkMember = {
+                memberId: profile.userId,
+                name: profile.displayName,
+                role: "未指定",
+                skills: [],
+                availability: "空閒",
+                contactInfo: {},
+                status: "在職",
+                isActive: true,
+                lastActiveTime: new Date().toISOString()
+            };
+            await firestoreAdmin.collection("workMembers").doc(profile.userId).set(newWorkMember);
+        }
 
         return auth.createCustomToken(profile.userId);
     } catch (err) {
