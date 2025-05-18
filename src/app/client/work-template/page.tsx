@@ -179,6 +179,11 @@ const WorkTemplatePage: React.FC = () => {
         ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId)
         : [];
 
+    useEffect(() => {
+        console.log("Selected WorkTypeId:", selectedWorkTypeId);
+        console.log("Filtered WorkFlows:", filteredWorkFlows);
+    }, [selectedWorkTypeId, filteredWorkFlows]);
+
     return (
         <>
             <main className="p-4">
