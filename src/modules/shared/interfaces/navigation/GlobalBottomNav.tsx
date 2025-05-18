@@ -35,19 +35,19 @@ const defaultNavItems: NavItem[] = [
     active: false
   },
   {
-    href: '/client/work-tasks',
+    href: '/client/work-task',
     icon: '📝',
     label: '工作任務',
     active: false
   },
   {
-    href: '/client/work-epics',
+    href: '/client/work-epic',
     icon: '📖',
     label: '工作史詩',
     active: false
   },
   {
-    href: '/client/members',
+    href: '/client/member',
     icon: '👥',
     label: '成員',
     active: false
