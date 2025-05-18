@@ -26,15 +26,6 @@
 - `Order` (順序)：整數值（從 1 開始）  
 - `RequiredSkills` (所需技能)
 
-### WorkItem[工作項目］
-定義：WorkFlow 中具體的其中一個步驟
-- `ItemID` (唯一識別碼)
-- `EpicID` (關聯的 WorkEpic)  
-- `FlowID` (關聯的 WorkFlow)  
-- `CurrentStep` (當前步驟)：引用 WorkFlow.Steps  
-- `AssignedTo` (指派對象)  
-- `Status` (狀態)：`未開始`/`進行中`/`已完成`/`阻塞中`  
-
 ### WorkTask[工作任務］
 定義：某個 WorkItem 的具體任務，包含應完成的數量
 - `TaskID` (唯一識別碼)
