@@ -59,15 +59,17 @@ const WorkTemplatePage: React.FC = () => {
             return;
         }
 
-        // 確保順序不重複
-        const existingOrders = new Set(
+        // 確保順序不重複且有效
+        const usedOrders = new Set(
             workFlows
                 .filter(flow => flow.workTypeId === selectedWorkTypeId)
                 .flatMap(flow => flow.steps.map(step => step.order))
         );
 
-        if (existingOrders.has(newStepOrder)) {
-            alert("該順序已存在，請選擇其他順序！");
+        const availableOrders = Array.from({ length: 10 }, (_, i) => i + 1).filter(order => !usedOrders.has(order));
+
+        if (!availableOrders.includes(newStepOrder)) {
+            alert("該順序無效或已存在，請選擇其他順序！");
             return;
         }
 
@@ -136,12 +138,13 @@ const WorkTemplatePage: React.FC = () => {
                 .filter(flow => flow.workTypeId === selectedWorkTypeId)
                 .flatMap(flow => flow.steps.map(step => step.order))
         );
+        // 確保返回的順序範圍正確，避免因資料庫中不存在的順序導致錯誤
         return Array.from({ length: 10 }, (_, i) => i + 1).filter(order => !usedOrders.has(order));
     };
 
     const filteredWorkFlows = selectedWorkTypeId
-        ? [] // 當選擇工作種類時，不顯示任何流程內容
-        : workFlows;
+        ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId) // 選擇工作種類時，顯示相關流程
+        : []; // 未選擇時，不顯示任何流程內容
 
     return (
         <>

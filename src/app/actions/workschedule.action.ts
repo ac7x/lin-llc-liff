@@ -1,17 +1,35 @@
 "use server";
 
-/**
- * 取得指定偏移量的日期範圍。
- * @param offset 偏移量（以天為單位）
- * @returns 日期範圍的字串陣列
- */
-export async function getDateRange(offset: number): Promise<string[]> {
+type WorkAssignment = {
+    location: string;
+    groupName: string;
+    members: string[];
+};
+
+type DailyWorkSchedule = {
+    date: string;
+    assignments: WorkAssignment[];
+};
+
+export async function getWorkSchedules(offset: number, range: number): Promise<DailyWorkSchedule[]> {
     const today = new Date();
-    const dates = [];
-    for (let i = -7; i <= 7; i++) {
+    const schedules: DailyWorkSchedule[] = [];
+
+    const locations = Array.from({ length: 15 }, (_, i) => `地點${i + 1}`);
+
+    for (let i = 0; i < range; i++) {
         const date = new Date(today);
-        date.setDate(today.getDate() + i + offset);
-        dates.push(date.toISOString().split("T")[0]); // 格式化為 YYYY-MM-DD
+        date.setDate(today.getDate() + offset + i);
+        const isoDate = date.toISOString().split("T")[0];
+
+        const assignments: WorkAssignment[] = locations.map((location, index) => ({
+            location,
+            groupName: `第${(index + i) % 5 + 1}組`,
+            members: [`員${(index + i * 3) % 70 + 1}`, `員${(index + i * 3 + 1) % 70 + 1}`],
+        }));
+
+        schedules.push({ date: isoDate, assignments });
     }
-    return dates;
+
+    return schedules;
 }
