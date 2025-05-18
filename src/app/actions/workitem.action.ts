@@ -3,12 +3,12 @@
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 
 export interface WorkItem {
-    itemId: string;
-    epicId: string;
-    flowId: string;
-    currentStep: string;
-    assignedTo: string;
-    status: "未開始" | "進行中" | "已完成" | "阻塞中";
+    itemId: string; // 唯一識別碼
+    epicId: string; // 關聯的 WorkEpic
+    flowId: string; // 關聯的 WorkFlow
+    currentStep: string; // 當前步驟，引用 WorkFlow.Steps
+    assignedTo: string; // 指派對象
+    status: "未開始" | "進行中" | "已完成" | "阻塞中"; // 狀態
 }
 
 export async function getAllWorkItems(): Promise<WorkItem[]> {

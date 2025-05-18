@@ -3,10 +3,10 @@
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 
 export interface WorkType {
-    typeId: string;
-    title: string;
-    defaultWorkflow: string;
-    requiredSkills: string[];
+    typeId: string; // 唯一識別碼
+    title: string; // 標題
+    defaultWorkflow?: string; // 預設關聯的 WorkFlow
+    requiredSkills: string[]; // 所需技能
 }
 
 export async function getAllWorkTypes(): Promise<WorkType[]> {

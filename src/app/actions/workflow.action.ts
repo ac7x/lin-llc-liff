@@ -3,12 +3,12 @@
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 
 export interface WorkFlow {
-    flowId: string;
-    workTypeId: string;
+    flowId: string; // 唯一識別碼
+    workTypeId: string; // 關聯的 WorkType
     steps: {
-        stepName: string;
-        order: number;
-        requiredSkills: string[];
+        stepName: string; // 步驟名稱
+        order: number; // 步驟順序（從 1 開始）
+        requiredSkills: string[]; // 所需技能
     }[];
 }
 
