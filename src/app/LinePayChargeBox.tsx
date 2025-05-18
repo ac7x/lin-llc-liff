@@ -1,5 +1,5 @@
 "use client";
-import { createLinePayCharge } from "@/app/actions/linepay-charge.action";
+import { createLinePayCharge } from "@/modules/linePay/infrastructure/linepay.action";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 

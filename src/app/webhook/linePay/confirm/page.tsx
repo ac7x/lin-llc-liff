@@ -1,6 +1,6 @@
 'use client';
 
-import { confirmLinePayCharge } from '@/app/actions/linepay-charge.action';
+import { confirmLinePayCharge } from '@/modules/linePay/infrastructure/linepay.action';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';

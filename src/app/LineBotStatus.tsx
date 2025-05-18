@@ -1,6 +1,6 @@
 "use client"
 
-import { getLineBotStatus } from "@/app/actions/line-bot-status.action";
+import { getLineBotStatus } from "@/modules/lineBot/infrastructure/linebot.action";
 import { useState, useTransition } from "react";
 
 // 假設未來可呼叫 API 取得 bot 狀態或發送訊息

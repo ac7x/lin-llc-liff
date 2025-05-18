@@ -8,7 +8,7 @@ import { ready as liffReady } from "@liff/ready";
 import liff from "@line/liff";
 import { getAuth, signInWithCustomToken, type User } from "firebase/auth";
 import { createContext, useEffect, useState } from "react";
-import { loginWithLine } from "./actions/line-login.action";
+import { loginWithLine } from "../modules/liff/infrastructure/line-login.action";
 
 export const LiffContext = createContext<{
     liff: typeof liff | null;

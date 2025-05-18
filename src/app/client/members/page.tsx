@@ -1,5 +1,5 @@
 "use client";
-import { WorkMember } from "@/app/actions/members.action";
+import { WorkMember } from "@/modules/case/workMember/infrastructure/members.action";
 import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import { collection, getDocs } from "firebase/firestore";
