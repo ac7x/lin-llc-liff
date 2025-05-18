@@ -2,23 +2,30 @@
 
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 
-export interface WorkType {
+export interface WorkTypeTemplate {
     typeId: string; // 唯一識別碼
     title: string; // 標題
-    defaultWorkflow?: string; // 預設關聯的 WorkFlow
     requiredSkills: string[]; // 所需技能
 }
 
-export async function getAllWorkTypes(): Promise<WorkType[]> {
-    const snapshot = await firestoreAdmin.collection("workType").get();
-    return snapshot.docs.map(doc => doc.data() as WorkType);
+export interface WorkTypeEntity extends WorkTypeTemplate {
+    defaultWorkflow?: string; // 預設關聯的 WorkFlow
 }
 
-export async function addWorkType(type: WorkType): Promise<void> {
+export async function getAllWorkTypes(isTemplate: boolean): Promise<WorkTypeTemplate[] | WorkTypeEntity[]> {
+    const snapshot = await firestoreAdmin.collection("workType").get();
+    if (isTemplate) {
+        return snapshot.docs.map(doc => doc.data() as WorkTypeTemplate);
+    } else {
+        return snapshot.docs.map(doc => doc.data() as WorkTypeEntity);
+    }
+}
+
+export async function addWorkType(type: WorkTypeTemplate | WorkTypeEntity): Promise<void> {
     await firestoreAdmin.collection("workType").doc(type.typeId).set(type);
 }
 
-export async function updateWorkType(typeId: string, updates: Partial<WorkType>): Promise<void> {
+export async function updateWorkType(typeId: string, updates: Partial<WorkTypeEntity>): Promise<void> {
     await firestoreAdmin.collection("workType").doc(typeId).update(updates);
 }
 

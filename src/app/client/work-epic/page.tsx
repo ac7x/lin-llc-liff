@@ -1,17 +1,17 @@
 "use client";
 
-import { addWorkEpic, getAllWorkEpics, WorkEpic } from "@/app/actions/workepic.action";
+import { addWorkEpic, getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import { useEffect, useState } from "react";
 
 export default function WorkEpicPage() {
-    const [workEpics, setWorkEpics] = useState<WorkEpic[]>([]);
+    const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
     const [newEpicTitle, setNewEpicTitle] = useState("");
 
     useEffect(() => {
         const fetchWorkEpics = async () => {
-            const epics = await getAllWorkEpics();
-            setWorkEpics(epics);
+            const epics = await getAllWorkEpics(false); // 使用 false 表示實體階段
+            setWorkEpics(epics as WorkEpicEntity[]);
         };
         fetchWorkEpics();
     }, []);
@@ -22,7 +22,7 @@ export default function WorkEpicPage() {
             return;
         }
 
-        const newEpic: WorkEpic = {
+        const newEpic: WorkEpicEntity = {
             epicId: `epic-${Date.now()}`,
             title: newEpicTitle,
             startDate: "",
@@ -31,7 +31,8 @@ export default function WorkEpicPage() {
             owner: "未指定",
             status: "待開始",
             priority: 1,
-            location: "未指定",
+            region: "北部", // 預設區域
+            address: "未指定", // 預設地址
             createdAt: new Date().toISOString() // 新增 createdAt 屬性
         };
 
@@ -87,7 +88,7 @@ export default function WorkEpicPage() {
                                 <td className="border border-gray-300 px-4 py-2">{epic.owner}</td>
                                 <td className="border border-gray-300 px-4 py-2">{epic.status}</td>
                                 <td className="border border-gray-300 px-4 py-2">{epic.priority}</td>
-                                <td className="border border-gray-300 px-4 py-2">{epic.location}</td>
+                                <td className="border border-gray-300 px-4 py-2">{epic.region} - {epic.address}</td>
                             </tr>
                         ))}
                     </tbody>

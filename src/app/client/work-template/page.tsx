@@ -2,14 +2,14 @@
 
 import { addWorkFlow, getAllWorkFlows, WorkFlow } from "@/app/actions/workflow.action";
 import { getAllWorkItems, WorkItemTemplate } from "@/app/actions/workitem.action";
-import { WorkLoad } from "@/app/actions/workload.action";
+import { WorkLoadEntity } from "@/app/actions/workload.action"; // 更新匯入，取代 WorkLoad
 import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action"; // 更新匯入，取代 WorkTask
-import { addWorkType, getAllWorkTypes, WorkType } from "@/app/actions/worktype.action";
+import { addWorkType, getAllWorkTypes, WorkTypeEntity } from "@/app/actions/worktype.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import React, { useEffect, useState } from "react";
 
 const WorkTemplatePage: React.FC = () => {
-    const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
+    const [workTypes, setWorkTypes] = useState<WorkTypeEntity[]>([]);
     const [newWorkTypeTitle, setNewWorkTypeTitle] = useState("");
     const [workFlows, setWorkFlows] = useState<WorkFlow[]>([]);
     const [selectedWorkTypeId, setSelectedWorkTypeId] = useState<string | null>(null);
@@ -18,13 +18,13 @@ const WorkTemplatePage: React.FC = () => {
     const [newStepSkills, setNewStepSkills] = useState<string>("");
     const [workItems, setWorkItems] = useState<WorkItemTemplate[]>([]);
     const [workTasks, setWorkTasks] = useState<WorkTaskEntity[]>([]);
-    const [workLoads, setWorkLoads] = useState<WorkLoad[]>([]);
+    const [workLoads, setWorkLoads] = useState<WorkLoadEntity[]>([]);
 
     useEffect(() => {
         const fetchWorkTypes = async () => {
             try {
-                const types = await getAllWorkTypes();
-                setWorkTypes(types);
+                const types = await getAllWorkTypes(false); // 使用 false 表示實體階段
+                setWorkTypes(types as WorkTypeEntity[]);
             } catch (error) {
                 console.error("無法載入工作種類資料:", error);
             }
@@ -74,10 +74,11 @@ const WorkTemplatePage: React.FC = () => {
             return;
         }
 
-        const newWorkType = {
+        const newWorkType: WorkTypeEntity = {
             typeId: `type-${Date.now()}`,
             title: newWorkTypeTitle,
-            requiredSkills: []
+            requiredSkills: [],
+            defaultWorkflow: undefined
         };
 
         await addWorkType(newWorkType);
@@ -147,7 +148,7 @@ const WorkTemplatePage: React.FC = () => {
     };
 
     const handleAddWorkLoad = () => {
-        const newLoad: WorkLoad = {
+        const newLoad: WorkLoadEntity = {
             loadId: `load-${Date.now()}`,
             taskId: "task-1", // 假設關聯的 TaskID
             executor: "member-1", // 假設執行人

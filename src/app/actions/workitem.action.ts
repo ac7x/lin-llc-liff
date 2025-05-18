@@ -11,6 +11,7 @@ export interface WorkItemBase {
 
 export interface WorkItemTemplate extends WorkItemBase {
     // 模板階段不需要指派對象和狀態
+    templateSpecificField?: string; // 示例字段，避免空介面
 }
 
 export interface WorkItemEntity extends WorkItemBase {
