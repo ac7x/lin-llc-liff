@@ -46,7 +46,7 @@ const WorkTemplatePage: React.FC = () => {
         if (selectedWorkTypeId) {
             setNewStepOrder(maxOrder + 1);
         }
-    }, [selectedWorkTypeId, workFlows]);
+    }, [selectedWorkTypeId, workFlows, maxOrder]);
 
     const handleAddWorkType = async () => {
         if (!newWorkTypeTitle.trim()) {
