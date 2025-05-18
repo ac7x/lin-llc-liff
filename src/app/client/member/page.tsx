@@ -1,5 +1,5 @@
 "use client";
-import { WorkMember, updateWorkMember } from "@/modules/case/workMember/infrastructure/workmember.action";
+import { WorkMember, updateWorkMember } from "@/app/actions/workmember.action";
 import { LiffContext } from "@/modules/liff/interfaces/Liff";
 import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";

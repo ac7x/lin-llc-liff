@@ -75,10 +75,37 @@
 - `SkillScore` 
 - `TaskCompletionRate` 
 
+### workSkill［工作技能］  
+定義：描述工作人員的技能及其熟練程度。
+- `SkillID` (唯一識別碼)
+- `Name` (技能名稱)：如 "焊接"、"電器"
+- `Description` (技能描述)：技能的詳細說明
+- `Category` (技能類別)：如 "技術"、"管理"
+- `Level` (技能等級)：整數值，表示熟練程度（如 1-10）
+- `IsMandatory` (是否必須)：是否為某些工作類型的必備技能
+
+### workLevel［工作等級］  
+定義：描述工作人員或工作的等級，類似於遊戲中的等級系統，用於區分責任範圍或技能要求。工作人員可透過完成任務獲得經驗值，進而升級。等級範圍為 1 至 60 級。
+- `LevelID` (唯一識別碼)
+- `Title` (等級)：顯示等級
+- `ExperiencePoints` (經驗值)：類似遊戲中的經驗值，用於升級
+- `NextLevelThreshold` (下一等級門檻)：升級所需的經驗值
+- `Rewards` (升級獎勵)：升級後可獲得的獎勵，例如加薪或新技能解鎖
+- `MaxLevel` (最高等級)：固定為 60 級
+
+### workAsset［工作薪資］  
+定義：描述與工作相關的薪資或資產資訊，並顯示用戶資產（如 `coin` 和 `diamond`）。
+- `AssetID` (唯一識別碼)
+- `Description` (資產描述)：資產的詳細說明
+- `Amount` (金額)：數值，表示薪資或資產的金額
+- `Currency` (貨幣)：如 "TWD"
+- `Coin` (硬幣)：用戶擁有的虛擬硬幣數量
+- `Diamond` (鑽石)：用戶擁有的虛擬鑽石數量
+
 ### **關聯與補充說明**
 1. **階層關係**：  
    `WorkEpic → WorkType → WorkFlow → WorkItem → WorkTask → WorkLoad`  
 
 2. **狀態流轉**：  
    - 每個層級的狀態需連動（例如 WorkItem 完成後，檢查是否所有 Steps 均完成）。  
-   - 可加入 `BlockedReason` 欄位標記阻塞原因。  
+   - 可加入 `BlockedReason` 欄位標記阻塞原因。
