@@ -12,7 +12,7 @@ export default function MembersPage() {
   const [filter, setFilter] = useState({ role: "", status: "" });
   const [sortKey, setSortKey] = useState<"name" | "role">("name");
   const [editingMember, setEditingMember] = useState<string | null>(null);
-  const [updatedFields, setUpdatedFields] = useState<{ name?: string; phone?: string }>({});
+  const [updatedFields, setUpdatedFields] = useState<{ name?: string }>({});
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -109,12 +109,6 @@ export default function MembersPage() {
                     type="text"
                     value={updatedFields.name || member.name}
                     onChange={e => handleEdit(member.memberId, "name", e.target.value)}
-                    className="border p-2 mb-2"
-                  />
-                  <input
-                    type="text"
-                    value={updatedFields.phone || member.contactInfo?.phone || ""}
-                    onChange={e => handleEdit(member.memberId, "phone", e.target.value)}
                     className="border p-2 mb-2"
                   />
                   <button onClick={() => handleSave(member.memberId)} className="bg-blue-500 text-white px-4 py-2">儲存</button>
