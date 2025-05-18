@@ -1,29 +1,52 @@
+"use client";
+
+import { getDateRange } from "@/app/actions/workschedule.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 const WorkSchedulePage: React.FC = () => {
-    const getDateRange = () => {
-        const today = new Date();
-        const dates = [];
-        for (let i = -7; i <= 7; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
-            dates.push(date.toISOString().split("T")[0]); // 格式化為 YYYY-MM-DD
-        }
-        return dates;
-    };
+    const [offset, setOffset] = useState(0);
+    const [dateRange, setDateRange] = useState<string[]>([]);
 
-    const dateRange = getDateRange();
+    useEffect(() => {
+        const fetchDateRange = async () => {
+            const dates = await getDateRange(offset);
+            setDateRange(dates);
+        };
+        fetchDateRange();
+    }, [offset]);
 
     return (
         <>
             <div className="p-4">
                 <h1 className="text-2xl font-bold mb-4">行事曆</h1>
-                <ul className="list-disc pl-5">
-                    {dateRange.map((date) => (
-                        <li key={date} className="mb-2">{date}</li>
+                <div className="flex justify-between items-center mb-4">
+                    <button
+                        onClick={() => setOffset(offset - 7)}
+                        className="bg-blue-500 text-white px-4 py-2 rounded"
+                    >
+                        前七天
+                    </button>
+                    <button
+                        onClick={() => setOffset(offset + 7)}
+                        className="bg-blue-500 text-white px-4 py-2 rounded"
+                    >
+                        後七天
+                    </button>
+                </div>
+                <div className="grid grid-cols-15 gap-2">
+                    {dateRange.map((date: string) => (
+                        <div key={date} className="border p-4 text-center">
+                            <p className="font-bold">{date}</p>
+                            <div className="grid grid-cols-5 gap-1 mt-2">
+                                {/* 每天的 5 個格子 */}
+                                {Array.from({ length: 5 }).map((_, index) => (
+                                    <div key={index} className="h-10 border"></div>
+                                ))}
+                            </div>
+                        </div>
                     ))}
-                </ul>
+                </div>
             </div>
             <GlobalBottomNav />
         </>

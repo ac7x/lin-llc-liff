@@ -1,4 +1,5 @@
 "use client";
+
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 
 export default function WorkTaskPage() {
