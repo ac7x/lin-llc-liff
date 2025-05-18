@@ -30,7 +30,7 @@ const defaultNavItems: NavItem[] = [
   },
   {
     href: '/client/work-schedule',
-    icon: '📅', // 修改為更適合的 emoji
+    icon: '📅',
     label: '工作行程',
     active: false
   },
@@ -47,13 +47,13 @@ const defaultNavItems: NavItem[] = [
     active: false
   },
   {
-    href: '/client/template',
+    href: '/client/work-template',
     icon: '📂',
     label: '工作範本',
     active: false
   },
   {
-    href: '/client/member',
+    href: '/client/work-member',
     icon: '👥',
     label: '成員',
     active: false
