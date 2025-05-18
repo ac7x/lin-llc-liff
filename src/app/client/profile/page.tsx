@@ -6,7 +6,7 @@ import { GlobalBottomNav } from '@/modules/shared/interfaces/navigation/GlobalBo
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { useContext, useEffect, useRef, useState } from 'react';
 
-export default function ProfilePage() {
+export default function UserProfilePage() {
   const { isLiffInitialized, firebaseLogin, firebaseUser, liffError, lineProfile, logout, isLoggedIn, isLiffLoggedIn, login } = useContext(LiffContext);
   const [actionMessage, setActionMessage] = useState<string>("");
   const autoLoginTriggered = useRef(false);

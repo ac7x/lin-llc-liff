@@ -1,7 +1,7 @@
 "use client";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 
-export default function ClientHomePage() {
+export default function HomePage() {
   return (
     <>
       <main style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>

@@ -1,7 +1,7 @@
 "use client";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 
-export default function ClientWorkTasksPage() {
+export default function WorkTaskPage() {
   return (
     <>
       <main style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh" }}>

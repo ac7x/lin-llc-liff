@@ -4,7 +4,7 @@ import { getAllWorkEpics, WorkEpic } from "@/app/actions/workepic.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import { useEffect, useState } from "react";
 
-export default function ClientWorkEpicsPage() {
+export default function WorkEpicPage() {
     const [workEpics, setWorkEpics] = useState<WorkEpic[]>([]);
 
     useEffect(() => {
