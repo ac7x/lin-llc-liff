@@ -72,6 +72,16 @@ const WorkTemplatePage: React.FC = () => {
         setNewStepSkills("");
     };
 
+    const getAvailableStepOrders = (): number[] => {
+        if (!selectedWorkTypeId) return [];
+        const usedOrders = new Set(
+            workFlows
+                .filter(flow => flow.workTypeId === selectedWorkTypeId)
+                .flatMap(flow => flow.steps.map(step => step.order))
+        );
+        return Array.from({ length: 10 }, (_, i) => i + 1).filter(order => !usedOrders.has(order));
+    };
+
     const filteredWorkFlows = selectedWorkTypeId
         ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId)
         : workFlows;
@@ -139,13 +149,17 @@ const WorkTemplatePage: React.FC = () => {
                             placeholder="步驟名稱"
                             className="border p-2 mr-2"
                         />
-                        <input
-                            type="number"
+                        <select
                             value={newStepOrder}
                             onChange={e => setNewStepOrder(Number(e.target.value))}
-                            placeholder="順序"
                             className="border p-2 mr-2"
-                        />
+                        >
+                            {getAvailableStepOrders().map(order => (
+                                <option key={order} value={order}>
+                                    {order}
+                                </option>
+                            ))}
+                        </select>
                         <input
                             type="text"
                             value={newStepSkills}
