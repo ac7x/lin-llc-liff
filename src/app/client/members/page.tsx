@@ -1,17 +1,23 @@
 "use client";
 import { WorkMember } from "@/modules/case/workMember/infrastructure/members.action";
+import { LiffContext } from "@/modules/liff/interfaces/Liff";
 import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import { collection, getDocs } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 export default function MembersPage() {
+  const { isLoggedIn, firebaseLogin } = useContext(LiffContext);
   const [members, setMembers] = useState<WorkMember[]>([]);
   const [filter, setFilter] = useState({ role: "", status: "" });
   const [sortKey, setSortKey] = useState<"name" | "role">("name");
 
   useEffect(() => {
     const fetchMembers = async () => {
+      if (!isLoggedIn) {
+        await firebaseLogin(); // 確保使用者已登入 Firebase
+      }
+
       const membersCollection = collection(firestore, "workMember");
       const snapshot = await getDocs(membersCollection);
       let data: WorkMember[] = snapshot.docs.map(doc => doc.data() as WorkMember);
@@ -29,8 +35,9 @@ export default function MembersPage() {
 
       setMembers(data);
     };
+
     fetchMembers();
-  }, [filter, sortKey]);
+  }, [filter, sortKey, isLoggedIn, firebaseLogin]);
 
   return (
     <>
