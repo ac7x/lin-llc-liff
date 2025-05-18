@@ -12,6 +12,8 @@ const firebaseConfig = {
   measurementId: "G-KBMLTJL6KK"
 };
 
+console.log("Firebase 初始化完成:", firebaseConfig);
+
 /**
  * Firebase 客戶端類別 - 單例模式
  * 用於初始化 Firebase 應用並提供 Firestore 資料庫操作功能
