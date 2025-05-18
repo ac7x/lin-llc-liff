@@ -2,6 +2,9 @@
 
 import { addWorkFlow, getAllWorkFlows, WorkFlow } from "@/app/actions/workflow.action";
 import { addWorkType, getAllWorkTypes, WorkType } from "@/app/actions/worktype.action";
+import { addWorkEpic, getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
+import { addWorkTask, getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
+import { addWorkLoad, getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import React, { useEffect, useState } from "react";
 
@@ -13,6 +16,10 @@ const WorkTemplatePage: React.FC = () => {
     const [newStepName, setNewStepName] = useState("");
     const [newStepOrder, setNewStepOrder] = useState<number>(1);
     const [newStepSkills, setNewStepSkills] = useState<string>("");
+    const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
+    const [selectedWorkEpicId, setSelectedWorkEpicId] = useState<string | null>(null);
+    const [workTasks, setWorkTasks] = useState<WorkTaskEntity[]>([]);
+    const [workLoads, setWorkLoads] = useState<WorkLoadEntity[]>([]);
 
     useEffect(() => {
         const fetchWorkTypes = async () => {
@@ -30,18 +37,38 @@ const WorkTemplatePage: React.FC = () => {
         fetchWorkFlows();
     }, []);
 
-    // ✅ 根據所選工作種類過濾流程
+    useEffect(() => {
+        const fetchWorkEpics = async () => {
+            const epics = await getAllWorkEpics(false);
+            setWorkEpics(epics as WorkEpicEntity[]);
+        };
+        fetchWorkEpics();
+    }, []);
+
+    useEffect(() => {
+        const fetchWorkTasks = async () => {
+            const tasks = await getAllWorkTasks(false);
+            setWorkTasks(tasks as WorkTaskEntity[]);
+        };
+        fetchWorkTasks();
+    }, []);
+
+    useEffect(() => {
+        const fetchWorkLoads = async () => {
+            const loads = await getAllWorkLoads(false);
+            setWorkLoads(loads as WorkLoadEntity[]);
+        };
+        fetchWorkLoads();
+    }, []);
+
     const filteredFlows = selectedWorkTypeId
         ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId)
         : [];
 
-    // ✅ 取得該工作種類所有步驟
     const allSteps = filteredFlows.flatMap(flow => flow.steps);
 
-    // ✅ 計算目前最大順序
     const maxOrder = allSteps.length > 0 ? Math.max(...allSteps.map(step => step.order)) : 0;
 
-    // ✅ 自動更新可用順序
     useEffect(() => {
         if (selectedWorkTypeId) {
             setNewStepOrder(maxOrder + 1);
@@ -71,7 +98,6 @@ const WorkTemplatePage: React.FC = () => {
             return;
         }
 
-        // ✅ 驗證是否有遺漏的前一個步驟
         const existingOrders = allSteps.map(step => step.order);
         for (let i = 1; i < newStepOrder; i++) {
             if (!existingOrders.includes(i)) {
@@ -80,7 +106,6 @@ const WorkTemplatePage: React.FC = () => {
             }
         }
 
-        // ✅ 驗證是否已存在相同順序
         if (existingOrders.includes(newStepOrder)) {
             alert(`第 ${newStepOrder} 步已存在！`);
             return;
@@ -102,7 +127,35 @@ const WorkTemplatePage: React.FC = () => {
         setWorkFlows(prev => [...prev, newFlow]);
         setNewStepName("");
         setNewStepSkills("");
-        setNewStepOrder(prev => prev + 1); // 自動前進到下一步
+        setNewStepOrder(prev => prev + 1);
+    };
+
+    const handleAddToWorkEpic = async () => {
+        if (!selectedWorkEpicId) {
+            alert("請選擇一個工作標的！");
+            return;
+        }
+
+        const selectedWorkType = workTypes.find(type => type.typeId === selectedWorkTypeId);
+        const selectedWorkFlow = workFlows.find(flow => flow.workTypeId === selectedWorkTypeId);
+        const selectedWorkTask = workTasks.find(task => task.itemId === selectedWorkTypeId);
+        const selectedWorkLoad = workLoads.find(load => load.taskId === selectedWorkTask?.taskId);
+
+        if (!selectedWorkType || !selectedWorkFlow || !selectedWorkTask || !selectedWorkLoad) {
+            alert("請確保所有項目都已選擇！");
+            return;
+        }
+
+        const updatedEpic = {
+            ...workEpics.find(epic => epic.epicId === selectedWorkEpicId),
+            workTypes: [...(workEpics.find(epic => epic.epicId === selectedWorkEpicId)?.workTypes || []), selectedWorkType],
+            workFlows: [...(workEpics.find(epic => epic.epicId === selectedWorkEpicId)?.workFlows || []), selectedWorkFlow],
+            workTasks: [...(workEpics.find(epic => epic.epicId === selectedWorkEpicId)?.workTasks || []), selectedWorkTask],
+            workLoads: [...(workEpics.find(epic => epic.epicId === selectedWorkEpicId)?.workLoads || []), selectedWorkLoad]
+        };
+
+        await addWorkEpic(updatedEpic);
+        setWorkEpics(prev => prev.map(epic => epic.epicId === selectedWorkEpicId ? updatedEpic : epic));
     };
 
     return (
@@ -110,7 +163,6 @@ const WorkTemplatePage: React.FC = () => {
             <main className="p-4">
                 <h1 className="text-2xl font-bold mb-4">工作種類模板</h1>
 
-                {/* 新增工作種類區域 */}
                 <div className="mb-4">
                     <input
                         type="text"
@@ -144,7 +196,6 @@ const WorkTemplatePage: React.FC = () => {
                     </tbody>
                 </table>
 
-                {/* 工作流程管理區域 */}
                 <div className="mt-8">
                     <h2 className="text-xl font-bold mb-4">工作流程管理</h2>
                     <select
@@ -216,6 +267,28 @@ const WorkTemplatePage: React.FC = () => {
                                 ))}
                         </tbody>
                     </table>
+                </div>
+
+                <div className="mt-8">
+                    <h2 className="text-xl font-bold mb-4">將工作種類、工作流程、工作任務和工作量加入現有的工作標的</h2>
+                    <select
+                        value={selectedWorkEpicId || ""}
+                        onChange={e => setSelectedWorkEpicId(e.target.value)}
+                        className="border p-2 mb-4"
+                    >
+                        <option value="">選擇工作標的</option>
+                        {workEpics.map(epic => (
+                            <option key={epic.epicId} value={epic.epicId}>
+                                {epic.title}
+                            </option>
+                        ))}
+                    </select>
+                    <button
+                        onClick={handleAddToWorkEpic}
+                        className="bg-green-500 text-white px-4 py-2"
+                    >
+                        加入工作標的
+                    </button>
                 </div>
             </main>
             <GlobalBottomNav />
