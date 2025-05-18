@@ -13,6 +13,7 @@ export interface WorkEpic {
     status: "待開始" | "進行中" | "已完成" | "已取消"; // 狀態
     priority: number; // 優先級，數字愈低愈優先
     location: string; // 地點
+    createdAt: string; // 建立時間
 }
 
 export async function getAllWorkEpics(): Promise<WorkEpic[]> {
@@ -21,7 +22,10 @@ export async function getAllWorkEpics(): Promise<WorkEpic[]> {
 }
 
 export async function addWorkEpic(epic: WorkEpic): Promise<void> {
-    await firestoreAdmin.collection("workEpic").doc(epic.epicId).set(epic);
+    await firestoreAdmin.collection("workEpic").doc(epic.epicId).set({
+        ...epic,
+        createdAt: new Date().toISOString() // 自動設置建立時間
+    });
 }
 
 export async function updateWorkEpic(epicId: string, updates: Partial<WorkEpic>): Promise<void> {

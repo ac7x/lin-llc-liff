@@ -25,13 +25,14 @@ export default function WorkEpicPage() {
         const newEpic: WorkEpic = {
             epicId: `epic-${Date.now()}`,
             title: newEpicTitle,
-            startDate: new Date().toISOString(),
+            startDate: "",
             endDate: "",
             insuranceStatus: "無",
             owner: "未指定",
             status: "待開始",
             priority: 1,
-            location: "未指定"
+            location: "未指定",
+            // createdAt 不顯示於前端，但會自動寫入數據庫
         };
 
         await addWorkEpic(newEpic);
