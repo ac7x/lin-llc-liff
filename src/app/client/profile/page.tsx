@@ -1,6 +1,6 @@
 'use client';
 
-import { LiffContext } from '@/app/Liff';
+import { LiffContext } from '@/modules/liff/interfaces/Liff';
 import { firebaseApp } from '@/modules/shared/infrastructure/persistence/firebase/client';
 import { GlobalBottomNav } from '@/modules/shared/interfaces/navigation/GlobalBottomNav';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';

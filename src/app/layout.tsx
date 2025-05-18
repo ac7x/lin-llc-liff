@@ -1,4 +1,4 @@
-import { LiffProvider } from "@/app/Liff";
+import { LiffProvider } from "@/modules/liff/interfaces/Liff";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../styles/globals.css";

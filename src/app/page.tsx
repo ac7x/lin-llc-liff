@@ -1,7 +1,7 @@
 'use client'
 
-import { LineBotStatus } from "@/app/LineBotStatus";
-import { LinePayChargeBox } from "@/app/LinePayChargeBox";
+import { LineBotStatus } from "@/modules/lineBot/interfaces/LineBot";
+import { LinePayChargeBox } from "@/modules/linePay/interfaces/LinePayChargeBox";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 
 export default function HomePage() {
