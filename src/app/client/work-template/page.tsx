@@ -16,7 +16,7 @@ const WorkTemplatePage: React.FC = () => {
 
     useEffect(() => {
         const fetchWorkTypes = async () => {
-            const types = await getAllWorkTypes(true); // 傳遞 isTemplate 參數
+            const types = await getAllWorkTypes(true);
             setWorkTypes(types);
         };
         fetchWorkTypes();
@@ -29,6 +29,24 @@ const WorkTemplatePage: React.FC = () => {
         };
         fetchWorkFlows();
     }, []);
+
+    // ✅ 根據所選工作種類過濾流程
+    const filteredFlows = selectedWorkTypeId
+        ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId)
+        : [];
+
+    // ✅ 取得該工作種類所有步驟
+    const allSteps = filteredFlows.flatMap(flow => flow.steps);
+
+    // ✅ 計算目前最大順序
+    const maxOrder = allSteps.length > 0 ? Math.max(...allSteps.map(step => step.order)) : 0;
+
+    // ✅ 自動更新可用順序
+    useEffect(() => {
+        if (selectedWorkTypeId) {
+            setNewStepOrder(maxOrder + 1);
+        }
+    }, [selectedWorkTypeId, workFlows]);
 
     const handleAddWorkType = async () => {
         if (!newWorkTypeTitle.trim()) {
@@ -53,6 +71,21 @@ const WorkTemplatePage: React.FC = () => {
             return;
         }
 
+        // ✅ 驗證是否有遺漏的前一個步驟
+        const existingOrders = allSteps.map(step => step.order);
+        for (let i = 1; i < newStepOrder; i++) {
+            if (!existingOrders.includes(i)) {
+                alert(`請先建立第 ${i} 步`);
+                return;
+            }
+        }
+
+        // ✅ 驗證是否已存在相同順序
+        if (existingOrders.includes(newStepOrder)) {
+            alert(`第 ${newStepOrder} 步已存在！`);
+            return;
+        }
+
         const newFlow: WorkFlow = {
             flowId: `flow-${Date.now()}`,
             workTypeId: selectedWorkTypeId,
@@ -68,14 +101,9 @@ const WorkTemplatePage: React.FC = () => {
         await addWorkFlow(newFlow);
         setWorkFlows(prev => [...prev, newFlow]);
         setNewStepName("");
-        setNewStepOrder(1);
         setNewStepSkills("");
+        setNewStepOrder(prev => prev + 1); // 自動前進到下一步
     };
-
-    // ✅ 過濾流程，只顯示所選工作種類的流程
-    const filteredFlows = selectedWorkTypeId
-        ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId)
-        : [];
 
     return (
         <>
@@ -172,18 +200,20 @@ const WorkTemplatePage: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredFlows.map(flow =>
-                                flow.steps.map(step => (
-                                    <tr key={`${flow.flowId}-${step.order}`}>
-                                        <td className="border border-gray-300 px-4 py-2">
-                                            {workTypes.find(type => type.typeId === flow.workTypeId)?.title || "未知"}
-                                        </td>
+                            {filteredFlows
+                                .flatMap(flow => flow.steps.map(step => ({
+                                    ...step,
+                                    workTypeTitle: workTypes.find(type => type.typeId === flow.workTypeId)?.title || "未知"
+                                })))
+                                .sort((a, b) => a.order - b.order)
+                                .map((step, index) => (
+                                    <tr key={index}>
+                                        <td className="border border-gray-300 px-4 py-2">{step.workTypeTitle}</td>
                                         <td className="border border-gray-300 px-4 py-2">{step.stepName}</td>
                                         <td className="border border-gray-300 px-4 py-2">{step.order}</td>
                                         <td className="border border-gray-300 px-4 py-2">{step.requiredSkills.join(", ")}</td>
                                     </tr>
-                                ))
-                            )}
+                                ))}
                         </tbody>
                     </table>
                 </div>
