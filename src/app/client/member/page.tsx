@@ -125,7 +125,7 @@ export default function MembersPage() {
                   <p>角色: {member.role}</p>
                   <p>技能: {member.skills.join(", ")}</p>
                   <p>狀態: {member.availability}</p>
-                  <p>聯絡資訊: {member.contactInfo.email || member.contactInfo.phone || "無"}</p>
+                  <p>聯絡資訊: {member.contactInfo?.phone || member.contactInfo?.email || "無"}</p>
                   <p>身分狀態: {member.status}</p>
                   <p>最後活躍時間: {member.lastActiveTime}</p>
                   <p>電話: {member.contactInfo?.phone || "未提供"}</p>
