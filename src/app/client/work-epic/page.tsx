@@ -32,7 +32,7 @@ export default function WorkEpicPage() {
             status: "待開始",
             priority: 1,
             location: "未指定",
-            // createdAt 不顯示於前端，但會自動寫入數據庫
+            createdAt: new Date().toISOString() // 新增 createdAt 屬性
         };
 
         await addWorkEpic(newEpic);
@@ -61,14 +61,6 @@ export default function WorkEpicPage() {
                         建立標的
                     </button>
                 </div>
-
-                {/* 新增按鈕 */}
-                <button
-                    onClick={handleAddEpic}
-                    className="bg-green-500 text-white px-4 py-2 mb-4"
-                >
-                    新增標的
-                </button>
 
                 <table className="table-auto w-full border-collapse border border-gray-300">
                     <thead>
