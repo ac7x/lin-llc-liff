@@ -12,6 +12,8 @@ export interface WorkTypeEntity extends WorkTypeTemplate {
     defaultWorkflow?: string; // 預設關聯的 WorkFlow
 }
 
+export type WorkType = WorkTypeTemplate | WorkTypeEntity;
+
 export async function getAllWorkTypes(isTemplate: boolean): Promise<WorkTypeTemplate[] | WorkTypeEntity[]> {
     const snapshot = await firestoreAdmin.collection("workType").get();
     if (isTemplate) {
