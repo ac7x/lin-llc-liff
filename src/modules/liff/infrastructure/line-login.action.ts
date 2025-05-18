@@ -82,7 +82,7 @@ async function updateUserProfile(auth: Auth, userId: string, profile: UserProfil
 async function initializeUserData(userId: string): Promise<void> {
     const batch = firestoreAdmin.batch();
     const userRef = firestoreAdmin.collection("users").doc(userId);
-    const assetRef = firestoreAdmin.collection("assets").doc(userId);
+    const assetRef = firestoreAdmin.collection("workAsset").doc(userId); // 修改集合名稱
     const memberRef = firestoreAdmin.collection("workMember").doc(userId);
 
     batch.set(userRef, {

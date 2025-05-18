@@ -37,7 +37,7 @@ export default function UserProfilePage() {
       }
       try {
         const db = getFirestore(firebaseApp);
-        const assetDoc = await getDoc(doc(db, 'assets', firebaseUser.uid));
+        const assetDoc = await getDoc(doc(db, 'workAsset', firebaseUser.uid)); // 修改集合名稱
         if (assetDoc.exists()) {
           const { coin, diamond } = assetDoc.data();
           setUserAssets({ coin, diamond });
