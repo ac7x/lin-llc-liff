@@ -18,20 +18,20 @@ interface GlobalBottomNavProps {
 const defaultNavItems: NavItem[] = [
   {
     href: '/client/home',
-    icon: '🛫',
+    icon: '🏠',
     label: '首頁',
-    active: false
-  },
-  {
-    href: '/client/explore',
-    icon: '🗺️',
-    label: '探索',
     active: false
   },
   {
     href: '/client/dashboard',
     icon: '📊',
     label: '儀表板',
+    active: false
+  },
+  {
+    href: '/client/work-schedule',
+    icon: '📅', // 修改為更適合的 emoji
+    label: '工作行程',
     active: false
   },
   {
@@ -47,6 +47,12 @@ const defaultNavItems: NavItem[] = [
     active: false
   },
   {
+    href: '/client/template',
+    icon: '📂',
+    label: '工作範本',
+    active: false
+  },
+  {
     href: '/client/member',
     icon: '👥',
     label: '成員',
@@ -54,7 +60,7 @@ const defaultNavItems: NavItem[] = [
   },
   {
     href: '/client/profile',
-    icon: '🧳',
+    icon: '🧑‍💼',
     label: '用戶',
     active: false
   }
