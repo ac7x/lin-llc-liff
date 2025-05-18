@@ -1,5 +1,4 @@
 "use server";
-import { WorkMember } from "@/app/actions/members.action";
 import "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 import { Auth, getAuth, UserRecord } from "firebase-admin/auth";
@@ -39,23 +38,6 @@ export async function loginWithLine(accessToken: string): Promise<string> {
             }),
             initializeUserData(profile.userId)
         ]);
-
-        // 檢查並建立 workMembers 條目
-        const workMemberDoc = await firestoreAdmin.collection("workMembers").doc(profile.userId).get();
-        if (!workMemberDoc.exists) {
-            const newWorkMember: WorkMember = {
-                memberId: profile.userId,
-                name: profile.displayName,
-                role: "未指定",
-                skills: [],
-                availability: "空閒",
-                contactInfo: {},
-                status: "在職",
-                isActive: true,
-                lastActiveTime: new Date().toISOString()
-            };
-            await firestoreAdmin.collection("workMembers").doc(profile.userId).set(newWorkMember);
-        }
 
         return auth.createCustomToken(profile.userId);
     } catch (err) {
@@ -101,6 +83,7 @@ async function initializeUserData(userId: string): Promise<void> {
     const batch = firestoreAdmin.batch();
     const userRef = firestoreAdmin.collection("users").doc(userId);
     const assetRef = firestoreAdmin.collection("assets").doc(userId);
+    const memberRef = firestoreAdmin.collection("members").doc(userId);
 
     batch.set(userRef, {
         lastLoginAt: new Date().toISOString()
@@ -113,6 +96,21 @@ async function initializeUserData(userId: string): Promise<void> {
             coin: 0,
             diamond: 0,
             updatedAt: new Date().toISOString()
+        });
+    }
+
+    const memberSnap = await memberRef.get();
+    if (!memberSnap.exists) {
+        batch.set(memberRef, {
+            memberId: userId,
+            name: "未指定",
+            role: "未指定",
+            skills: [],
+            availability: "空閒",
+            contactInfo: {},
+            status: "在職",
+            isActive: true,
+            lastActiveTime: new Date().toISOString()
         });
     }
 

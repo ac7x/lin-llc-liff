@@ -20,18 +20,18 @@ export interface WorkMember {
 }
 
 export async function getAllWorkMembers(): Promise<WorkMember[]> {
-    const snapshot = await firestoreAdmin.collection("workMembers").get();
+    const snapshot = await firestoreAdmin.collection("members").get();
     return snapshot.docs.map(doc => doc.data() as WorkMember);
 }
 
 export async function addWorkMember(member: WorkMember): Promise<void> {
-    await firestoreAdmin.collection("workMembers").doc(member.memberId).set(member);
+    await firestoreAdmin.collection("members").doc(member.memberId).set(member);
 }
 
 export async function updateWorkMember(memberId: string, updates: Partial<WorkMember>): Promise<void> {
-    await firestoreAdmin.collection("workMembers").doc(memberId).update(updates);
+    await firestoreAdmin.collection("members").doc(memberId).update(updates);
 }
 
 export async function deleteWorkMember(memberId: string): Promise<void> {
-    await firestoreAdmin.collection("workMembers").doc(memberId).delete();
+    await firestoreAdmin.collection("members").doc(memberId).delete();
 }

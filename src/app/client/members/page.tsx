@@ -17,9 +17,11 @@ export default function MembersPage() {
   return (
     <>
       <main className="p-4">
-        <h1 className="text-2xl font-bold mb-4">工作人員列表</h1>
+        <h1 className="text-2xl font-bold mb-4">
+          工作人員列表
+        </h1>
         <ul className="space-y-4">
-          {members.map(member => (
+          {members.map((member) => (
             <li key={member.memberId} className="p-4 bg-white rounded shadow">
               <h2 className="text-lg font-semibold">{member.name}</h2>
               <p>角色: {member.role}</p>
