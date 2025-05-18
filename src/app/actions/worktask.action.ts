@@ -3,12 +3,12 @@
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 
 export interface WorkTask {
-    taskId: string;
-    itemId: string;
-    targetQuantity: number;
-    completedQuantity: number;
-    unit: string;
-    status: "待分配" | "執行中" | "已完成";
+    taskId: string; // 唯一識別碼
+    itemId: string; // 關聯的 WorkItem
+    targetQuantity: number; // 目標數量
+    completedQuantity: number; // 已完成數量
+    unit: string; // 單位
+    status: "待分配" | "執行中" | "已完成"; // 狀態
 }
 
 export async function getAllWorkTasks(): Promise<WorkTask[]> {

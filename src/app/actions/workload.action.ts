@@ -3,15 +3,15 @@
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 
 export interface WorkLoad {
-    loadId: string;
-    taskId: string;
-    executor: string;
-    plannedQuantity: number;
-    actualQuantity: number;
-    unit: string;
-    notes?: string;
-    plannedStartTime: string;
-    plannedEndTime: string;
+    loadId: string; // 唯一識別碼
+    taskId: string; // 關聯的 WorkTask
+    executor: string; // 執行者
+    plannedQuantity: number; // 計劃數量
+    actualQuantity: number; // 實際完成數量
+    unit: string; // 單位
+    notes?: string; // 備註
+    plannedStartTime: string; // 計劃開始時間
+    plannedEndTime: string; // 計劃結束時間
 }
 
 export async function getAllWorkLoads(): Promise<WorkLoad[]> {
