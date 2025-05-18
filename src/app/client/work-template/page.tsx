@@ -1,10 +1,10 @@
 "use client";
 
+import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { addWorkFlow, getAllWorkFlows, WorkFlow } from "@/app/actions/workflow.action";
+import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
+import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { addWorkType, getAllWorkTypes, WorkType } from "@/app/actions/worktype.action";
-import { addWorkEpic, getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
-import { addWorkTask, getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
-import { addWorkLoad, getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import React, { useEffect, useState } from "react";
 
@@ -146,16 +146,22 @@ const WorkTemplatePage: React.FC = () => {
             return;
         }
 
-        const updatedEpic = {
-            ...workEpics.find(epic => epic.epicId === selectedWorkEpicId),
-            workTypes: [...(workEpics.find(epic => epic.epicId === selectedWorkEpicId)?.workTypes || []), selectedWorkType],
-            workFlows: [...(workEpics.find(epic => epic.epicId === selectedWorkEpicId)?.workFlows || []), selectedWorkFlow],
-            workTasks: [...(workEpics.find(epic => epic.epicId === selectedWorkEpicId)?.workTasks || []), selectedWorkTask],
-            workLoads: [...(workEpics.find(epic => epic.epicId === selectedWorkEpicId)?.workLoads || []), selectedWorkLoad]
+        const existingEpic = workEpics.find(epic => epic.epicId === selectedWorkEpicId);
+
+        if (!existingEpic) {
+            alert("無法找到選定的工作標的！");
+            return;
+        }
+
+        const updates: Partial<WorkEpicEntity> = {
+            workTypes: [...(existingEpic.workTypes || []), selectedWorkType],
+            workFlows: [...(existingEpic.workFlows || []), selectedWorkFlow],
+            workTasks: [...(existingEpic.workTasks || []), selectedWorkTask],
+            workLoads: [...(existingEpic.workLoads || []), selectedWorkLoad]
         };
 
-        await addWorkEpic(updatedEpic);
-        setWorkEpics(prev => prev.map(epic => epic.epicId === selectedWorkEpicId ? updatedEpic : epic));
+        await updateWorkEpic(selectedWorkEpicId, updates);
+        setWorkEpics(prev => prev.map(epic => epic.epicId === selectedWorkEpicId ? { ...epic, ...updates } : epic));
     };
 
     return (
