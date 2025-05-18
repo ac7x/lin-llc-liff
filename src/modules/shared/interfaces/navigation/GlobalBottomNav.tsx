@@ -16,18 +16,7 @@ interface GlobalBottomNavProps {
 }
 
 const defaultNavItems: NavItem[] = [
-  {
-    href: '/client/home',
-    icon: '🏠',
-    label: '首頁',
-    active: false
-  },
-  {
-    href: '/client/dashboard',
-    icon: '📊',
-    label: '儀表板',
-    active: false
-  },
+
   {
     href: '/client/work-schedule',
     icon: '📅',
