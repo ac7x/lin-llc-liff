@@ -1,12 +1,14 @@
 "use client";
 
-import { addWorkEpic, getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
+import { addWorkEpic, deleteWorkEpic, getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import { useEffect, useState } from "react";
 
 export default function WorkEpicPage() {
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
     const [newEpicTitle, setNewEpicTitle] = useState("");
+    const [editingEpicId, setEditingEpicId] = useState<string | null>(null);
+    const [editFields, setEditFields] = useState<Partial<WorkEpicEntity>>({});
 
     useEffect(() => {
         const fetchWorkEpics = async () => {
@@ -39,6 +41,33 @@ export default function WorkEpicPage() {
         await addWorkEpic(newEpic);
         setWorkEpics(prev => [...prev, newEpic]);
         setNewEpicTitle("");
+    };
+
+    const handleEditClick = (epic: WorkEpicEntity) => {
+        setEditingEpicId(epic.epicId);
+        setEditFields({ ...epic });
+    };
+
+    const handleEditFieldChange = (field: keyof WorkEpicEntity, value: string | number | undefined) => {
+        setEditFields(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSaveEdit = async (epicId: string) => {
+        await updateWorkEpic(epicId, editFields);
+        setWorkEpics(prev => prev.map(epic => epic.epicId === epicId ? { ...epic, ...editFields } : epic));
+        setEditingEpicId(null);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingEpicId(null);
+        setEditFields({});
+    };
+
+    const handleDeleteEpic = async (epicId: string) => {
+        if (window.confirm('確定要刪除這個標的嗎？')) {
+            await deleteWorkEpic(epicId);
+            setWorkEpics(prev => prev.filter(epic => epic.epicId !== epicId));
+        }
     };
 
     return (
@@ -74,21 +103,63 @@ export default function WorkEpicPage() {
                             <th className="border border-gray-300 px-4 py-2">狀態</th>
                             <th className="border border-gray-300 px-4 py-2">優先級</th>
                             <th className="border border-gray-300 px-4 py-2">地點</th>
+                            <th className="border border-gray-300 px-4 py-2">操作</th>
                         </tr>
                     </thead>
                     <tbody>
                         {workEpics.map(epic => (
                             <tr key={epic.epicId}>
-                                <td className="border border-gray-300 px-4 py-2">{epic.title}</td>
-                                <td className="border border-gray-300 px-4 py-2">{epic.startDate}</td>
-                                <td className="border border-gray-300 px-4 py-2">{epic.endDate}</td>
-                                <td className="border border-gray-300 px-4 py-2">
-                                    {epic.insuranceStatus === "有" ? `有 (${epic.insuranceDate || "未提供"})` : "無"}
-                                </td>
-                                <td className="border border-gray-300 px-4 py-2">{epic.owner}</td>
-                                <td className="border border-gray-300 px-4 py-2">{epic.status}</td>
-                                <td className="border border-gray-300 px-4 py-2">{epic.priority}</td>
-                                <td className="border border-gray-300 px-4 py-2">{epic.region} - {epic.address}</td>
+                                {editingEpicId === epic.epicId ? (
+                                    <>
+                                        <td className="border px-2 py-1"><input value={editFields.title || ''} onChange={e => handleEditFieldChange('title', e.target.value)} className="border p-1 w-full" /></td>
+                                        <td className="border px-2 py-1"><input type="date" value={editFields.startDate || ''} onChange={e => handleEditFieldChange('startDate', e.target.value)} className="border p-1 w-full" /></td>
+                                        <td className="border px-2 py-1"><input type="date" value={editFields.endDate || ''} onChange={e => handleEditFieldChange('endDate', e.target.value)} className="border p-1 w-full" /></td>
+                                        <td className="border px-2 py-1">
+                                            <select value={editFields.insuranceStatus || '無'} onChange={e => handleEditFieldChange('insuranceStatus', e.target.value)} className="border p-1 w-full">
+                                                <option value="無">無</option>
+                                                <option value="有">有</option>
+                                            </select>
+                                        </td>
+                                        <td className="border px-2 py-1"><input value={editFields.owner || ''} onChange={e => handleEditFieldChange('owner', e.target.value)} className="border p-1 w-full" /></td>
+                                        <td className="border px-2 py-1">
+                                            <select value={editFields.status || '待開始'} onChange={e => handleEditFieldChange('status', e.target.value)} className="border p-1 w-full">
+                                                <option value="待開始">待開始</option>
+                                                <option value="進行中">進行中</option>
+                                                <option value="已完成">已完成</option>
+                                                <option value="已取消">已取消</option>
+                                            </select>
+                                        </td>
+                                        <td className="border px-2 py-1"><input type="number" value={editFields.priority || 1} onChange={e => handleEditFieldChange('priority', Number(e.target.value))} className="border p-1 w-full" /></td>
+                                        <td className="border px-2 py-1">
+                                            <select value={editFields.region || '北部'} onChange={e => handleEditFieldChange('region', e.target.value)} className="border p-1 w-full">
+                                                <option value="北部">北部</option>
+                                                <option value="中部">中部</option>
+                                                <option value="南部">南部</option>
+                                                <option value="東部">東部</option>
+                                                <option value="離島">離島</option>
+                                            </select>
+                                        </td>
+                                        <td className="border px-2 py-1 flex gap-2">
+                                            <button onClick={() => handleSaveEdit(epic.epicId)} className="bg-green-500 text-white px-2 py-1 rounded">儲存</button>
+                                            <button onClick={handleCancelEdit} className="bg-gray-300 px-2 py-1 rounded">取消</button>
+                                        </td>
+                                    </>
+                                ) : (
+                                    <>
+                                        <td className="border px-2 py-1">{epic.title}</td>
+                                        <td className="border px-2 py-1">{epic.startDate}</td>
+                                        <td className="border px-2 py-1">{epic.endDate}</td>
+                                        <td className="border px-2 py-1">{epic.insuranceStatus || '無'}</td>
+                                        <td className="border px-2 py-1">{epic.owner}</td>
+                                        <td className="border px-2 py-1">{epic.status}</td>
+                                        <td className="border px-2 py-1">{epic.priority}</td>
+                                        <td className="border px-2 py-1">{epic.region}</td>
+                                        <td className="border px-2 py-1 flex gap-2">
+                                            <button onClick={() => handleEditClick(epic)} className="bg-yellow-400 text-white px-2 py-1 rounded">編輯</button>
+                                            <button onClick={() => handleDeleteEpic(epic.epicId)} className="bg-red-500 text-white px-2 py-1 rounded">刪除</button>
+                                        </td>
+                                    </>
+                                )}
                             </tr>
                         ))}
                     </tbody>
