@@ -20,34 +20,24 @@ export async function getWorkSchedules(
     horizontalAxis: "date" | "location" = "date"
 ): Promise<DailyWorkSchedule[]> {
     const today = new Date();
-    const schedules: DailyWorkSchedule[] = [];
-
-    // 模擬資料：15 個地點
     const locations = Array.from({ length: 15 }, (_, i) => `地點${i + 1}`);
 
-    // 根據 horizontalAxis 決定資料生成邏輯
-    if (horizontalAxis === "date") {
-        for (let i = 0; i < range; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + offset + i);
-            const isoDate = date.toISOString().split("T")[0];
+    return Array.from({ length: range }, (_, i) => {
+        const date = new Date(today);
+        date.setDate(today.getDate() + offset + i);
+        const isoDate = date.toISOString().split("T")[0];
 
-            const assignments: WorkAssignment[] = locations.map((location, index) => ({
+        const assignments = horizontalAxis === "date"
+            ? locations.map((location, index) => ({
                 location,
                 groupName: `第${(index + i) % 5 + 1}組`,
                 members: [
                     `員${(index + i * 3) % 70 + 1}`,
                     `員${(index + i * 3 + 1) % 70 + 1}`,
                 ],
-            }));
-
-            schedules.push({ date: isoDate, assignments });
-        }
-    } else {
-        for (let i = 0; i < range; i++) {
-            const location = locations[i % locations.length];
-            const assignments: WorkAssignment[] = [{
-                location,
+            }))
+            : [{
+                location: locations[i % locations.length],
                 groupName: `第${i % 5 + 1}組`,
                 members: [
                     `員${(i * 3) % 70 + 1}`,
@@ -55,9 +45,6 @@ export async function getWorkSchedules(
                 ],
             }];
 
-            schedules.push({ date: today.toISOString().split("T")[0], assignments });
-        }
-    }
-
-    return schedules;
+        return { date: isoDate, assignments };
+    });
 }

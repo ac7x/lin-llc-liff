@@ -18,20 +18,36 @@ type DailyWorkSchedule = {
 
 type Axis = "date" | "location";
 
+const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) => {
+    const horizontalLabels =
+        horizontalAxis === "date"
+            ? schedules.map(s => s.date)
+            : [...new Set(schedules.flatMap(s => s.assignments.map(a => a.location)))];
+
+    const verticalLabels =
+        horizontalAxis === "date"
+            ? [...new Set(schedules.flatMap(s => s.assignments.map(a => a.location)))]
+            : schedules.map(s => s.date);
+
+    return { horizontalLabels, verticalLabels };
+};
+
 const WorkSchedulePage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [offset, setOffset] = useState(0);
-    const [range, setRange] = useState(7);
-    const [schedules, setSchedules] = useState<DailyWorkSchedule[]>([]);
-    const [workLoads, setWorkLoads] = useState<WorkLoadEntity[]>([]);
-    const [horizontalAxis, setHorizontalAxis] = useState<Axis>("date");
+    const [state, setState] = useState({
+        offset: 0,
+        range: 7,
+        schedules: [] as DailyWorkSchedule[],
+        workLoads: [] as WorkLoadEntity[],
+        horizontalAxis: "date" as Axis,
+    });
 
     useEffect(() => {
         const updateRange = () => {
             const containerWidth = containerRef.current?.offsetWidth ?? 0;
             const approxCellWidth = 120;
             const maxCols = Math.max(1, Math.floor((containerWidth - 100) / approxCellWidth));
-            setRange(maxCols);
+            setState(prev => ({ ...prev, range: maxCols }));
         };
 
         const observer = new ResizeObserver(updateRange);
@@ -42,60 +58,25 @@ const WorkSchedulePage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        const fetch = async () => {
-            const data = await getWorkSchedules(offset, range, horizontalAxis);
-            setSchedules(data);
+        const fetchSchedules = async () => {
+            const data = await getWorkSchedules(state.offset, state.range, state.horizontalAxis);
+            setState(prev => ({ ...prev, schedules: data }));
         };
-        fetch();
-    }, [offset, range, horizontalAxis]);
+        fetchSchedules();
+    }, [state.offset, state.range, state.horizontalAxis]);
 
     useEffect(() => {
         const fetchWorkLoads = async () => {
             const loads = await getAllWorkLoads(false);
-            setWorkLoads(loads as WorkLoadEntity[]);
+            setState(prev => ({ ...prev, workLoads: loads as WorkLoadEntity[] }));
         };
         fetchWorkLoads();
     }, []);
 
-    const renderWorkLoads = () => {
-        return workLoads.map((load, index) => (
-            <tr key={index}>
-                <td>{load.loadId}</td>
-                <td>{load.taskId}</td>
-                <td>{load.plannedQuantity}</td>
-                <td>{load.unit}</td>
-            </tr>
-        ));
-    };
-
-    const handleAddWorkLoad = () => {
-        const newLoad: WorkLoadEntity = {
-            loadId: `load-${Date.now()}`,
-            taskId: "task-1",
-            plannedQuantity: 10,
-            unit: "件",
-            plannedStartTime: new Date().toISOString(),
-            plannedEndTime: new Date(Date.now() + 3600 * 1000).toISOString(),
-            actualQuantity: 0,
-            executor: "user-1",
-        };
-        setWorkLoads(prev => [...prev, newLoad]);
-    };
-
-    // 橫軸：依據 horizontalAxis 決定橫向資料是日期還是地點
-    const horizontalLabels =
-        horizontalAxis === "date"
-            ? schedules.map(s => s.date)
-            : [...new Set(schedules.flatMap(s => s.assignments.map(a => a.location)))];
-
-    // 縱軸：如果橫軸是日期，縱軸為地點；反之為日期
-    const verticalLabels =
-        horizontalAxis === "date"
-            ? [...new Set(schedules.flatMap(s => s.assignments.map(a => a.location)))]
-            : schedules.map(s => s.date);
+    const { horizontalLabels, verticalLabels } = calculateLabels(state.schedules, state.horizontalAxis);
 
     const getAssignment = (date: string, location: string) => {
-        const day = schedules.find(s => s.date === date);
+        const day = state.schedules.find(s => s.date === date);
         return day?.assignments.find(a => a.location === location);
     };
 
@@ -105,28 +86,12 @@ const WorkSchedulePage: React.FC = () => {
                 <h1 className="text-2xl font-bold mb-4">工作排班表</h1>
 
                 <div className="flex justify-between items-center mb-4">
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setOffset(offset - range)}
-                            className="bg-blue-500 text-white px-4 py-2 rounded"
-                        >
-                            前 {range} 天
-                        </button>
-                        <button
-                            onClick={() => setOffset(offset + range)}
-                            className="bg-blue-500 text-white px-4 py-2 rounded"
-                        >
-                            後 {range} 天
-                        </button>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                        顯示天數：{range}
-                    </div>
+                    <div className="text-sm text-gray-600">顯示天數：{state.range}</div>
                     <div>
                         <select
                             className="border px-2 py-1 rounded"
-                            value={horizontalAxis}
-                            onChange={(e) => setHorizontalAxis(e.target.value as Axis)}
+                            value={state.horizontalAxis}
+                            onChange={(e) => setState(prev => ({ ...prev, horizontalAxis: e.target.value as Axis }))}
                         >
                             <option value="date">橫向：日期</option>
                             <option value="location">橫向：地點</option>
@@ -138,7 +103,7 @@ const WorkSchedulePage: React.FC = () => {
                     <thead>
                         <tr className="bg-gray-100">
                             <th className="border px-2 py-1 whitespace-nowrap">
-                                {horizontalAxis === "date" ? "地點" : "日期"}
+                                {state.horizontalAxis === "date" ? "地點" : "日期"}
                             </th>
                             {horizontalLabels.map(label => (
                                 <th key={label} className="border px-2 py-1 whitespace-nowrap">
@@ -155,7 +120,7 @@ const WorkSchedulePage: React.FC = () => {
                                 </td>
                                 {horizontalLabels.map((hLabel) => {
                                     const assignment =
-                                        horizontalAxis === "date"
+                                        state.horizontalAxis === "date"
                                             ? getAssignment(hLabel, label)
                                             : getAssignment(label, hLabel);
 
@@ -187,12 +152,31 @@ const WorkSchedulePage: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {renderWorkLoads()}
+                        {state.workLoads.map((load, index) => (
+                            <tr key={index}>
+                                <td>{load.loadId}</td>
+                                <td>{load.taskId}</td>
+                                <td>{load.plannedQuantity}</td>
+                                <td>{load.unit}</td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
                 <button
                     className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
-                    onClick={handleAddWorkLoad}
+                    onClick={() => {
+                        const newLoad: WorkLoadEntity = {
+                            loadId: `load-${Date.now()}`,
+                            taskId: "task-1",
+                            plannedQuantity: 10,
+                            unit: "件",
+                            plannedStartTime: new Date().toISOString(),
+                            plannedEndTime: new Date(Date.now() + 3600 * 1000).toISOString(),
+                            actualQuantity: 0,
+                            executor: "user-1",
+                        };
+                        setState(prev => ({ ...prev, workLoads: [...prev.workLoads, newLoad] }));
+                    }}
                 >
                     新增工作負載
                 </button>
