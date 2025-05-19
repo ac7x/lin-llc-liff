@@ -14,11 +14,15 @@ import {
     addWorkLoad // ← 加入這行
     ,
 
+
+
     WorkLoadEntity
 } from "@/app/actions/workload.action";
 import {
     addWorkTask // ← 加入這行
     ,
+
+
 
     WorkTaskEntity
 } from "@/app/actions/worktask.action";
@@ -164,33 +168,32 @@ const WorkTemplatePage: React.FC = () => {
         selectedFlows.forEach(flow => {
             const quantity = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
-            for (let i = 0; i < quantity; i++) {
-                const taskId = `task-${flow.flowId}-${Date.now()}-${i}`;
-                const task: WorkTaskEntity = {
-                    taskId,
-                    itemId: flow.flowId,
-                    targetQuantity: 1,
-                    unit: "單位",
-                    completedQuantity: 0,
-                    status: "待分配"
-                };
-                newTasks.push(task);
+            // 只產生一筆 task
+            const taskId = `task-${flow.flowId}-${Date.now()}`;
+            const task: WorkTaskEntity = {
+                taskId,
+                itemId: flow.flowId,
+                targetQuantity: quantity,
+                unit: "單位",
+                completedQuantity: 0,
+                status: "待分配"
+            };
+            newTasks.push(task);
 
-                // 修正：每個 task 依 split 產生 load
-                for (let j = 0; j < split; j++) {
-                    const loadId = `load-${taskId}-${j}`;
-                    const load: WorkLoadEntity = {
-                        loadId,
-                        taskId,
-                        plannedQuantity: 1,
-                        unit: "單位",
-                        plannedStartTime: new Date().toISOString(),
-                        plannedEndTime: new Date().toISOString(),
-                        actualQuantity: 0,
-                        executor: ""
-                    };
-                    newLoads.push(load);
-                }
+            // 只依 split 產生 load
+            for (let j = 0; j < split; j++) {
+                const loadId = `load-${taskId}-${j}`;
+                const load: WorkLoadEntity = {
+                    loadId,
+                    taskId,
+                    plannedQuantity: Math.ceil(quantity / split),
+                    unit: "單位",
+                    plannedStartTime: new Date().toISOString(),
+                    plannedEndTime: new Date().toISOString(),
+                    actualQuantity: 0,
+                    executor: ""
+                };
+                newLoads.push(load);
             }
         });
 
