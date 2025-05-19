@@ -37,7 +37,8 @@ export default function UserProfilePage() {
       }
       try {
         const db = getFirestore(firebaseApp);
-        const assetDoc = await getDoc(doc(db, 'workAsset', firebaseUser.uid)); // 修改集合名稱
+        // 只從 workAsset 取得資產，與 workMember 對應
+        const assetDoc = await getDoc(doc(db, 'workAsset', firebaseUser.uid));
         if (assetDoc.exists()) {
           const { coin, diamond } = assetDoc.data();
           setUserAssets({ coin, diamond });

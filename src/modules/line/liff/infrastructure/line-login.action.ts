@@ -81,12 +81,22 @@ async function updateUserProfile(auth: Auth, userId: string, profile: UserProfil
 
 async function initializeUserData(userId: string): Promise<void> {
     const batch = firestoreAdmin.batch();
-    const userRef = firestoreAdmin.collection("workUser").doc(userId);
-    const assetRef = firestoreAdmin.collection("workAsset").doc(userId); // 修改集合名稱
+    // 移除 workUser 集合，僅保留 workMember
+    const assetRef = firestoreAdmin.collection("workAsset").doc(userId);
     const memberRef = firestoreAdmin.collection("workMember").doc(userId);
 
-    batch.set(userRef, {
-        lastLoginAt: new Date().toISOString()
+    // 不再有 workUser，將 lastLoginAt 寫入 workMember
+    batch.set(memberRef, {
+        memberId: userId,
+        lastLoginAt: new Date().toISOString(),
+        name: "未指定",
+        role: "未指定",
+        skills: [],
+        availability: "空閒",
+        contactInfo: {},
+        status: "在職",
+        isActive: true,
+        lastActiveTime: new Date().toISOString()
     }, { merge: true });
 
     const assetSnap = await assetRef.get();
@@ -99,20 +109,6 @@ async function initializeUserData(userId: string): Promise<void> {
         });
     }
 
-    const memberSnap = await memberRef.get();
-    if (!memberSnap.exists) {
-        batch.set(memberRef, {
-            memberId: userId,
-            name: "未指定",
-            role: "未指定",
-            skills: [],
-            availability: "空閒",
-            contactInfo: {},
-            status: "在職",
-            isActive: true,
-            lastActiveTime: new Date().toISOString()
-        });
-    }
-
+    // memberRef 已於 batch.set 上方合併建立/更新
     await batch.commit();
 }
