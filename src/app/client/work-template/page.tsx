@@ -53,6 +53,7 @@ const WorkTemplatePage: React.FC = () => {
     const [selectedWorkLoadId, setSelectedWorkLoadId] = useState<string | null>(null);
     const [showValidationError, setShowValidationError] = useState(false);
     const [flowQuantities, setFlowQuantities] = useState<{ [flowId: string]: number }>({});
+    const [workloadCounts, setWorkloadCounts] = useState<{ [taskId: string]: number }>({});
 
     useEffect(() => {
         const fetchData = async () => {
@@ -320,7 +321,7 @@ const WorkTemplatePage: React.FC = () => {
                     {/* 流程列表與數量輸入 */}
                     {selectedWorkTypeId && (
                         <div className="mb-4">
-                            <h4 className="font-bold mb-2">對應流程與數量</h4>
+                            <h4 className="font-bold mb-2">對應流程、數量與分割筆數</h4>
                             {filteredFlows.length === 0 && <div className="text-gray-500">此種類尚無流程</div>}
                             {filteredFlows.map(flow => (
                                 <div key={flow.flowId} className="flex items-center mb-2 gap-2">
@@ -336,6 +337,19 @@ const WorkTemplatePage: React.FC = () => {
                                         className="border p-1 w-24"
                                         placeholder="數量"
                                     />
+                                    <label className="ml-2">分割：</label>
+                                    <select
+                                        className="border p-1 w-20"
+                                        value={workloadCounts[flow.flowId] || 1}
+                                        onChange={e => {
+                                            const val = parseInt(e.target.value, 10) || 1;
+                                            setWorkloadCounts(prev => ({ ...prev, [flow.flowId]: val }));
+                                        }}
+                                    >
+                                        {[...Array(10)].map((_, i) => (
+                                            <option key={i + 1} value={i + 1}>{i + 1} 筆</option>
+                                        ))}
+                                    </select>
                                 </div>
                             ))}
                         </div>
