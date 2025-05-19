@@ -24,11 +24,15 @@ import {
 
 
 
+
+
     WorkLoadEntity
 } from "@/app/actions/workload.action";
 import {
     addWorkTask // ← 加入這行
     ,
+
+
 
 
 
@@ -143,8 +147,9 @@ const WorkTemplatePage: React.FC = () => {
         const type = workTypes.find(t => t.typeId === selectedWorkTypeId);
         const typeTitle = type ? type.title : '未知';
 
-        // flowId 改為 flow-種類-順序
-        const newFlowId = `flow-${typeTitle}-${newStepOrder}`;
+        // flowId 改為 flow-種類-順序（順序補零兩位數）
+        const orderStr = newStepOrder.toString().padStart(2, '0');
+        const newFlowId = `flow-${typeTitle}-${orderStr}`;
 
         const newFlow: WorkFlowEntity = {
             flowId: newFlowId,
@@ -191,8 +196,10 @@ const WorkTemplatePage: React.FC = () => {
         selectedFlows.forEach(flow => {
             const quantity = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
-            // 只產生一筆 task
-            const taskId = `task-${flow.flowId}-${Date.now()}`;
+            // 只產生一筆 task，taskId 補零兩位數
+            const now = Date.now();
+            const taskOrderStr = split.toString().padStart(2, '0');
+            const taskId = `task-${flow.flowId}-${taskOrderStr}-${now}`;
             const task: WorkTaskEntity = {
                 taskId,
                 itemId: flow.flowId,
@@ -203,9 +210,10 @@ const WorkTemplatePage: React.FC = () => {
             };
             newTasks.push(task);
 
-            // 只依 split 產生 load
+            // 只依 split 產生 load，loadId 補零兩位數
             for (let j = 0; j < split; j++) {
-                const loadId = `load-${taskId}-${j}`;
+                const loadOrderStr = j.toString().padStart(2, '0');
+                const loadId = `load-${taskId}-${loadOrderStr}`;
                 const load: WorkLoadEntity = {
                     loadId,
                     taskId,
