@@ -17,11 +17,13 @@ import {
 
 
 
+
     WorkLoadEntity
 } from "@/app/actions/workload.action";
 import {
     addWorkTask // ← 加入這行
     ,
+
 
 
 
@@ -190,8 +192,8 @@ const WorkTemplatePage: React.FC = () => {
                     taskId,
                     plannedQuantity: 0, // ← 這裡改為 0
                     unit: "單位",
-                    plannedStartTime: new Date().toISOString(),
-                    plannedEndTime: new Date().toISOString(),
+                    plannedStartTime: "", // ← 改為空字串
+                    plannedEndTime: "",   // ← 改為空字串
                     actualQuantity: 0,
                     executor: ""
                 };
