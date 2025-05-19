@@ -114,15 +114,31 @@ const WorkSchedulePage: React.FC = () => {
         return day?.assignments.find(a => a.location === location);
     };
 
+    const tableStyle = {
+        borderCollapse: "collapse" as const,
+        width: "100%",
+        marginBottom: 24,
+    };
+
+    const cellStyle = {
+        border: "1px solid #888",
+        padding: 8,
+    };
+
+    const headerStyle = {
+        ...cellStyle,
+        background: "#f5f5f5",
+    };
+
     return (
         <>
             <div
                 ref={containerRef}
                 style={{
-                    border: '1px solid #ccc',
+                    border: "1px solid #ccc",
                     borderRadius: 8,
                     padding: 16,
-                    margin: 16
+                    margin: 16,
                 }}
             >
                 <h1>工作排班表</h1>
@@ -140,57 +156,30 @@ const WorkSchedulePage: React.FC = () => {
                     </div>
                 </div>
 
-                <table
-                    style={{
-                        borderCollapse: 'collapse',
-                        width: '100%',
-                        marginBottom: 24,
-                        border: '1px solid #888'
-                    }}
-                >
+                <table style={tableStyle}>
                     <thead>
                         <tr>
-                            <th
-                                style={{
-                                    border: '1px solid #888',
-                                    background: '#f5f5f5',
-                                    padding: 8
-                                }}
-                            >
+                            <th style={headerStyle}>
                                 {state.horizontalAxis === "date" ? "地點" : "日期"}
                             </th>
                             {horizontalLabels.map(label => (
-                                <th
-                                    key={label}
-                                    style={{
-                                        border: '1px solid #888',
-                                        background: '#f5f5f5',
-                                        padding: 8
-                                    }}
-                                >
-                                    {label}
-                                </th>
+                                <th key={label} style={headerStyle}>{label}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {verticalLabels.map(label => (
                             <tr key={label}>
-                                <td style={{ border: '1px solid #888', padding: 8 }}>{label}</td>
+                                <td style={cellStyle}>{label}</td>
                                 {horizontalLabels.map(hLabel => {
                                     const assignment =
                                         state.horizontalAxis === "date"
                                             ? getAssignment(hLabel, label)
                                             : getAssignment(label, hLabel);
                                     return (
-                                        <td
-                                            key={label + "-" + hLabel}
-                                            style={{ border: '1px solid #888', padding: 8 }}
-                                        >
+                                        <td key={label + "-" + hLabel} style={cellStyle}>
                                             <div>{assignment?.groupName ?? "-"}</div>
-                                            <div>
-                                                {(assignment?.members ?? []).join("、")}
-                                            </div>
+                                            <div>{(assignment?.members ?? []).join("、")}</div>
                                         </td>
                                     );
                                 })}
@@ -200,32 +189,27 @@ const WorkSchedulePage: React.FC = () => {
                 </table>
 
                 <h2>工作負荷</h2>
-                <table
-                    style={{
-                        borderCollapse: 'collapse',
-                        width: '100%',
-                        border: '1px solid #888'
-                    }}
-                >
+                <table style={tableStyle}>
                     <thead>
                         <tr>
-                            <th style={{ border: '1px solid #888', background: '#f5f5f5', padding: 8 }}>負荷ID</th>
-                            <th style={{ border: '1px solid #888', background: '#f5f5f5', padding: 8 }}>任務ID</th>
-                            <th style={{ border: '1px solid #888', background: '#f5f5f5', padding: 8 }}>計劃數量</th>
-                            <th style={{ border: '1px solid #888', background: '#f5f5f5', padding: 8 }}>單位</th>
+                            <th style={headerStyle}>負荷ID</th>
+                            <th style={headerStyle}>任務ID</th>
+                            <th style={headerStyle}>計劃數量</th>
+                            <th style={headerStyle}>單位</th>
                         </tr>
                     </thead>
                     <tbody>
                         {state.workLoads.map((load, index) => (
                             <tr key={index}>
-                                <td style={{ border: '1px solid #888', padding: 8 }}>{load.loadId}</td>
-                                <td style={{ border: '1px solid #888', padding: 8 }}>{load.taskId}</td>
-                                <td style={{ border: '1px solid #888', padding: 8 }}>{load.plannedQuantity}</td>
-                                <td style={{ border: '1px solid #888', padding: 8 }}>{load.unit}</td>
+                                <td style={cellStyle}>{load.loadId}</td>
+                                <td style={cellStyle}>{load.taskId}</td>
+                                <td style={cellStyle}>{load.plannedQuantity}</td>
+                                <td style={cellStyle}>{load.unit}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+
                 <button
                     onClick={() => {
                         const newLoad: WorkLoadEntity = {
