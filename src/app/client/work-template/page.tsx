@@ -179,6 +179,16 @@ const WorkTemplatePage: React.FC = () => {
         await updateWorkEpic(selectedWorkEpicId, updates);
     };
 
+    // 根據所選流程過濾工作任務
+    const filteredTasks = selectedWorkFlowIds.length > 0
+        ? workTasks.filter(task => {
+            // 這裡假設 task.itemId 或其他欄位能與 flowId 關聯，若無則需根據實際資料結構調整
+            // 例如：task.flowId === selectedWorkFlowIds[0] 或 task 屬於該流程
+            // 目前暫以全部顯示，請根據實際需求調整
+            return true;
+        })
+        : workTasks;
+
     return (
         <>
             <main className="p-4">
@@ -341,7 +351,7 @@ const WorkTemplatePage: React.FC = () => {
                         className="border p-2 mb-4 block"
                     >
                         <option value="">選擇工作任務</option>
-                        {workTasks.map(task => (
+                        {filteredTasks.map(task => (
                             <option key={task.taskId} value={task.taskId}>
                                 {task.taskId}
                             </option>
