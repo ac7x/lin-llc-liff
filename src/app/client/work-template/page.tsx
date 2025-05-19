@@ -38,10 +38,11 @@ const WorkTemplatePage: React.FC = () => {
     const [selectedWorkEpicId, setSelectedWorkEpicId] = useState<string | null>(null);
     const [workTasks, setWorkTasks] = useState<WorkTaskEntity[]>([]);
     const [workLoads, setWorkLoads] = useState<WorkLoadEntity[]>([]);
-    const [selectedWorkFlowIds, setSelectedWorkFlowIds] = useState<string[]>([]);
+    const [selectedWorkFlowIds] = useState<string[]>([]);
     const [selectedWorkTaskId, setSelectedWorkTaskId] = useState<string | null>(null);
     const [selectedWorkLoadId, setSelectedWorkLoadId] = useState<string | null>(null);
     const [showValidationError, setShowValidationError] = useState(false);
+    const [flowQuantities, setFlowQuantities] = useState<{ [flowId: string]: number }>({});
 
     useEffect(() => {
         const fetchData = async () => {
@@ -181,12 +182,7 @@ const WorkTemplatePage: React.FC = () => {
 
     // 根據所選流程過濾工作任務
     const filteredTasks = selectedWorkFlowIds.length > 0
-        ? workTasks.filter(task => {
-            // 這裡假設 task.itemId 或其他欄位能與 flowId 關聯，若無則需根據實際資料結構調整
-            // 例如：task.flowId === selectedWorkFlowIds[0] 或 task 屬於該流程
-            // 目前暫以全部顯示，請根據實際需求調整
-            return true;
-        })
+        ? workTasks // 目前暫以全部顯示，請根據實際需求調整
         : workTasks;
 
     return (
@@ -319,7 +315,10 @@ const WorkTemplatePage: React.FC = () => {
 
                     <select
                         value={selectedWorkTypeId || ""}
-                        onChange={e => setSelectedWorkTypeId(e.target.value)}
+                        onChange={e => {
+                            setSelectedWorkTypeId(e.target.value)
+                            setFlowQuantities({}); // 切換種類時重置數量
+                        }}
                         className="border p-2 mb-4 block"
                     >
                         <option value="">選擇工作種類</option>
@@ -330,20 +329,29 @@ const WorkTemplatePage: React.FC = () => {
                         ))}
                     </select>
 
-                    <select
-                        multiple
-                        value={selectedWorkFlowIds}
-                        onChange={e =>
-                            setSelectedWorkFlowIds(Array.from(e.target.selectedOptions, option => option.value))
-                        }
-                        className="border p-2 mb-4 block h-32"
-                    >
-                        {filteredFlows.map(flow => (
-                            <option key={flow.flowId} value={flow.flowId}>
-                                {flow.flowId}
-                            </option>
-                        ))}
-                    </select>
+                    {/* 流程列表與數量輸入 */}
+                    {selectedWorkTypeId && (
+                        <div className="mb-4">
+                            <h4 className="font-bold mb-2">對應流程與數量</h4>
+                            {filteredFlows.length === 0 && <div className="text-gray-500">此種類尚無流程</div>}
+                            {filteredFlows.map(flow => (
+                                <div key={flow.flowId} className="flex items-center mb-2 gap-2">
+                                    <span className="flex-1">流程ID: {flow.flowId}</span>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        value={flowQuantities[flow.flowId] || ''}
+                                        onChange={e => {
+                                            const val = parseInt(e.target.value, 10) || 0;
+                                            setFlowQuantities(q => ({ ...q, [flow.flowId]: val }));
+                                        }}
+                                        className="border p-1 w-24"
+                                        placeholder="數量"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     <select
                         value={selectedWorkTaskId || ""}
