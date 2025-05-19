@@ -13,11 +13,13 @@ import {
 import {
     addWorkLoad // ← 加入這行
     ,
+
     WorkLoadEntity
 } from "@/app/actions/workload.action";
 import {
     addWorkTask // ← 加入這行
     ,
+
     WorkTaskEntity
 } from "@/app/actions/worktask.action";
 import {
@@ -157,8 +159,8 @@ const WorkTemplatePage: React.FC = () => {
         }
 
         // 產生任務與工作量
-        const newTasks: WorkTaskEntity[] = []
-        const newLoads: WorkLoadEntity[] = []
+        const newTasks: WorkTaskEntity[] = [];
+        const newLoads: WorkLoadEntity[] = [];
         selectedFlows.forEach(flow => {
             const quantity = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
@@ -174,6 +176,7 @@ const WorkTemplatePage: React.FC = () => {
                 };
                 newTasks.push(task);
 
+                // 修正：每個 task 依 split 產生 load
                 for (let j = 0; j < split; j++) {
                     const loadId = `load-${taskId}-${j}`;
                     const load: WorkLoadEntity = {
