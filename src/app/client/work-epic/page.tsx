@@ -75,21 +75,8 @@ export default function WorkEpicPage() {
         let total = 0
         let completed = 0
 
-        if (epic.workTypes && epic.workFlows && epic.workTasks) {
-            // 取得所有 workType 對應的 workFlow
-            epic.workTypes.forEach(type => {
-                const flows = epic.workFlows!.filter(flow => flow.workTypeId === type.typeId)
-                flows.forEach(flow => {
-                    // 找出屬於此 flow 的 workTask
-                    const tasks = epic.workTasks!.filter(task => task.itemId === flow.flowId)
-                    tasks.forEach(task => {
-                        total += task.targetQuantity
-                        completed += task.completedQuantity
-                    })
-                })
-            })
-        } else if (epic.workTasks) {
-            // 若沒有 workTypes/workFlows，直接統計所有 workTasks
+        // 只統計每個 workTask 一次，避免重複加總
+        if (epic.workTasks) {
             epic.workTasks.forEach(task => {
                 total += task.targetQuantity
                 completed += task.completedQuantity
