@@ -2,6 +2,15 @@
 
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 
+/**
+ * WorkAsset 資料結構
+ * @property {string} assetID - 唯一識別碼
+ * @property {string} description - 資產描述
+ * @property {number} amount - 金額，表示薪資或資產的金額
+ * @property {string} currency - 貨幣，例如 "TWD"
+ * @property {number} coin - 用戶擁有的虛擬硬幣數量
+ * @property {number} diamond - 用戶擁有的虛擬鑽石數量
+ */
 export interface WorkAsset {
     assetID: string; // 唯一識別碼
     description: string; // 資產描述

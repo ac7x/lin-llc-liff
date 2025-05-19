@@ -2,6 +2,13 @@
 
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 
+/**
+ * WorkTaskTemplate 代表一個工作任務的基本資料結構
+ * @property taskId 唯一識別碼
+ * @property itemId 關聯的 WorkItem
+ * @property targetQuantity 目標數量
+ * @property unit 單位
+ */
 export interface WorkTaskTemplate {
     taskId: string; // 唯一識別碼
     itemId: string; // 關聯的 WorkItem
@@ -9,6 +16,11 @@ export interface WorkTaskTemplate {
     unit: string; // 單位
 }
 
+/**
+ * WorkTaskEntity 擴充自 WorkTaskTemplate，包含任務執行狀態
+ * @property completedQuantity 已完成數量
+ * @property status 任務狀態（待分配、執行中、已完成）
+ */
 export interface WorkTaskEntity extends WorkTaskTemplate {
     completedQuantity: number; // 已完成數量
     status: "待分配" | "執行中" | "已完成"; // 狀態
