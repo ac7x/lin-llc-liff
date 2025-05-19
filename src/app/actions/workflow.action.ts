@@ -47,7 +47,7 @@ export async function deleteWorkFlow(flowId: string): Promise<void> {
 /**
  * 取得所有 workFlow 的原始資料清單
  */
-export async function listWorkFlow(): Promise<any[]> {
+export async function listWorkFlow(): Promise<WorkFlowEntity[]> {
     const snapshot = await firestoreAdmin.collection("workFlow").get();
-    return snapshot.docs.map(doc => doc.data());
+    return snapshot.docs.map(doc => doc.data() as WorkFlowEntity);
 }

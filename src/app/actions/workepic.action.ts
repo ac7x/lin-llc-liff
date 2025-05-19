@@ -75,7 +75,7 @@ export async function deleteWorkEpic(epicId: string): Promise<void> {
 /**
  * 取得所有 workEpic 的原始資料清單
  */
-export async function listWorkEpic(): Promise<any[]> {
+export async function listWorkEpic(): Promise<WorkEpicEntity[]> {
     const snapshot = await firestoreAdmin.collection("workEpic").get();
-    return snapshot.docs.map(doc => doc.data());
+    return snapshot.docs.map(doc => doc.data() as WorkEpicEntity);
 }

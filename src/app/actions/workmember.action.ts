@@ -39,7 +39,7 @@ export async function deleteWorkMember(memberId: string): Promise<void> {
 /**
  * 取得所有 workMember 的原始資料清單
  */
-export async function listWorkMember(): Promise<any[]> {
+export async function listWorkMember(): Promise<WorkMember[]> {
     const snapshot = await firestoreAdmin.collection("workMember").get();
-    return snapshot.docs.map(doc => doc.data());
+    return snapshot.docs.map(doc => doc.data() as WorkMember);
 }

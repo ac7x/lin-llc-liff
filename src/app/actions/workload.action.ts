@@ -41,7 +41,7 @@ export async function deleteWorkLoad(loadId: string): Promise<void> {
 /**
  * 取得所有 workLoad 的原始資料清單
  */
-export async function listWorkLoad(): Promise<any[]> {
+export async function listWorkLoad(): Promise<WorkLoadEntity[]> {
     const snapshot = await firestoreAdmin.collection("workLoad").get();
-    return snapshot.docs.map(doc => doc.data());
+    return snapshot.docs.map(doc => doc.data() as WorkLoadEntity);
 }

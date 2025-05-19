@@ -38,7 +38,7 @@ export async function deleteWorkType(typeId: string): Promise<void> {
 /**
  * 取得所有 workType 的原始資料清單
  */
-export async function listWorkType(): Promise<any[]> {
+export async function listWorkType(): Promise<WorkTypeEntity[]> {
     const snapshot = await firestoreAdmin.collection("workType").get();
-    return snapshot.docs.map(doc => doc.data());
+    return snapshot.docs.map(doc => doc.data() as WorkTypeEntity);
 }
