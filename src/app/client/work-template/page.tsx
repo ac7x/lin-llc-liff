@@ -134,29 +134,49 @@ const WorkTemplatePage: React.FC = () => {
             return;
         }
 
-        const selectedWorkType = workTypes.find(type => type.typeId === selectedWorkTypeId);
-        const selectedWorkFlows = workFlows.filter(flow => selectedWorkFlowIds.includes(flow.flowId));
-        const selectedWorkTask = workTasks.find(task => task.taskId === selectedWorkTaskId);
-        const selectedWorkLoad = workLoads.find(load => load.loadId === selectedWorkLoadId);
+        // 取得選中的工作種類、流程、任務、工作量
+        const selectedType = workTypes.find(type => type.typeId === selectedWorkTypeId);
+        const selectedFlows = workFlows.filter(flow => selectedWorkFlowIds.includes(flow.flowId));
+        const selectedTask = workTasks.find(task => task.taskId === selectedWorkTaskId);
+        const selectedLoad = workLoads.find(load => load.loadId === selectedWorkLoadId);
         const existingEpic = workEpics.find(epic => epic.epicId === selectedWorkEpicId);
 
-        if (!selectedWorkType || selectedWorkFlows.length === 0 || !selectedWorkTask || !selectedWorkLoad || !existingEpic) {
+        if (!selectedType || selectedFlows.length === 0 || !selectedTask || !selectedLoad || !existingEpic) {
             setShowValidationError(true);
             return;
         }
 
+        // 避免與 useState 變數衝突，改名
+        const updatedWorkTypes = existingEpic.workTypes ? [...existingEpic.workTypes] : [];
+        if (!updatedWorkTypes.some(type => type.typeId === selectedType.typeId)) {
+            updatedWorkTypes.push(selectedType);
+        }
+
+        const updatedWorkFlows = existingEpic.workFlows ? [...existingEpic.workFlows] : [];
+        selectedFlows.forEach(flow => {
+            if (!updatedWorkFlows.some(f => f.flowId === flow.flowId)) {
+                updatedWorkFlows.push(flow);
+            }
+        });
+
+        const updatedWorkTasks = existingEpic.workTasks ? [...existingEpic.workTasks] : [];
+        if (!updatedWorkTasks.some(task => task.taskId === selectedTask.taskId)) {
+            updatedWorkTasks.push(selectedTask);
+        }
+
+        const updatedWorkLoads = existingEpic.workLoads ? [...existingEpic.workLoads] : [];
+        if (!updatedWorkLoads.some(load => load.loadId === selectedLoad.loadId)) {
+            updatedWorkLoads.push(selectedLoad);
+        }
+
         const updates: Partial<WorkEpicEntity> = {
-            workTypes: [...(existingEpic.workTypes || []), selectedWorkType],
-            workFlows: [...(existingEpic.workFlows || []), ...selectedWorkFlows],
-            workTasks: [...(existingEpic.workTasks || []), selectedWorkTask],
-            workLoads: [...(existingEpic.workLoads || []), selectedWorkLoad]
+            workTypes: updatedWorkTypes,
+            workFlows: updatedWorkFlows,
+            workTasks: updatedWorkTasks,
+            workLoads: updatedWorkLoads
         };
 
         await updateWorkEpic(selectedWorkEpicId, updates);
-        setWorkEpics(prev =>
-            prev.map(epic => epic.epicId === selectedWorkEpicId ? { ...epic, ...updates } : epic)
-        );
-        setShowValidationError(false);
     };
 
     return (
