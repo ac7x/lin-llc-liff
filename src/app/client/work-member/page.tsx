@@ -57,16 +57,17 @@ export default function WorkMemberPage() {
 
   return (
     <>
-      <main className="p-4">
-        <h1 className="text-2xl font-bold mb-4">工作人員列表</h1>
+      <main className="pb-16 max-w-lg mx-auto px-4">
+        <h1 className="text-2xl font-bold mb-6 text-center">工作人員列表</h1>
 
         {/* Filter Section */}
-        <div className="mb-4">
+        <div className="mb-4 flex flex-wrap gap-4 items-center justify-center">
           <label>
             角色:
             <select
               value={filter.role}
               onChange={e => setFilter({ ...filter, role: e.target.value })}
+              className="border p-2 ml-2 rounded"
             >
               <option value="">全部</option>
               <option value="Developer">Developer</option>
@@ -78,6 +79,7 @@ export default function WorkMemberPage() {
             <select
               value={filter.status}
               onChange={e => setFilter({ ...filter, status: e.target.value })}
+              className="border p-2 ml-2 rounded"
             >
               <option value="">全部</option>
               <option value="在職">在職</option>
@@ -87,12 +89,13 @@ export default function WorkMemberPage() {
         </div>
 
         {/* Sort Section */}
-        <div className="mb-4">
+        <div className="mb-4 flex items-center justify-center">
           <label>
             排序:
             <select
               value={sortKey}
               onChange={e => setSortKey(e.target.value as "name" | "role")}
+              className="border p-2 ml-2 rounded"
             >
               <option value="name">名稱</option>
               <option value="role">角色</option>
@@ -102,20 +105,20 @@ export default function WorkMemberPage() {
 
         <ul className="space-y-4">
           {members.map(member => (
-            <li key={member.memberId} className="p-4 bg-white rounded shadow">
+            <li key={member.memberId} className="p-4 bg-white rounded-lg shadow-md">
               {editingMember === member.memberId ? (
                 <>
                   <input
                     type="text"
                     value={updatedFields.name || member.name}
                     onChange={e => handleEdit(member.memberId, "name", e.target.value)}
-                    className="border p-2 mb-2"
+                    className="border p-2 mb-2 w-full rounded"
                   />
-                  <button onClick={() => handleSave(member.memberId)} className="bg-blue-500 text-white px-4 py-2">儲存</button>
+                  <button onClick={() => handleSave(member.memberId)} className="bg-blue-500 text-white px-4 py-2 rounded">儲存</button>
                 </>
               ) : (
                 <>
-                  <h2 className="text-lg font-semibold">{member.name}</h2>
+                  <h2 className="text-lg font-semibold mb-1">{member.name}</h2>
                   <p>角色: {member.role}</p>
                   <p>技能: {member.skills.join(", ")}</p>
                   <p>狀態: {member.availability}</p>
@@ -123,7 +126,7 @@ export default function WorkMemberPage() {
                   <p>身分狀態: {member.status}</p>
                   <p>最後活躍時間: {member.lastActiveTime}</p>
                   <p>電話: {member.contactInfo?.phone || "未提供"}</p>
-                  <button onClick={() => setEditingMember(member.memberId)} className="bg-gray-500 text-white px-4 py-2">編輯</button>
+                  <button onClick={() => setEditingMember(member.memberId)} className="bg-gray-500 text-white px-4 py-2 rounded mt-2">編輯</button>
                 </>
               )}
             </li>

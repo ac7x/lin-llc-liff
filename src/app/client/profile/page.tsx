@@ -28,7 +28,9 @@ export default function UserProfilePage() {
     }
   }, [isLiffLoggedIn, isLoggedIn, isLiffInitialized, firebaseLogin]);
 
-  // 取得用戶資產
+  /**
+   * 取得用戶資產，只從 workAsset 取得資產，與 workMember 對應
+   */
   useEffect(() => {
     const fetchAssets = async () => {
       if (!firebaseUser) {
@@ -37,7 +39,6 @@ export default function UserProfilePage() {
       }
       try {
         const db = getFirestore(firebaseApp);
-        // 只從 workAsset 取得資產，與 workMember 對應
         const assetDoc = await getDoc(doc(db, 'workAsset', firebaseUser.uid));
         if (assetDoc.exists()) {
           const { coin, diamond } = assetDoc.data();
