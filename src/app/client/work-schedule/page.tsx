@@ -116,16 +116,15 @@ const WorkSchedulePage: React.FC = () => {
 
     return (
         <>
-            <div className="p-4 overflow-x-auto" ref={containerRef}>
-                <h1 className="text-2xl font-bold mb-4">工作排班表</h1>
+            <div ref={containerRef}>
+                <h1>工作排班表</h1>
 
-                <div className="flex justify-between items-center mb-4">
-                    <div className="text-sm text-gray-600">顯示天數：{state.range}</div>
+                <div>
+                    <div>顯示天數：{state.range}</div>
                     <div>
                         <select
-                            className="border px-2 py-1 rounded"
                             value={state.horizontalAxis}
-                            onChange={(e) => dispatch({ type: "SET_HORIZONTAL_AXIS", payload: e.target.value as Axis })}
+                            onChange={e => dispatch({ type: "SET_HORIZONTAL_AXIS", payload: e.target.value as Axis })}
                         >
                             <option value="date">橫向：日期</option>
                             <option value="location">橫向：地點</option>
@@ -133,38 +132,28 @@ const WorkSchedulePage: React.FC = () => {
                     </div>
                 </div>
 
-                <table className="min-w-full border border-gray-300 text-sm text-center">
+                <table>
                     <thead>
-                        <tr className="bg-gray-100">
-                            <th className="border px-2 py-1 whitespace-nowrap">
-                                {state.horizontalAxis === "date" ? "地點" : "日期"}
-                            </th>
+                        <tr>
+                            <th>{state.horizontalAxis === "date" ? "地點" : "日期"}</th>
                             {horizontalLabels.map(label => (
-                                <th key={label} className="border px-2 py-1 whitespace-nowrap">
-                                    {label}
-                                </th>
+                                <th key={label}>{label}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {verticalLabels.map((label) => (
+                        {verticalLabels.map(label => (
                             <tr key={label}>
-                                <td className="border px-2 py-1 font-bold bg-gray-50 whitespace-nowrap">
-                                    {label}
-                                </td>
-                                {horizontalLabels.map((hLabel) => {
+                                <td>{label}</td>
+                                {horizontalLabels.map(hLabel => {
                                     const assignment =
                                         state.horizontalAxis === "date"
                                             ? getAssignment(hLabel, label)
                                             : getAssignment(label, hLabel);
-
                                     return (
-                                        <td
-                                            key={label + "-" + hLabel}
-                                            className="border px-2 py-1 whitespace-nowrap"
-                                        >
-                                            <div className="font-semibold">{assignment?.groupName ?? "-"}</div>
-                                            <div className="text-xs text-gray-600 truncate">
+                                        <td key={label + "-" + hLabel}>
+                                            <div>{assignment?.groupName ?? "-"}</div>
+                                            <div>
                                                 {(assignment?.members ?? []).join("、")}
                                             </div>
                                         </td>
@@ -175,14 +164,14 @@ const WorkSchedulePage: React.FC = () => {
                     </tbody>
                 </table>
 
-                <h2 className="text-xl font-bold mt-8">工作負荷</h2>
-                <table className="min-w-full border border-gray-300 text-sm text-center mt-4">
+                <h2>工作負荷</h2>
+                <table>
                     <thead>
-                        <tr className="bg-gray-100">
-                            <th className="border px-2 py-1">負荷ID</th>
-                            <th className="border px-2 py-1">任務ID</th>
-                            <th className="border px-2 py-1">計劃數量</th>
-                            <th className="border px-2 py-1">單位</th>
+                        <tr>
+                            <th>負荷ID</th>
+                            <th>任務ID</th>
+                            <th>計劃數量</th>
+                            <th>單位</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -197,7 +186,6 @@ const WorkSchedulePage: React.FC = () => {
                     </tbody>
                 </table>
                 <button
-                    className="bg-blue-500 text-white px-4 py-2 rounded mt-4"
                     onClick={() => {
                         const newLoad: WorkLoadEntity = {
                             loadId: `load-${Date.now()}`,
