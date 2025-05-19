@@ -37,3 +37,11 @@ export async function updateWorkLoad(loadId: string, updates: Partial<WorkLoadEn
 export async function deleteWorkLoad(loadId: string): Promise<void> {
     await firestoreAdmin.collection("workLoad").doc(loadId).delete();
 }
+
+/**
+ * 取得所有 workLoad 的原始資料清單
+ */
+export async function listWorkLoad(): Promise<any[]> {
+    const snapshot = await firestoreAdmin.collection("workLoad").get();
+    return snapshot.docs.map(doc => doc.data());
+}

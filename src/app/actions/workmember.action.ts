@@ -35,3 +35,11 @@ export async function updateWorkMember(memberId: string, updates: Partial<WorkMe
 export async function deleteWorkMember(memberId: string): Promise<void> {
     await firestoreAdmin.collection("workMember").doc(memberId).delete();
 }
+
+/**
+ * 取得所有 workMember 的原始資料清單
+ */
+export async function listWorkMember(): Promise<any[]> {
+    const snapshot = await firestoreAdmin.collection("workMember").get();
+    return snapshot.docs.map(doc => doc.data());
+}

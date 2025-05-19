@@ -34,3 +34,11 @@ export async function updateWorkType(typeId: string, updates: Partial<WorkTypeEn
 export async function deleteWorkType(typeId: string): Promise<void> {
     await firestoreAdmin.collection("workType").doc(typeId).delete();
 }
+
+/**
+ * 取得所有 workType 的原始資料清單
+ */
+export async function listWorkType(): Promise<any[]> {
+    const snapshot = await firestoreAdmin.collection("workType").get();
+    return snapshot.docs.map(doc => doc.data());
+}

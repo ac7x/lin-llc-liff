@@ -43,3 +43,11 @@ export async function updateWorkFlow(flowId: string, updates: Partial<WorkFlow>)
 export async function deleteWorkFlow(flowId: string): Promise<void> {
     await firestoreAdmin.collection("workFlow").doc(flowId).delete();
 }
+
+/**
+ * 取得所有 workFlow 的原始資料清單
+ */
+export async function listWorkFlow(): Promise<any[]> {
+    const snapshot = await firestoreAdmin.collection("workFlow").get();
+    return snapshot.docs.map(doc => doc.data());
+}
