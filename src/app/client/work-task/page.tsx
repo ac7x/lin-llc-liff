@@ -1,7 +1,7 @@
 "use client";
 
 import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from "@/app/actions/workload.action";
-import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
+import { getAllWorkTasks, updateWorkTask, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import { collection, getDocs } from "firebase/firestore";
@@ -68,6 +68,24 @@ export default function WorkTaskPage() {
     setWorkloads(prev =>
       prev.map(load =>
         load.loadId === loadId ? { ...load, actualQuantity } : load
+      )
+    );
+
+    // 取得該 load 對應的 taskId
+    const updatedLoad = workloads.find(load => load.loadId === loadId);
+    if (!updatedLoad) return;
+    const taskId = updatedLoad.taskId;
+    // 取得所有屬於該 taskId 的 workloads
+    const relatedLoads = workloads
+      .map(load => (load.loadId === loadId ? { ...load, actualQuantity } : load))
+      .filter(load => load.taskId === taskId);
+    // 加總 actualQuantity
+    const totalActual = relatedLoads.reduce((sum, load) => sum + (load.actualQuantity || 0), 0);
+    // 更新對應的 workTask.completedQuantity
+    await updateWorkTask(taskId, { completedQuantity: totalActual });
+    setTasks(prev =>
+      prev.map(task =>
+        task.taskId === taskId ? { ...task, completedQuantity: totalActual } : task
       )
     );
   };
