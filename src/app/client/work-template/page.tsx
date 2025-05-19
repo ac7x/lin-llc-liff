@@ -11,10 +11,16 @@ import {
     WorkFlow
 } from "@/app/actions/workflow.action";
 import {
+    addWorkLoad // ← 加入這行
+    ,
+
     getAllWorkLoads,
     WorkLoadEntity
 } from "@/app/actions/workload.action";
 import {
+    addWorkTask // ← 加入這行
+    ,
+
     getAllWorkTasks,
     WorkTaskEntity
 } from "@/app/actions/worktask.action";
@@ -48,7 +54,7 @@ const WorkTemplatePage: React.FC = () => {
     const [selectedWorkEpicId, setSelectedWorkEpicId] = useState<string | null>(null);
     const [workTasks, setWorkTasks] = useState<WorkTaskEntity[]>([]);
     const [workLoads, setWorkLoads] = useState<WorkLoadEntity[]>([]);
-    const [selectedWorkFlowIds] = useState<string[]>([]);
+    const [selectedWorkFlowIds, setSelectedWorkFlowIds] = useState<string[]>([]);
     const [selectedWorkTaskId, setSelectedWorkTaskId] = useState<string | null>(null);
     const [selectedWorkLoadId, setSelectedWorkLoadId] = useState<string | null>(null);
     const [showValidationError, setShowValidationError] = useState(false);
@@ -138,56 +144,69 @@ const WorkTemplatePage: React.FC = () => {
         if (
             !selectedWorkEpicId ||
             !selectedWorkTypeId ||
-            selectedWorkFlowIds.length === 0 ||
-            !selectedWorkTaskId ||
-            !selectedWorkLoadId
+            selectedWorkFlowIds.length === 0
         ) {
             setShowValidationError(true);
             return;
         }
 
-        // 取得選中的工作種類、流程、任務、工作量
         const selectedType = workTypes.find(type => type.typeId === selectedWorkTypeId);
         const selectedFlows = workFlows.filter(flow => selectedWorkFlowIds.includes(flow.flowId));
-        const selectedTask = workTasks.find(task => task.taskId === selectedWorkTaskId);
-        const selectedLoad = workLoads.find(load => load.loadId === selectedWorkLoadId);
         const existingEpic = workEpics.find(epic => epic.epicId === selectedWorkEpicId);
 
-        if (!selectedType || selectedFlows.length === 0 || !selectedTask || !selectedLoad || !existingEpic) {
+        if (!selectedType || selectedFlows.length === 0 || !existingEpic) {
             setShowValidationError(true);
             return;
         }
 
-        // 避免與 useState 變數衝突，改名
-        const updatedWorkTypes = existingEpic.workTypes ? [...existingEpic.workTypes] : [];
-        if (!updatedWorkTypes.some(type => type.typeId === selectedType.typeId)) {
-            updatedWorkTypes.push(selectedType);
-        }
-
-        const updatedWorkFlows = existingEpic.workFlows ? [...existingEpic.workFlows] : [];
+        // 產生任務與工作量
+        const newTasks: WorkTaskEntity[] = []
+        const newLoads: WorkLoadEntity[] = []
         selectedFlows.forEach(flow => {
-            if (!updatedWorkFlows.some(f => f.flowId === flow.flowId)) {
-                updatedWorkFlows.push(flow);
+            const quantity = flowQuantities[flow.flowId] || 1;
+            const split = workloadCounts[flow.flowId] || 1;
+            for (let i = 0; i < quantity; i++) {
+                const taskId = `task-${flow.flowId}-${Date.now()}-${i}`;
+                const task: WorkTaskEntity = {
+                    taskId,
+                    itemId: flow.flowId,
+                    targetQuantity: 1,
+                    unit: "單位",
+                    completedQuantity: 0,
+                    status: "待分配"
+                };
+                newTasks.push(task);
+
+                for (let j = 0; j < split; j++) {
+                    const loadId = `load-${taskId}-${j}`;
+                    const load: WorkLoadEntity = {
+                        loadId,
+                        taskId,
+                        plannedQuantity: 1,
+                        unit: "單位",
+                        plannedStartTime: new Date().toISOString(),
+                        plannedEndTime: new Date().toISOString(),
+                        actualQuantity: 0,
+                        executor: ""
+                    };
+                    newLoads.push(load);
+                }
             }
         });
 
-        const updatedWorkTasks = existingEpic.workTasks ? [...existingEpic.workTasks] : [];
-        if (!updatedWorkTasks.some(task => task.taskId === selectedTask.taskId)) {
-            updatedWorkTasks.push(selectedTask);
-        }
+        // 寫入資料庫
+        await Promise.all([
+            ...newTasks.map(task => addWorkTask(task)),
+            ...newLoads.map(load => addWorkLoad(load))
+        ]);
 
-        const updatedWorkLoads = existingEpic.workLoads ? [...existingEpic.workLoads] : [];
-        if (!updatedWorkLoads.some(load => load.loadId === selectedLoad.loadId)) {
-            updatedWorkLoads.push(selectedLoad);
-        }
-
+        // 更新標的
         const updates: Partial<WorkEpicEntity> = {
-            workTypes: updatedWorkTypes,
-            workFlows: updatedWorkFlows,
-            workTasks: updatedWorkTasks,
-            workLoads: updatedWorkLoads
+            workTypes: [...(existingEpic.workTypes || []), selectedType],
+            workFlows: [...(existingEpic.workFlows || []), ...selectedFlows],
+            workTasks: [...(existingEpic.workTasks || []), ...newTasks],
+            workLoads: [...(existingEpic.workLoads || []), ...newLoads]
         };
-
         await updateWorkEpic(selectedWorkEpicId, updates);
     };
 
@@ -325,6 +344,17 @@ const WorkTemplatePage: React.FC = () => {
                             {filteredFlows.length === 0 && <div className="text-gray-500">此種類尚無流程</div>}
                             {filteredFlows.map(flow => (
                                 <div key={flow.flowId} className="flex items-center mb-2 gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedWorkFlowIds.includes(flow.flowId)}
+                                        onChange={e => {
+                                            setSelectedWorkFlowIds(ids =>
+                                                e.target.checked
+                                                    ? [...ids, flow.flowId]
+                                                    : ids.filter(id => id !== flow.flowId)
+                                            );
+                                        }}
+                                    />
                                     <span className="flex-1">流程ID: {flow.flowId}</span>
                                     <input
                                         type="number"
