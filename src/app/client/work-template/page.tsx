@@ -19,11 +19,15 @@ import {
 
 
 
+
+
     WorkLoadEntity
 } from "@/app/actions/workload.action";
 import {
     addWorkTask // ← 加入這行
     ,
+
+
 
 
 
@@ -349,6 +353,33 @@ const WorkTemplatePage: React.FC = () => {
                     {selectedWorkTypeId && (
                         <div className="mb-4">
                             <h4 className="font-bold mb-2">對應流程、數量與分割筆數</h4>
+                            {/* 全選功能 */}
+                            {filteredFlows.length > 0 && (
+                                <div className="flex items-center mb-2">
+                                    {/*
+                                        需用 ref 設定 indeterminate
+                                    */}
+                                    <input
+                                        type="checkbox"
+                                        checked={filteredFlows.every(flow => selectedWorkFlowIds.includes(flow.flowId))}
+                                        ref={el => {
+                                            if (el) {
+                                                el.indeterminate =
+                                                    selectedWorkFlowIds.length > 0 &&
+                                                    selectedWorkFlowIds.length < filteredFlows.length;
+                                            }
+                                        }}
+                                        onChange={e => {
+                                            if (e.target.checked) {
+                                                setSelectedWorkFlowIds(filteredFlows.map(flow => flow.flowId));
+                                            } else {
+                                                setSelectedWorkFlowIds([]);
+                                            }
+                                        }}
+                                    />
+                                    <span className="ml-2">全選</span>
+                                </div>
+                            )}
                             {filteredFlows.length === 0 && <div className="text-gray-500">此種類尚無流程</div>}
                             {filteredFlows.map(flow => (
                                 <div key={flow.flowId} className="flex items-center mb-2 gap-2">
