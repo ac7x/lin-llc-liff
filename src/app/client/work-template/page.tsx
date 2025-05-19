@@ -8,11 +8,12 @@ import {
 import {
     addWorkFlow,
     getAllWorkFlows,
-    WorkFlow
+    WorkFlowEntity
 } from "@/app/actions/workflow.action";
 import {
     addWorkLoad // ← 加入這行
     ,
+
 
 
 
@@ -38,12 +39,13 @@ import {
 
 
 
+
     WorkTaskEntity
 } from "@/app/actions/worktask.action";
 import {
     addWorkType,
     getAllWorkTypes,
-    WorkType
+    WorkTypeEntity
 } from "@/app/actions/worktype.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import React, { useEffect, useState } from "react";
@@ -59,9 +61,9 @@ const Select = ({ value, onChange, options, placeholder }: { value: string; onCh
 )
 
 const WorkTemplatePage: React.FC = () => {
-    const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
+    const [workTypes, setWorkTypes] = useState<WorkTypeEntity[]>([]);
     const [newWorkTypeTitle, setNewWorkTypeTitle] = useState("");
-    const [workFlows, setWorkFlows] = useState<WorkFlow[]>([]);
+    const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]);
     const [selectedWorkTypeId, setSelectedWorkTypeId] = useState<string | null>(null);
     const [newStepName, setNewStepName] = useState("");
     const [newStepOrder, setNewStepOrder] = useState<number>(1);
@@ -75,8 +77,8 @@ const WorkTemplatePage: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            setWorkTypes(await getAllWorkTypes(true));
-            setWorkFlows(await getAllWorkFlows());
+            setWorkTypes(await getAllWorkTypes(true) as WorkTypeEntity[]);
+            setWorkFlows(await getAllWorkFlows(true) as WorkFlowEntity[]);
             setWorkEpics(await getAllWorkEpics(false) as WorkEpicEntity[]);
         };
         fetchData();
@@ -144,7 +146,7 @@ const WorkTemplatePage: React.FC = () => {
         // flowId 改為 flow-種類-順序
         const newFlowId = `flow-${typeTitle}-${newStepOrder}`;
 
-        const newFlow: WorkFlow = {
+        const newFlow: WorkFlowEntity = {
             flowId: newFlowId,
             workTypeId: selectedWorkTypeId,
             steps: [

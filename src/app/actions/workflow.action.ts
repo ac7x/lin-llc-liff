@@ -12,9 +12,24 @@ export interface WorkFlow {
     }[];
 }
 
-export async function getAllWorkFlows(): Promise<WorkFlow[]> {
+export interface WorkFlowEntity extends WorkFlow {
+    /**
+     * 流程描述
+     */
+    description?: string;
+    /**
+     * 是否啟用
+     */
+    enabled?: boolean;
+}
+
+export async function getAllWorkFlows(isEntity: boolean = false): Promise<WorkFlow[] | WorkFlowEntity[]> {
     const snapshot = await firestoreAdmin.collection("workFlow").get();
-    return snapshot.docs.map(doc => doc.data() as WorkFlow);
+    if (isEntity) {
+        return snapshot.docs.map(doc => doc.data() as WorkFlowEntity);
+    } else {
+        return snapshot.docs.map(doc => doc.data() as WorkFlow);
+    }
 }
 
 export async function addWorkFlow(flow: WorkFlow): Promise<void> {

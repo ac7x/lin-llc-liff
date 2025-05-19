@@ -14,12 +14,12 @@ export interface WorkTypeEntity extends WorkTypeTemplate {
 
 export type WorkType = WorkTypeTemplate | WorkTypeEntity;
 
-export async function getAllWorkTypes(isTemplate: boolean): Promise<WorkTypeTemplate[] | WorkTypeEntity[]> {
+export async function getAllWorkTypes(isEntity: boolean = false): Promise<WorkTypeTemplate[] | WorkTypeEntity[]> {
     const snapshot = await firestoreAdmin.collection("workType").get();
-    if (isTemplate) {
-        return snapshot.docs.map(doc => doc.data() as WorkTypeTemplate);
-    } else {
+    if (isEntity) {
         return snapshot.docs.map(doc => doc.data() as WorkTypeEntity);
+    } else {
+        return snapshot.docs.map(doc => doc.data() as WorkTypeTemplate);
     }
 }
 

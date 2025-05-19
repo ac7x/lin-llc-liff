@@ -1,10 +1,10 @@
 "use server";
 
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
-import { WorkFlow } from "./workflow.action";
+import { WorkFlowEntity } from "./workflow.action";
 import { WorkLoadEntity } from "./workload.action";
 import { WorkTaskEntity } from "./worktask.action";
-import { WorkType } from "./worktype.action";
+import { WorkTypeEntity } from "./worktype.action";
 
 export interface WorkEpicTemplate {
     epicId: string; // 唯一識別碼
@@ -22,8 +22,8 @@ export interface WorkEpicEntity extends WorkEpicTemplate {
     region: "北部" | "中部" | "南部" | "東部" | "離島"; // 區域
     address: string; // 詳細地址
     createdAt: string; // 建立時間
-    workTypes?: WorkType[]; // 新增屬性
-    workFlows?: WorkFlow[]; // 新增屬性
+    workTypes?: WorkTypeEntity[]; // 新增屬性
+    workFlows?: WorkFlowEntity[]; // 新增屬性
     workTasks?: WorkTaskEntity[]; // 新增屬性
     workLoads?: WorkLoadEntity[]; // 新增屬性
 }
