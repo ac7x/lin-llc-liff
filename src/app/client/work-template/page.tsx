@@ -26,6 +26,16 @@ import {
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import React, { useEffect, useState } from "react";
 
+// 將下拉選單抽成簡單元件，減少重複
+const Select = ({ value, onChange, options, placeholder }: { value: string; onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void; options: { value: string; label: string }[]; placeholder: string }) => (
+    <select value={value} onChange={onChange} className="border p-2 mb-4 block">
+        <option value="">{placeholder}</option>
+        {options.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+    </select>
+)
+
 const WorkTemplatePage: React.FC = () => {
     const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
     const [newWorkTypeTitle, setNewWorkTypeTitle] = useState("");
@@ -185,6 +195,12 @@ const WorkTemplatePage: React.FC = () => {
         ? workTasks // 目前暫以全部顯示，請根據實際需求調整
         : workTasks;
 
+    // 將選項資料轉換為 Select 元件格式
+    const epicOptions = workEpics.map(e => ({ value: e.epicId, label: e.title }));
+    const typeOptions = workTypes.map(t => ({ value: t.typeId, label: t.title }));
+    const taskOptions = filteredTasks.map(t => ({ value: t.taskId, label: t.taskId }));
+    const loadOptions = workLoads.map(l => ({ value: l.loadId, label: l.loadId }));
+
     return (
         <>
             <main className="p-4">
@@ -299,36 +315,8 @@ const WorkTemplatePage: React.FC = () => {
                 {/* 加入到工作標的 */}
                 <div className="mt-8">
                     <h2 className="text-xl font-bold mb-4">將工作項目加入現有的工作標的</h2>
-
-                    <select
-                        value={selectedWorkEpicId || ""}
-                        onChange={e => setSelectedWorkEpicId(e.target.value)}
-                        className="border p-2 mb-4 block"
-                    >
-                        <option value="">選擇工作標的</option>
-                        {workEpics.map(epic => (
-                            <option key={epic.epicId} value={epic.epicId}>
-                                {epic.title}
-                            </option>
-                        ))}
-                    </select>
-
-                    <select
-                        value={selectedWorkTypeId || ""}
-                        onChange={e => {
-                            setSelectedWorkTypeId(e.target.value)
-                            setFlowQuantities({}); // 切換種類時重置數量
-                        }}
-                        className="border p-2 mb-4 block"
-                    >
-                        <option value="">選擇工作種類</option>
-                        {workTypes.map(type => (
-                            <option key={type.typeId} value={type.typeId}>
-                                {type.title}
-                            </option>
-                        ))}
-                    </select>
-
+                    <Select value={selectedWorkEpicId || ""} onChange={e => setSelectedWorkEpicId(e.target.value)} options={epicOptions} placeholder="選擇工作標的" />
+                    <Select value={selectedWorkTypeId || ""} onChange={e => { setSelectedWorkTypeId(e.target.value); setFlowQuantities({}); }} options={typeOptions} placeholder="選擇工作種類" />
                     {/* 流程列表與數量輸入 */}
                     {selectedWorkTypeId && (
                         <div className="mb-4">
@@ -352,37 +340,11 @@ const WorkTemplatePage: React.FC = () => {
                             ))}
                         </div>
                     )}
-
-                    <select
-                        value={selectedWorkTaskId || ""}
-                        onChange={e => setSelectedWorkTaskId(e.target.value)}
-                        className="border p-2 mb-4 block"
-                    >
-                        <option value="">選擇工作任務</option>
-                        {filteredTasks.map(task => (
-                            <option key={task.taskId} value={task.taskId}>
-                                {task.taskId}
-                            </option>
-                        ))}
-                    </select>
-
-                    <select
-                        value={selectedWorkLoadId || ""}
-                        onChange={e => setSelectedWorkLoadId(e.target.value)}
-                        className="border p-2 mb-4 block"
-                    >
-                        <option value="">選擇工作量</option>
-                        {workLoads.map(load => (
-                            <option key={load.loadId} value={load.loadId}>
-                                {load.loadId}
-                            </option>
-                        ))}
-                    </select>
-
+                    <Select value={selectedWorkTaskId || ""} onChange={e => setSelectedWorkTaskId(e.target.value)} options={taskOptions} placeholder="選擇工作任務" />
+                    <Select value={selectedWorkLoadId || ""} onChange={e => setSelectedWorkLoadId(e.target.value)} options={loadOptions} placeholder="選擇工作量" />
                     {showValidationError && (
                         <div className="text-red-500 mb-2">請確保所有項目都已選擇！</div>
                     )}
-
                     <button
                         onClick={handleAddToWorkEpic}
                         className="bg-green-500 text-white px-4 py-2"
