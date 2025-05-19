@@ -14,12 +14,14 @@ import {
     addWorkLoad // ← 加入這行
     ,
 
+
     getAllWorkLoads,
     WorkLoadEntity
 } from "@/app/actions/workload.action";
 import {
     addWorkTask // ← 加入這行
     ,
+
 
     getAllWorkTasks,
     WorkTaskEntity
@@ -104,7 +106,7 @@ const WorkTemplatePage: React.FC = () => {
 
     const handleAddStep = async () => {
         if (!selectedWorkTypeId || !newStepName.trim()) {
-            alert("請選擇工作種類並填寫步驟名稱！");
+            alert("請輸入工作種類標題！");
             return;
         }
 
@@ -121,8 +123,15 @@ const WorkTemplatePage: React.FC = () => {
             return;
         }
 
+        // 取得種類名稱
+        const type = workTypes.find(t => t.typeId === selectedWorkTypeId);
+        const typeTitle = type ? type.title : '未知';
+
+        // flowId 改為 flow-種類-順序
+        const newFlowId = `flow-${typeTitle}-${newStepOrder}`;
+
         const newFlow: WorkFlow = {
-            flowId: `flow-${Date.now()}`,
+            flowId: newFlowId,
             workTypeId: selectedWorkTypeId,
             steps: [
                 {
@@ -135,8 +144,8 @@ const WorkTemplatePage: React.FC = () => {
 
         await addWorkFlow(newFlow);
         setWorkFlows(prev => [...prev, newFlow]);
-        setNewStepName("");
-        setNewStepSkills("");
+        setNewStepName('');
+        setNewStepSkills('');
         setNewStepOrder(prev => prev + 1);
     };
 
