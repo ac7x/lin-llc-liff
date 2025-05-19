@@ -18,11 +18,13 @@ import {
 
 
 
+
     WorkLoadEntity
 } from "@/app/actions/workload.action";
 import {
     addWorkTask // ← 加入這行
     ,
+
 
 
 
@@ -76,14 +78,17 @@ const WorkTemplatePage: React.FC = () => {
         ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId)
         : [];
 
+    // 取得所有步驟
     const allSteps = filteredFlows.flatMap(flow => flow.steps);
+    // 取得目前最大順序
     const maxOrder = allSteps.length > 0 ? Math.max(...allSteps.map(step => step.order)) : 0;
 
     useEffect(() => {
         if (selectedWorkTypeId) {
+            // 每次選擇種類時，預設順序為最大+1
             setNewStepOrder(maxOrder + 1);
         }
-    }, [selectedWorkTypeId, workFlows, maxOrder]);
+    }, [selectedWorkTypeId, maxOrder]);
 
     const handleAddWorkType = async () => {
         if (!newWorkTypeTitle.trim()) {
@@ -108,7 +113,9 @@ const WorkTemplatePage: React.FC = () => {
             return;
         }
 
+        // 取得目前所有步驟順序
         const existingOrders = allSteps.map(step => step.order);
+        // 檢查 1~(newStepOrder-1) 是否都存在
         for (let i = 1; i < newStepOrder; i++) {
             if (!existingOrders.includes(i)) {
                 alert(`請先建立第 ${i} 步`);
@@ -116,6 +123,7 @@ const WorkTemplatePage: React.FC = () => {
             }
         }
 
+        // 檢查 newStepOrder 是否已存在
         if (existingOrders.includes(newStepOrder)) {
             alert(`第 ${newStepOrder} 步已存在！`);
             return;
@@ -144,7 +152,8 @@ const WorkTemplatePage: React.FC = () => {
         setWorkFlows(prev => [...prev, newFlow]);
         setNewStepName('');
         setNewStepSkills('');
-        setNewStepOrder(prev => prev + 1);
+        // 新增後自動設為下一步
+        setNewStepOrder(newStepOrder + 1);
     };
 
     const handleAddToWorkEpic = async () => {
