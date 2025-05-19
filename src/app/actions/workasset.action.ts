@@ -13,6 +13,7 @@ export interface WorkAsset {
 
 /**
  * 取得所有 WorkAsset
+ * @returns WorkAsset 陣列
  */
 export async function getAllWorkAssets(): Promise<WorkAsset[]> {
     const snapshot = await firestoreAdmin.collection("workAsset").get();
@@ -20,28 +21,36 @@ export async function getAllWorkAssets(): Promise<WorkAsset[]> {
 }
 
 /**
- * 新增 WorkAsset
+ * 新增 WorkAsset 至 Firestore 資料庫
+ * @param asset WorkAsset 物件，包含資產資訊
+ * @returns 無回傳值，僅執行新增動作
  */
 export async function addWorkAsset(asset: WorkAsset): Promise<void> {
     await firestoreAdmin.collection("workAsset").doc(asset.assetID).set(asset);
 }
 
 /**
- * 更新 WorkAsset
+ * 更新指定 WorkAsset 至 Firestore 資料庫
+ * @param assetID WorkAsset 的唯一識別碼
+ * @param updates 欲更新的 WorkAsset 欄位內容
+ * @returns 無回傳值，僅執行更新動作
  */
 export async function updateWorkAsset(assetID: string, updates: Partial<WorkAsset>): Promise<void> {
     await firestoreAdmin.collection("workAsset").doc(assetID).update(updates);
 }
 
 /**
- * 刪除 WorkAsset
+ * 從 Firestore 資料庫刪除指定 WorkAsset
+ * @param assetID WorkAsset 的唯一識別碼
+ * @returns 無回傳值，僅執行刪除動作
  */
 export async function deleteWorkAsset(assetID: string): Promise<void> {
     await firestoreAdmin.collection("workAsset").doc(assetID).delete();
 }
 
 /**
- * 取得所有 workAsset 的原始資料清單
+ * 取得所有 WorkAsset 的原始資料清單
+ * @returns WorkAsset 陣列
  */
 export async function listWorkAsset(): Promise<WorkAsset[]> {
     const snapshot = await firestoreAdmin.collection("workAsset").get();

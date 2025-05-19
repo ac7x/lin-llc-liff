@@ -13,6 +13,7 @@ export interface WorkLevel {
 
 /**
  * 取得所有 WorkLevel
+ * @returns WorkLevel 陣列
  */
 export async function getAllWorkLevels(): Promise<WorkLevel[]> {
     const snapshot = await firestoreAdmin.collection("workLevel").get();
@@ -20,28 +21,36 @@ export async function getAllWorkLevels(): Promise<WorkLevel[]> {
 }
 
 /**
- * 新增 WorkLevel
+ * 新增 WorkLevel 至 Firestore 資料庫
+ * @param level WorkLevel 物件，包含等級資訊
+ * @returns 無回傳值，僅執行新增動作
  */
 export async function addWorkLevel(level: WorkLevel): Promise<void> {
     await firestoreAdmin.collection("workLevel").doc(level.levelID).set(level);
 }
 
 /**
- * 更新 WorkLevel
+ * 更新指定 WorkLevel 至 Firestore 資料庫
+ * @param levelID WorkLevel 的唯一識別碼
+ * @param updates 欲更新的 WorkLevel 欄位內容
+ * @returns 無回傳值，僅執行更新動作
  */
 export async function updateWorkLevel(levelID: string, updates: Partial<WorkLevel>): Promise<void> {
     await firestoreAdmin.collection("workLevel").doc(levelID).update(updates);
 }
 
 /**
- * 刪除 WorkLevel
+ * 從 Firestore 資料庫刪除指定 WorkLevel
+ * @param levelID WorkLevel 的唯一識別碼
+ * @returns 無回傳值，僅執行刪除動作
  */
 export async function deleteWorkLevel(levelID: string): Promise<void> {
     await firestoreAdmin.collection("workLevel").doc(levelID).delete();
 }
 
 /**
- * 取得所有 workLevel 的原始資料清單
+ * 取得所有 WorkLevel 的原始資料清單
+ * @returns WorkLevel 陣列
  */
 export async function listWorkLevel(): Promise<WorkLevel[]> {
     const snapshot = await firestoreAdmin.collection("workLevel").get();

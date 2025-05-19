@@ -4,6 +4,8 @@
   // ------------------------
   "typescript.validate.enable": true,
   "javascript.validate.enable": true,
+  "javascript.suggest.completeJSDocs": true,
+  "typescript.suggest.completeJSDocs": true,
   "typescript.tsserver.useSyntaxServer": "never",
   "typescript.tsserver.log": "off",
   "typescript.strict": true,

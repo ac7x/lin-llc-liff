@@ -28,6 +28,11 @@ export interface WorkEpicEntity extends WorkEpicTemplate {
     workLoads?: WorkLoadEntity[]; // 新增屬性
 }
 
+/**
+ * 取得所有 WorkEpic
+ * @param isTemplate 是否僅回傳模板型態
+ * @returns WorkEpicTemplate 或 WorkEpicEntity 陣列
+ */
 export async function getAllWorkEpics(isTemplate: boolean): Promise<WorkEpicTemplate[] | WorkEpicEntity[]> {
     const snapshot = await firestoreAdmin.collection("workEpic").get();
     if (isTemplate) {
@@ -37,6 +42,11 @@ export async function getAllWorkEpics(isTemplate: boolean): Promise<WorkEpicTemp
     }
 }
 
+/**
+ * 新增 WorkEpic 至 Firestore 資料庫
+ * @param epic WorkEpicTemplate 或 WorkEpicEntity 物件，包含 Epic 資訊
+ * @returns 無回傳值，僅執行新增動作
+ */
 export async function addWorkEpic(epic: WorkEpicTemplate | WorkEpicEntity): Promise<void> {
     const data: WorkEpicEntity = {
         ...epic,
@@ -64,16 +74,28 @@ export async function addWorkEpic(epic: WorkEpicTemplate | WorkEpicEntity): Prom
     await firestoreAdmin.collection("workEpic").doc(epic.epicId).set(data);
 }
 
+/**
+ * 更新指定 WorkEpic 至 Firestore 資料庫
+ * @param epicId WorkEpic 的唯一識別碼
+ * @param updates 欲更新的 WorkEpicEntity 欄位內容
+ * @returns 無回傳值，僅執行更新動作
+ */
 export async function updateWorkEpic(epicId: string, updates: Partial<WorkEpicEntity>): Promise<void> {
     await firestoreAdmin.collection("workEpic").doc(epicId).update(updates);
 }
 
+/**
+ * 從 Firestore 資料庫刪除指定 WorkEpic
+ * @param epicId WorkEpic 的唯一識別碼
+ * @returns 無回傳值，僅執行刪除動作
+ */
 export async function deleteWorkEpic(epicId: string): Promise<void> {
     await firestoreAdmin.collection("workEpic").doc(epicId).delete();
 }
 
 /**
- * 取得所有 workEpic 的原始資料清單
+ * 取得所有 WorkEpic 的原始資料清單
+ * @returns WorkEpicEntity 陣列
  */
 export async function listWorkEpic(): Promise<WorkEpicEntity[]> {
     const snapshot = await firestoreAdmin.collection("workEpic").get();

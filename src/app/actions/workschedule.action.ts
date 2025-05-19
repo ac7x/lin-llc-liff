@@ -12,7 +12,12 @@ type DailyWorkSchedule = {
 };
 
 /**
+ * 取得所有 WorkSchedule
  * 擴充為支援不同橫軸維度的資料結構（雖然目前仍回傳相同格式，但邏輯具備擴展性）
+ * @param offset 起始天數偏移量
+ * @param range 取得天數範圍
+ * @param horizontalAxis 橫軸維度（date 或 location）
+ * @returns DailyWorkSchedule 陣列
  */
 export async function getWorkSchedules(
     offset: number,

@@ -13,6 +13,7 @@ export interface WorkSkill {
 
 /**
  * 取得所有 WorkSkill
+ * @returns WorkSkill 陣列
  */
 export async function getAllWorkSkills(): Promise<WorkSkill[]> {
     const snapshot = await firestoreAdmin.collection("workSkill").get();
@@ -20,28 +21,36 @@ export async function getAllWorkSkills(): Promise<WorkSkill[]> {
 }
 
 /**
- * 新增 WorkSkill
+ * 新增 WorkSkill 至 Firestore 資料庫
+ * @param skill WorkSkill 物件，包含技能資訊
+ * @returns 無回傳值，僅執行新增動作
  */
 export async function addWorkSkill(skill: WorkSkill): Promise<void> {
     await firestoreAdmin.collection("workSkill").doc(skill.skillID).set(skill);
 }
 
 /**
- * 更新 WorkSkill
+ * 更新指定 WorkSkill 至 Firestore 資料庫
+ * @param skillID WorkSkill 的唯一識別碼
+ * @param updates 欲更新的 WorkSkill 欄位內容
+ * @returns 無回傳值，僅執行更新動作
  */
 export async function updateWorkSkill(skillID: string, updates: Partial<WorkSkill>): Promise<void> {
     await firestoreAdmin.collection("workSkill").doc(skillID).update(updates);
 }
 
 /**
- * 刪除 WorkSkill
+ * 從 Firestore 資料庫刪除指定 WorkSkill
+ * @param skillID WorkSkill 的唯一識別碼
+ * @returns 無回傳值，僅執行刪除動作
  */
 export async function deleteWorkSkill(skillID: string): Promise<void> {
     await firestoreAdmin.collection("workSkill").doc(skillID).delete();
 }
 
 /**
- * 取得所有 workSkill 的原始資料清單
+ * 取得所有 WorkSkill 的原始資料清單
+ * @returns WorkSkill 陣列
  */
 export async function listWorkSkill(): Promise<WorkSkill[]> {
     const snapshot = await firestoreAdmin.collection("workSkill").get();
