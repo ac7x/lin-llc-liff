@@ -70,10 +70,61 @@ export default function WorkEpicPage() {
         }
     };
 
+    // 計算進度
+    const getEpicProgress = (epic: WorkEpicEntity) => {
+        let total = 0
+        let completed = 0
+
+        if (epic.workTypes && epic.workFlows && epic.workTasks) {
+            // 取得所有 workType 對應的 workFlow
+            epic.workTypes.forEach(type => {
+                const flows = epic.workFlows!.filter(flow => flow.workTypeId === type.typeId)
+                flows.forEach(flow => {
+                    // 找出屬於此 flow 的 workTask
+                    const tasks = epic.workTasks!.filter(task => task.itemId === flow.flowId)
+                    tasks.forEach(task => {
+                        total += task.targetQuantity
+                        completed += task.completedQuantity
+                    })
+                })
+            })
+        } else if (epic.workTasks) {
+            // 若沒有 workTypes/workFlows，直接統計所有 workTasks
+            epic.workTasks.forEach(task => {
+                total += task.targetQuantity
+                completed += task.completedQuantity
+            })
+        }
+
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0
+        return { percent, completed, total }
+    }
+
     return (
         <>
             <main className="p-4">
                 <h1 className="text-2xl font-bold mb-4">工作標的列表</h1>
+
+                {/* 進度表區塊 */}
+                <div className="mb-6">
+                    {workEpics.map(epic => {
+                        const progress = getEpicProgress(epic)
+                        return (
+                            <div key={epic.epicId} className="mb-2">
+                                <div className="flex justify-between items-center mb-1">
+                                    <span className="font-semibold">{epic.title}</span>
+                                    <span className="text-sm text-gray-600">{progress.completed}/{progress.total}（{progress.percent}%）</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded h-3">
+                                    <div
+                                        className="bg-green-500 h-3 rounded"
+                                        style={{ width: `${progress.percent}%` }}
+                                    />
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
 
                 {/* 新增標的區域 */}
                 <div className="mb-4">
