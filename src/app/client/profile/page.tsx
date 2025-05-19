@@ -63,24 +63,24 @@ export default function UserProfilePage() {
 
   return (
     <>
-      <main className="py-8 px-4">
-        <h1 className="text-2xl font-bold mb-6 text-center">LINE 用戶資料</h1>
+      <main className="py-8 px-4 min-h-screen bg-gray-100">
+        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">LINE 用戶資料</h1>
 
-        <div className="space-y-6">
+        <div className="space-y-6 max-w-md mx-auto">
           {/* 用戶基本資料 */}
           {lineProfile && (
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <div className="flex items-center space-x-4">
+            <div className="bg-white rounded-2xl p-6 shadow-lg flex flex-col gap-4">
+              <div className="flex items-center gap-4">
                 {lineProfile.pictureUrl && (
                   <img
                     src={lineProfile.pictureUrl}
                     alt="個人頭像"
-                    className="w-16 h-16 rounded-full"
+                    className="w-20 h-20 rounded-full border-2 border-gray-200 shadow"
                   />
                 )}
                 <div>
-                  <h3 className="font-medium">{lineProfile.displayName}</h3>
-                  <p className="text-sm text-gray-500">{lineProfile.userId}</p>
+                  <h3 className="font-semibold text-lg text-gray-900">{lineProfile.displayName}</h3>
+                  <p className="text-xs text-gray-400 break-all">{lineProfile.userId}</p>
                 </div>
               </div>
             </div>
@@ -88,39 +88,39 @@ export default function UserProfilePage() {
 
           {/* 用戶資產 */}
           {userAssets && (
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <h3 className="font-medium text-lg mb-4">我的資產</h3>
+            <div className="bg-white rounded-2xl p-6 shadow-lg flex flex-col gap-4">
+              <h3 className="font-semibold text-lg mb-2 text-gray-800">我的資產</h3>
               <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                  <p className="text-yellow-600 text-2xl font-bold">{userAssets.coin}</p>
-                  <p className="text-sm text-gray-600">金幣</p>
+                <div className="flex flex-col items-center justify-center p-4 bg-yellow-50 rounded-xl shadow-inner">
+                  <p className="text-yellow-600 text-3xl font-extrabold">{userAssets.coin}</p>
+                  <p className="text-xs text-gray-500 mt-1">金幣</p>
                 </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <p className="text-blue-600 text-2xl font-bold">{userAssets.diamond}</p>
-                  <p className="text-sm text-gray-600">鑽石</p>
+                <div className="flex flex-col items-center justify-center p-4 bg-blue-50 rounded-xl shadow-inner">
+                  <p className="text-blue-600 text-3xl font-extrabold">{userAssets.diamond}</p>
+                  <p className="text-xs text-gray-500 mt-1">鑽石</p>
                 </div>
               </div>
             </div>
           )}
 
           {/* 登入狀態和操作 */}
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <h3 className="font-medium text-lg mb-4">登入狀態</h3>
+          <div className="bg-white rounded-2xl p-6 shadow-lg flex flex-col gap-4">
+            <h3 className="font-semibold text-lg mb-2 text-gray-800">登入狀態</h3>
             <div className="space-y-2">
-              <p className="text-sm">
+              <p className="text-xs text-gray-700">
                 LIFF 登入狀態: <span className="font-mono">{isLiffLoggedIn ? '已登入' : '未登入'}</span>
               </p>
-              <p className="text-sm">
+              <p className="text-xs text-gray-700">
                 Firebase 登入狀態: <span className="font-mono">{isLoggedIn ? '已登入' : '未登入'}</span>
               </p>
               {actionMessage && (
-                <p className="text-sm text-blue-600">{actionMessage}</p>
+                <p className="text-xs text-blue-600">{actionMessage}</p>
               )}
               <div className="flex gap-2 mt-4">
                 {!isLiffLoggedIn && (
                   <button
                     onClick={() => login()}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                    className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition-colors"
                   >
                     LINE 登入
                   </button>
@@ -128,7 +128,7 @@ export default function UserProfilePage() {
                 {isLiffLoggedIn && (
                   <button
                     onClick={handleLogout}
-                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                    className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition-colors"
                   >
                     登出
                   </button>
@@ -139,8 +139,8 @@ export default function UserProfilePage() {
 
           {/* 錯誤訊息 */}
           {liffError && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg">
-              <p className="text-sm">{liffError}</p>
+            <div className="bg-red-50 text-red-600 p-4 rounded-xl shadow">
+              <p className="text-xs">{liffError}</p>
             </div>
           )}
         </div>
