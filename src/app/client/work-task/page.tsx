@@ -1,13 +1,31 @@
 "use client";
 
-import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
+import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
+import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
+import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
+
+interface WorkMember {
+  taskId?: string;
+  memberId: string;
+  name: string;
+  role: string;
+  skills: string[];
+  availability: string;
+  contactInfo?: {
+    phone?: string;
+    email?: string;
+  };
+  status: string;
+  lastActiveTime?: string;
+}
 
 export default function WorkTaskPage() {
   const [tasks, setTasks] = useState<WorkTaskEntity[]>([]);
   const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
+  const [members, setMembers] = useState<WorkMember[]>([]);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -24,6 +42,35 @@ export default function WorkTaskPage() {
     };
     fetchWorkloads();
   }, []);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const membersCollection = collection(firestore, "workMember");
+      const snapshot = await getDocs(membersCollection);
+      const data: WorkMember[] = snapshot.docs.map(doc => doc.data() as WorkMember);
+      setMembers(data);
+    };
+    fetchMembers();
+  }, []);
+
+  const handleExecutorChange = async (loadId: string, executor: string) => {
+    await updateWorkLoad(loadId, { executor });
+    setWorkloads(prev =>
+      prev.map(load =>
+        load.loadId === loadId ? { ...load, executor } : load
+      )
+    );
+  };
+
+  // 新增：處理實際完成數量變更
+  const handleActualQuantityChange = async (loadId: string, actualQuantity: number) => {
+    await updateWorkLoad(loadId, { actualQuantity });
+    setWorkloads(prev =>
+      prev.map(load =>
+        load.loadId === loadId ? { ...load, actualQuantity } : load
+      )
+    );
+  };
 
   return (
     <>
@@ -78,8 +125,29 @@ export default function WorkTaskPage() {
                 <td className="border px-2 py-1">{load.unit}</td>
                 <td className="border px-2 py-1">{load.plannedStartTime}</td>
                 <td className="border px-2 py-1">{load.plannedEndTime}</td>
-                <td className="border px-2 py-1">{load.actualQuantity}</td>
-                <td className="border px-2 py-1">{load.executor}</td>
+                <td className="border px-2 py-1">
+                  <input
+                    type="number"
+                    className="border p-1 w-20"
+                    value={load.actualQuantity}
+                    onChange={e => handleActualQuantityChange(load.loadId, Number(e.target.value))}
+                    min={0}
+                  />
+                </td>
+                <td className="border px-2 py-1">
+                  <select
+                    className="border p-1"
+                    value={load.executor || ""}
+                    onChange={e => handleExecutorChange(load.loadId, e.target.value)}
+                  >
+                    <option value="">請選擇</option>
+                    {members.map(member => (
+                      <option key={member.memberId} value={member.memberId}>
+                        {member.name}（{member.role}）
+                      </option>
+                    ))}
+                  </select>
+                </td>
                 <td className="border px-2 py-1">{load.notes || ''}</td>
               </tr>
             ))}
