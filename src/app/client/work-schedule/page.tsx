@@ -116,7 +116,15 @@ const WorkSchedulePage: React.FC = () => {
 
     return (
         <>
-            <div ref={containerRef}>
+            <div
+                ref={containerRef}
+                style={{
+                    border: '1px solid #ccc',
+                    borderRadius: 8,
+                    padding: 16,
+                    margin: 16
+                }}
+            >
                 <h1>工作排班表</h1>
 
                 <div>
@@ -132,26 +140,53 @@ const WorkSchedulePage: React.FC = () => {
                     </div>
                 </div>
 
-                <table>
+                <table
+                    style={{
+                        borderCollapse: 'collapse',
+                        width: '100%',
+                        marginBottom: 24,
+                        border: '1px solid #888'
+                    }}
+                >
                     <thead>
                         <tr>
-                            <th>{state.horizontalAxis === "date" ? "地點" : "日期"}</th>
+                            <th
+                                style={{
+                                    border: '1px solid #888',
+                                    background: '#f5f5f5',
+                                    padding: 8
+                                }}
+                            >
+                                {state.horizontalAxis === "date" ? "地點" : "日期"}
+                            </th>
                             {horizontalLabels.map(label => (
-                                <th key={label}>{label}</th>
+                                <th
+                                    key={label}
+                                    style={{
+                                        border: '1px solid #888',
+                                        background: '#f5f5f5',
+                                        padding: 8
+                                    }}
+                                >
+                                    {label}
+                                </th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {verticalLabels.map(label => (
                             <tr key={label}>
-                                <td>{label}</td>
+                                <td style={{ border: '1px solid #888', padding: 8 }}>{label}</td>
                                 {horizontalLabels.map(hLabel => {
                                     const assignment =
                                         state.horizontalAxis === "date"
                                             ? getAssignment(hLabel, label)
                                             : getAssignment(label, hLabel);
                                     return (
-                                        <td key={label + "-" + hLabel}>
+                                        <td
+                                            key={label + "-" + hLabel}
+                                            style={{ border: '1px solid #888', padding: 8 }}
+                                        >
                                             <div>{assignment?.groupName ?? "-"}</div>
                                             <div>
                                                 {(assignment?.members ?? []).join("、")}
@@ -165,22 +200,28 @@ const WorkSchedulePage: React.FC = () => {
                 </table>
 
                 <h2>工作負荷</h2>
-                <table>
+                <table
+                    style={{
+                        borderCollapse: 'collapse',
+                        width: '100%',
+                        border: '1px solid #888'
+                    }}
+                >
                     <thead>
                         <tr>
-                            <th>負荷ID</th>
-                            <th>任務ID</th>
-                            <th>計劃數量</th>
-                            <th>單位</th>
+                            <th style={{ border: '1px solid #888', background: '#f5f5f5', padding: 8 }}>負荷ID</th>
+                            <th style={{ border: '1px solid #888', background: '#f5f5f5', padding: 8 }}>任務ID</th>
+                            <th style={{ border: '1px solid #888', background: '#f5f5f5', padding: 8 }}>計劃數量</th>
+                            <th style={{ border: '1px solid #888', background: '#f5f5f5', padding: 8 }}>單位</th>
                         </tr>
                     </thead>
                     <tbody>
                         {state.workLoads.map((load, index) => (
                             <tr key={index}>
-                                <td>{load.loadId}</td>
-                                <td>{load.taskId}</td>
-                                <td>{load.plannedQuantity}</td>
-                                <td>{load.unit}</td>
+                                <td style={{ border: '1px solid #888', padding: 8 }}>{load.loadId}</td>
+                                <td style={{ border: '1px solid #888', padding: 8 }}>{load.taskId}</td>
+                                <td style={{ border: '1px solid #888', padding: 8 }}>{load.plannedQuantity}</td>
+                                <td style={{ border: '1px solid #888', padding: 8 }}>{load.unit}</td>
                             </tr>
                         ))}
                     </tbody>
