@@ -13,17 +13,11 @@ import {
 import {
     addWorkLoad // ← 加入這行
     ,
-
-
-    getAllWorkLoads,
     WorkLoadEntity
 } from "@/app/actions/workload.action";
 import {
     addWorkTask // ← 加入這行
     ,
-
-
-    getAllWorkTasks,
     WorkTaskEntity
 } from "@/app/actions/worktask.action";
 import {
@@ -54,11 +48,7 @@ const WorkTemplatePage: React.FC = () => {
     const [newStepSkills, setNewStepSkills] = useState<string>("");
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
     const [selectedWorkEpicId, setSelectedWorkEpicId] = useState<string | null>(null);
-    const [workTasks, setWorkTasks] = useState<WorkTaskEntity[]>([]);
-    const [workLoads, setWorkLoads] = useState<WorkLoadEntity[]>([]);
     const [selectedWorkFlowIds, setSelectedWorkFlowIds] = useState<string[]>([]);
-    const [selectedWorkTaskId, setSelectedWorkTaskId] = useState<string | null>(null);
-    const [selectedWorkLoadId, setSelectedWorkLoadId] = useState<string | null>(null);
     const [showValidationError, setShowValidationError] = useState(false);
     const [flowQuantities, setFlowQuantities] = useState<{ [flowId: string]: number }>({});
     const [workloadCounts, setWorkloadCounts] = useState<{ [taskId: string]: number }>({});
@@ -68,8 +58,6 @@ const WorkTemplatePage: React.FC = () => {
             setWorkTypes(await getAllWorkTypes(true));
             setWorkFlows(await getAllWorkFlows());
             setWorkEpics(await getAllWorkEpics(false) as WorkEpicEntity[]);
-            setWorkTasks(await getAllWorkTasks(false) as WorkTaskEntity[]);
-            setWorkLoads(await getAllWorkLoads(false) as WorkLoadEntity[]);
         };
         fetchData();
     }, []);
@@ -219,16 +207,8 @@ const WorkTemplatePage: React.FC = () => {
         await updateWorkEpic(selectedWorkEpicId, updates);
     };
 
-    // 根據所選流程過濾工作任務
-    const filteredTasks = selectedWorkFlowIds.length > 0
-        ? workTasks // 目前暫以全部顯示，請根據實際需求調整
-        : workTasks;
-
-    // 將選項資料轉換為 Select 元件格式
     const epicOptions = workEpics.map(e => ({ value: e.epicId, label: e.title }));
     const typeOptions = workTypes.map(t => ({ value: t.typeId, label: t.title }));
-    const taskOptions = filteredTasks.map(t => ({ value: t.taskId, label: t.taskId }));
-    const loadOptions = workLoads.map(l => ({ value: l.loadId, label: l.loadId }));
 
     return (
         <>
@@ -393,8 +373,6 @@ const WorkTemplatePage: React.FC = () => {
                             ))}
                         </div>
                     )}
-                    <Select value={selectedWorkTaskId || ""} onChange={e => setSelectedWorkTaskId(e.target.value)} options={taskOptions} placeholder="選擇工作任務" />
-                    <Select value={selectedWorkLoadId || ""} onChange={e => setSelectedWorkLoadId(e.target.value)} options={loadOptions} placeholder="選擇工作量" />
                     {showValidationError && (
                         <div className="text-red-500 mb-2">請確保所有項目都已選擇！</div>
                     )}
