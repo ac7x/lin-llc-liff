@@ -47,6 +47,8 @@ export default function WorkEpicPage() {
                             <th className="border border-gray-300 px-4 py-2">結束時間</th>
                             <th className="border border-gray-300 px-4 py-2">保險狀態</th>
                             <th className="border border-gray-300 px-4 py-2">負責人</th>
+                            <th className="border border-gray-300 px-4 py-2">監工</th>
+                            <th className="border border-gray-300 px-4 py-2">安全衛生人員</th>
                             <th className="border border-gray-300 px-4 py-2">狀態</th>
                             <th className="border border-gray-300 px-4 py-2">優先級</th>
                             <th className="border border-gray-300 px-4 py-2">地點</th>
@@ -67,7 +69,9 @@ export default function WorkEpicPage() {
                                     <td className="border border-gray-300 px-4 py-2">{epic.startDate}</td>
                                     <td className="border border-gray-300 px-4 py-2">{epic.endDate}</td>
                                     <td className="border border-gray-300 px-4 py-2">{epic.insuranceStatus || "無"}</td>
-                                    <td className="border border-gray-300 px-4 py-2">{epic.owner}</td>
+                                    <td className="border border-gray-300 px-4 py-2">{epic.owner?.name || "未指定"}</td>
+                                    <td className="border border-gray-300 px-4 py-2">{epic.siteSupervisors?.map(s => s.name).join('、') || "-"}</td>
+                                    <td className="border border-gray-300 px-4 py-2">{epic.safetyOfficers?.map(s => s.name).join('、') || "-"}</td>
                                     <td className="border border-gray-300 px-4 py-2">{epic.status}</td>
                                     <td className="border border-gray-300 px-4 py-2">{epic.priority}</td>
                                     <td className="border border-gray-300 px-4 py-2">{epic.region}</td>

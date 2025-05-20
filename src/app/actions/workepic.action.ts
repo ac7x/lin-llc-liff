@@ -16,7 +16,9 @@ export interface WorkEpicTemplate {
 export interface WorkEpicEntity extends WorkEpicTemplate {
     insuranceStatus?: "無" | "有"; // 修改為可選屬性
     insuranceDate?: string; // 保險日期（僅當保險狀態為 "有" 時存在）
-    owner: string; // 負責人
+    owner: { memberId: string; name: string }; // 負責人
+    siteSupervisors?: { memberId: string; name: string }[]; // 監工
+    safetyOfficers?: { memberId: string; name: string }[]; // 安全衛生人員（公安）
     status: "待開始" | "進行中" | "已完成" | "已取消"; // 狀態
     priority: number; // 優先級，數字愈低愈優先
     region: "北部" | "中部" | "南部" | "東部" | "離島"; // 區域
@@ -51,11 +53,13 @@ export async function addWorkEpic(epic: WorkEpicTemplate | WorkEpicEntity): Prom
     const data: WorkEpicEntity = {
         ...epic,
         createdAt: "createdAt" in epic ? epic.createdAt : new Date().toISOString(),
-        owner: "owner" in epic && epic.owner ? epic.owner : "未指定",
+        owner: "owner" in epic && epic.owner ? epic.owner : { memberId: "", name: "未指定" },
         status: "status" in epic && epic.status ? epic.status : "待開始",
         priority: "priority" in epic && epic.priority ? epic.priority : 1,
         region: "region" in epic && epic.region ? epic.region : "北部",
-        address: "address" in epic && epic.address ? epic.address : "未指定"
+        address: "address" in epic && epic.address ? epic.address : "未指定",
+        siteSupervisors: "siteSupervisors" in epic ? epic.siteSupervisors : [],
+        safetyOfficers: "safetyOfficers" in epic ? epic.safetyOfficers : []
     };
 
     if ("workTypes" in epic) {

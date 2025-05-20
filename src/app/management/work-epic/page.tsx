@@ -9,7 +9,9 @@ import { useEffect, useState } from "react";
 export default function WorkEpicPage() {
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
     const [newEpicTitle, setNewEpicTitle] = useState("");
-    const [newEpicOwner, setNewEpicOwner] = useState("");
+    const [newEpicOwner, setNewEpicOwner] = useState<{ memberId: string; name: string } | null>(null);
+    const [newSiteSupervisors, setNewSiteSupervisors] = useState<{ memberId: string; name: string }[]>([]);
+    const [newSafetyOfficers, setNewSafetyOfficers] = useState<{ memberId: string; name: string }[]>([]);
     const [newEpicAddress, setNewEpicAddress] = useState("");
     const [editingEpicId, setEditingEpicId] = useState<string | null>(null);
     const [editFields, setEditFields] = useState<Partial<WorkEpicEntity>>({});
@@ -56,6 +58,8 @@ export default function WorkEpicPage() {
             endDate: "",
             insuranceStatus: "無",
             owner: newEpicOwner,
+            siteSupervisors: newSiteSupervisors,
+            safetyOfficers: newSafetyOfficers,
             status: "待開始",
             priority: 1,
             region: "北部", // 預設區域
@@ -66,7 +70,9 @@ export default function WorkEpicPage() {
         await addWorkEpic(newEpic);
         setWorkEpics(prev => [...prev, newEpic]);
         setNewEpicTitle("");
-        setNewEpicOwner("");
+        setNewEpicOwner(null);
+        setNewSiteSupervisors([]);
+        setNewSafetyOfficers([]);
         setNewEpicAddress("");
     };
 
@@ -75,7 +81,10 @@ export default function WorkEpicPage() {
         setEditFields({ ...epic });
     };
 
-    const handleEditFieldChange = (field: keyof WorkEpicEntity, value: string | number | undefined) => {
+    const handleEditFieldChange = (
+        field: keyof WorkEpicEntity,
+        value: string | number | boolean | { memberId: string; name: string } | { memberId: string; name: string }[] | undefined
+    ) => {
         setEditFields(prev => ({ ...prev, [field]: value }));
     };
 
@@ -150,13 +159,42 @@ export default function WorkEpicPage() {
                         className="border p-2 mr-2"
                     />
                     <select
-                        value={newEpicOwner}
-                        onChange={e => setNewEpicOwner(e.target.value)}
+                        value={newEpicOwner?.memberId || ""}
+                        onChange={e => {
+                            const member = members.find(m => m.memberId === e.target.value);
+                            setNewEpicOwner(member ? { memberId: member.memberId, name: member.name } : null);
+                        }}
                         className="border p-2 mr-2"
                     >
                         <option value="">選擇負責人</option>
                         {members.map(member => (
-                            <option key={member.memberId} value={member.name}>{member.name}</option>
+                            <option key={member.memberId} value={member.memberId}>{member.name}</option>
+                        ))}
+                    </select>
+                    <select
+                        multiple
+                        value={newSiteSupervisors.map(s => s.memberId)}
+                        onChange={e => {
+                            const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                            setNewSiteSupervisors(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })));
+                        }}
+                        className="border p-2 mr-2"
+                    >
+                        {members.map(member => (
+                            <option key={member.memberId} value={member.memberId}>{member.name}</option>
+                        ))}
+                    </select>
+                    <select
+                        multiple
+                        value={newSafetyOfficers.map(s => s.memberId)}
+                        onChange={e => {
+                            const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                            setNewSafetyOfficers(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })));
+                        }}
+                        className="border p-2 mr-2"
+                    >
+                        {members.map(member => (
+                            <option key={member.memberId} value={member.memberId}>{member.name}</option>
                         ))}
                     </select>
                     <input
@@ -182,6 +220,8 @@ export default function WorkEpicPage() {
                             <th className="border border-gray-300 px-4 py-2">結束時間</th>
                             <th className="border border-gray-300 px-4 py-2">保險狀態</th>
                             <th className="border border-gray-300 px-4 py-2">負責人</th>
+                            <th className="border border-gray-300 px-4 py-2">現場監督</th>
+                            <th className="border border-gray-300 px-4 py-2">安全員</th>
                             <th className="border border-gray-300 px-4 py-2">狀態</th>
                             <th className="border border-gray-300 px-4 py-2">優先級</th>
                             <th className="border border-gray-300 px-4 py-2">地點</th>
@@ -205,13 +245,40 @@ export default function WorkEpicPage() {
                                         </td>
                                         <td className="border px-2 py-1">
                                             <select
-                                                value={editFields.owner || ''}
-                                                onChange={e => handleEditFieldChange('owner', e.target.value)}
+                                                value={editFields.owner?.memberId || ''}
+                                                onChange={e => {
+                                                    const member = members.find(m => m.memberId === e.target.value);
+                                                    handleEditFieldChange('owner', member ? { memberId: member.memberId, name: member.name } : undefined);
+                                                }}
                                                 className="border p-1 w-full"
                                             >
                                                 <option value="">請選擇</option>
                                                 {members.map(member => (
-                                                    <option key={member.memberId} value={member.name}>{member.name}</option>
+                                                    <option key={member.memberId} value={member.memberId}>{member.name}</option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                        <td className="border px-2 py-1">
+                                            <select
+                                                multiple
+                                                value={editFields.siteSupervisors?.map(s => s.memberId) || []}
+                                                onChange={e => handleEditFieldChange('siteSupervisors', Array.from(e.target.selectedOptions).map(opt => members.find(m => m.memberId === opt.value) || undefined).filter(Boolean))}
+                                                className="border p-1 w-full"
+                                            >
+                                                {members.map(member => (
+                                                    <option key={member.memberId} value={member.memberId}>{member.name}</option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                        <td className="border px-2 py-1">
+                                            <select
+                                                multiple
+                                                value={editFields.safetyOfficers?.map(s => s.memberId) || []}
+                                                onChange={e => handleEditFieldChange('safetyOfficers', Array.from(e.target.selectedOptions).map(opt => members.find(m => m.memberId === opt.value) || undefined).filter(Boolean))}
+                                                className="border p-1 w-full"
+                                            >
+                                                {members.map(member => (
+                                                    <option key={member.memberId} value={member.memberId}>{member.name}</option>
                                                 ))}
                                             </select>
                                         </td>
@@ -245,7 +312,9 @@ export default function WorkEpicPage() {
                                         <td className="border px-2 py-1">{epic.startDate}</td>
                                         <td className="border px-2 py-1">{epic.endDate}</td>
                                         <td className="border px-2 py-1">{epic.insuranceStatus || '無'}</td>
-                                        <td className="border px-2 py-1">{epic.owner}</td>
+                                        <td className="border px-2 py-1">{epic.owner?.name}</td>
+                                        <td className="border px-2 py-1">{Array.isArray(epic.siteSupervisors) ? epic.siteSupervisors.map(s => s.name).join('、') : '-'}</td>
+                                        <td className="border px-2 py-1">{Array.isArray(epic.safetyOfficers) ? epic.safetyOfficers.map(s => s.name).join('、') : '-'}</td>
                                         <td className="border px-2 py-1">{epic.status}</td>
                                         <td className="border px-2 py-1">{epic.priority}</td>
                                         <td className="border px-2 py-1">{epic.region}</td>
