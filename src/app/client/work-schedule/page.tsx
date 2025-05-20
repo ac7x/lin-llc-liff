@@ -1,5 +1,6 @@
 "use client";
 
+import { getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getWorkSchedules } from "@/app/actions/workschedule.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
@@ -35,7 +36,7 @@ type Action =
 
 const initialState: State = {
     offset: 0,
-    range: 7,
+    range: 7, // 預設顯示七天
     schedules: [],
     workLoads: [],
     horizontalAxis: "date",
@@ -58,23 +59,16 @@ const reducer = (state: State, action: Action): State => {
     }
 };
 
-const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) => {
-    if (!schedules.length) return { horizontalLabels: [], verticalLabels: [] };
-    if (horizontalAxis === "date") {
-        const horizontalLabels = schedules.map(s => s.date);
-        const verticalLabels = Array.from(new Set(schedules.flatMap(s => s.assignments.map(a => a.location))));
-        return { horizontalLabels, verticalLabels };
-    } else {
-        const horizontalLabels = Array.from(new Set(schedules.flatMap(s => s.assignments.map(a => a.location))));
-        const verticalLabels = schedules.map(s => s.date);
-        return { horizontalLabels, verticalLabels };
-    }
-};
-
 const WorkSchedulePage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [state, dispatch] = useReducer(reducer, initialState);
+    const [epics, setEpics] = React.useState<WorkEpicEntity[]>([]);
     const hasAutoSetRange = useRef(false);
+
+    // 取得所有標的（epic）
+    useEffect(() => {
+        getAllWorkEpics(false).then(data => setEpics(data as WorkEpicEntity[]));
+    }, []);
 
     // 只在初次載入時根據容器寬度自動調整 range
     useEffect(() => {
@@ -105,22 +99,30 @@ const WorkSchedulePage: React.FC = () => {
         });
     }, []);
 
-    const { horizontalLabels, verticalLabels } = calculateLabels(state.schedules, state.horizontalAxis);
-
-    const getAssignment = (date: string, location: string) => {
-        const day = state.schedules.find(s => s.date === date);
-        return day?.assignments.find(a => a.location === location);
+    // 調整 calculateLabels 以 epic 為主
+    const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) => {
+        if (!schedules.length || !epics.length) return { horizontalLabels: [], verticalLabels: [] };
+        if (horizontalAxis === "date") {
+            const horizontalLabels = schedules.map(s => s.date);
+            const verticalLabels = epics.map(e => e.title); // 以 epic title 為地點
+            return { horizontalLabels, verticalLabels };
+        } else {
+            const horizontalLabels = epics.map(e => e.title);
+            const verticalLabels = schedules.map(s => s.date);
+            return { horizontalLabels, verticalLabels };
+        }
     };
 
-    // 根據 assignment 的日期與地點，找出對應的工作量
-    const getLoadsForCell = (date: string, location: string) => {
-        // 假設 load.title 格式為 "epicTitle-workTaskTitle"，可根據 location 進行部分比對
-        // 若有更精確的 mapping，請根據資料結構調整
+    const { horizontalLabels, verticalLabels } = calculateLabels(state.schedules, state.horizontalAxis);
+
+    // 根據 epic title 找出對應的工作量
+    const getLoadsForCell = (date: string, epicTitle: string) => {
+        // 僅顯示該日期的 workLoad，且 title 需包含 epicTitle
         return state.workLoads.filter(l => {
-            // 這裡假設 title 內含 location 名稱
-            const matchLocation = l.title.includes(location);
-            // 若有日期欄位可比對，請加上日期比對條件
-            return matchLocation;
+            // 需有 plannedStartTime 且等於 date
+            const matchEpic = l.title.includes(epicTitle);
+            const matchDate = l.plannedStartTime && l.plannedStartTime.startsWith(date);
+            return matchEpic && matchDate;
         });
     };
 
@@ -151,7 +153,7 @@ const WorkSchedulePage: React.FC = () => {
                             className="border border-gray-300 dark:border-neutral-700 rounded bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-2 py-1"
                         >
                             <option value="date">橫向：日期</option>
-                            <option value="location">橫向：地點</option>
+                            <option value="location">橫向：標的</option>
                         </select>
                     </div>
                 </div>
@@ -160,7 +162,7 @@ const WorkSchedulePage: React.FC = () => {
                     <thead>
                         <tr>
                             <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">
-                                {state.horizontalAxis === "date" ? "地點" : "日期"}
+                                {state.horizontalAxis === "date" ? "標的" : "日期"}
                             </th>
                             {horizontalLabels.map(label => (
                                 <th key={label} className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">{label}</th>
@@ -173,30 +175,22 @@ const WorkSchedulePage: React.FC = () => {
                                 <td className="border px-2 py-1 font-bold">{vLabel}</td>
                                 {horizontalLabels.map(hLabel => {
                                     const date = state.horizontalAxis === "date" ? hLabel : vLabel;
-                                    const location = state.horizontalAxis === "date" ? vLabel : hLabel;
-                                    const assignment = getAssignment(date, location);
-                                    const loads = getLoadsForCell(date, location);
+                                    const epicTitle = state.horizontalAxis === "date" ? vLabel : hLabel;
+                                    const loads = getLoadsForCell(date, epicTitle);
                                     return (
                                         <td key={hLabel} className="border px-2 py-1 align-top">
-                                            {assignment ? (
-                                                <div>
-                                                    <div>組別：{assignment.groupName}</div>
-                                                    <div>成員：{assignment.members.join(", ")}</div>
-                                                </div>
-                                            ) : <span className="text-gray-400">無排班</span>}
-                                            {/* 顯示工作量 */}
-                                            {loads.length > 0 && (
+                                            {loads.length > 0 ? (
                                                 <ul className="mt-1 text-xs">
                                                     {loads.map(load => (
                                                         <li key={load.loadId} className="mb-1">
                                                             <div>工作量：{load.title}</div>
                                                             <div>
-                                                                執行者：{(load.executor && load.executor.length > 0) ? load.executor.join('、') : <span className="text-gray-400">未指定</span>}
+                                                                執行人：{(load.executor && load.executor.length > 0) ? load.executor.join('、') : <span className="text-gray-400">未指定</span>}
                                                             </div>
                                                         </li>
                                                     ))}
                                                 </ul>
-                                            )}
+                                            ) : <span className="text-gray-400">無工作量</span>}
                                         </td>
                                     );
                                 })}
