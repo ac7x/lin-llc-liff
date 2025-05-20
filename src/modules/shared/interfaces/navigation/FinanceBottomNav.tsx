@@ -35,12 +35,6 @@ const defaultFinanceNavItems: NavItem[] = [
         active: false
     },
     {
-        href: '/finance/transaction',
-        icon: '💳',
-        label: '交易紀錄',
-        active: false
-    },
-    {
         href: '/finance/report',
         icon: '📈',
         label: '報表',
