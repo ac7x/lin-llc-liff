@@ -17,7 +17,7 @@ interface ManagementBottomNavProps {
 
 const defaultAdminNavItems: NavItem[] = [
     {
-        href: '/admin/dashboard',
+        href: '/management/dashboard',
         icon: '📊',
         label: '儀表板',
         active: false
