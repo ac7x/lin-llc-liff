@@ -35,6 +35,18 @@ const defaultAdminNavItems: NavItem[] = [
         active: false
     },
     {
+        href: '/client/work-task',
+        icon: '📝',
+        label: '工作任務',
+        active: false
+    },
+    {
+        href: '/client/work-epic',
+        icon: '📖',
+        label: '工作史詩',
+        active: false
+    },
+    {
         href: '/client/work-template',
         icon: '📂',
         label: '工作範本',
