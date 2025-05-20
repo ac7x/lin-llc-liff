@@ -35,7 +35,7 @@ const defaultAdminNavItems: NavItem[] = [
         active: false
     },
     {
-        href: '/management/position',
+        href: '/management/workmember',
         icon: '👥',
         label: '成員管理',
         active: false

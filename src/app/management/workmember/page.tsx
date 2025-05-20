@@ -6,7 +6,7 @@ import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBo
 import { collection, getDocs } from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
 
-export default function ManagementPositionPage() {
+export default function WorkMemberPage() {
   const { isLoggedIn, firebaseLogin } = useContext(LiffContext);
   const [members, setMembers] = useState<WorkMember[]>([]);
   const [filter, setFilter] = useState({ role: "", status: "" });

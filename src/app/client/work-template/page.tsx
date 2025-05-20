@@ -398,18 +398,16 @@ const WorkTemplatePage: React.FC = () => {
                                         placeholder="數量"
                                     />
                                     <label className="ml-2">分割：</label>
-                                    <select
-                                        className="border p-1 w-20"
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        className="border px-2 py-1 w-20"
                                         value={workloadCounts[flow.flowId] || 1}
                                         onChange={e => {
-                                            const val = parseInt(e.target.value, 10) || 1;
-                                            setWorkloadCounts(prev => ({ ...prev, [flow.flowId]: val }));
+                                            const val = Math.max(1, parseInt(e.target.value) || 1)
+                                            setWorkloadCounts(counts => ({ ...counts, [flow.flowId]: val }))
                                         }}
-                                    >
-                                        {[...Array(10)].map((_, i) => (
-                                            <option key={i + 1} value={i + 1}>{i + 1} 筆</option>
-                                        ))}
-                                    </select>
+                                    />
                                 </div>
                             ))}
                         </div>
