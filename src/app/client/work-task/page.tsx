@@ -65,6 +65,7 @@ export default function WorkTaskPage() {
   // 新增：處理實際完成數量變更
   const handleActualQuantityChange = async (loadId: string, actualQuantity: number) => {
     await updateWorkLoad(loadId, { actualQuantity });
+    // 先更新 workloads 狀態
     setWorkloads(prev =>
       prev.map(load =>
         load.loadId === loadId ? { ...load, actualQuantity } : load
@@ -72,15 +73,19 @@ export default function WorkTaskPage() {
     );
 
     // 取得該 load 對應的 taskId
+    // 注意：此時 workloads 尚未 set 完成，需用 prev 狀態計算
     const updatedLoad = workloads.find(load => load.loadId === loadId);
     if (!updatedLoad) return;
     const taskId = updatedLoad.taskId;
-    // 取得所有屬於該 taskId 的 workloads
+
+    // 取得所有屬於該 taskId 的 workloads，並將本次變更的 actualQuantity 帶入
     const relatedLoads = workloads
-      .map(load => (load.loadId === loadId ? { ...load, actualQuantity } : load))
+      .map(load => load.loadId === loadId ? { ...load, actualQuantity } : load)
       .filter(load => load.taskId === taskId);
+
     // 加總 actualQuantity
     const totalActual = relatedLoads.reduce((sum, load) => sum + (load.actualQuantity || 0), 0);
+
     // 更新對應的 workTask.completedQuantity
     await updateWorkTask(taskId, { completedQuantity: totalActual });
     setTasks(prev =>
