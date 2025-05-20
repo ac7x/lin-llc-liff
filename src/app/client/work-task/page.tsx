@@ -132,7 +132,7 @@ export default function WorkTaskPage() {
         <table className="table-auto w-full border-collapse border border-gray-300 mb-8">
           <thead>
             <tr>
-              <th className="border px-2 py-1">任務ID</th>
+              <th className="border px-2 py-1">任務名稱</th>
               <th className="border px-2 py-1">流程ID</th>
               <th className="border px-2 py-1">目標數量</th>
               <th className="border px-2 py-1">單位</th>
@@ -143,7 +143,7 @@ export default function WorkTaskPage() {
           <tbody>
             {tasks.map(task => (
               <tr key={task.taskId}>
-                <td className="border px-2 py-1">{task.taskId}</td>
+                <td className="border px-2 py-1">{task.title}</td>
                 <td className="border px-2 py-1">{task.flowId}</td>
                 <td className="border px-2 py-1">{task.targetQuantity}</td>
                 <td className="border px-2 py-1">{task.unit}</td>
@@ -158,8 +158,8 @@ export default function WorkTaskPage() {
         <table className="table-auto w-full border-collapse border border-gray-300">
           <thead>
             <tr>
-              <th className="border px-2 py-1">負載ID</th>
-              <th className="border px-2 py-1">任務ID</th>
+              <th className="border px-2 py-1">負載名稱</th>
+              <th className="border px-2 py-1">任務名稱</th>
               <th className="border px-2 py-1">計劃數量</th>
               <th className="border px-2 py-1">單位</th>
               <th className="border px-2 py-1">計劃開始</th>
@@ -170,62 +170,65 @@ export default function WorkTaskPage() {
             </tr>
           </thead>
           <tbody>
-            {workloads.map(load => (
-              <tr key={load.loadId}>
-                <td className="border px-2 py-1">{load.loadId}</td>
-                <td className="border px-2 py-1">{load.taskId}</td>
-                <td className="border px-2 py-1">
-                  <input
-                    type="number"
-                    className="border p-1 w-20"
-                    value={load.plannedQuantity}
-                    onChange={e => handlePlannedQuantityChange(load.loadId, Number(e.target.value))}
-                    min={0}
-                  />
-                </td>
-                <td className="border px-2 py-1">{load.unit}</td>
-                <td className="border px-2 py-1">
-                  <input
-                    type="datetime-local"
-                    className="border p-1 w-44"
-                    value={load.plannedStartTime}
-                    onChange={e => handlePlannedStartTimeChange(load.loadId, e.target.value)}
-                  />
-                </td>
-                <td className="border px-2 py-1">
-                  <input
-                    type="datetime-local"
-                    className="border p-1 w-44"
-                    value={load.plannedEndTime}
-                    onChange={e => handlePlannedEndTimeChange(load.loadId, e.target.value)}
-                  />
-                </td>
-                <td className="border px-2 py-1">
-                  <input
-                    type="number"
-                    className="border p-1 w-20"
-                    value={load.actualQuantity}
-                    onChange={e => handleActualQuantityChange(load.loadId, Number(e.target.value))}
-                    min={0}
-                  />
-                </td>
-                <td className="border px-2 py-1">
-                  <select
-                    className="border p-1"
-                    value={load.executor || ""}
-                    onChange={e => handleExecutorChange(load.loadId, e.target.value)}
-                  >
-                    <option value="">請選擇</option>
-                    {members.map(member => (
-                      <option key={member.memberId} value={member.memberId}>
-                        {member.name}（{member.role}）
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="border px-2 py-1">{load.notes || ''}</td>
-              </tr>
-            ))}
+            {workloads.map(load => {
+              const task = tasks.find(t => t.taskId === load.taskId);
+              return (
+                <tr key={load.loadId}>
+                  <td className="border px-2 py-1">{load.title || load.loadId}</td>
+                  <td className="border px-2 py-1">{task ? task.title : load.taskId}</td>
+                  <td className="border px-2 py-1">
+                    <input
+                      type="number"
+                      className="border p-1 w-20"
+                      value={load.plannedQuantity}
+                      onChange={e => handlePlannedQuantityChange(load.loadId, Number(e.target.value))}
+                      min={0}
+                    />
+                  </td>
+                  <td className="border px-2 py-1">{load.unit}</td>
+                  <td className="border px-2 py-1">
+                    <input
+                      type="datetime-local"
+                      className="border p-1 w-44"
+                      value={load.plannedStartTime}
+                      onChange={e => handlePlannedStartTimeChange(load.loadId, e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-2 py-1">
+                    <input
+                      type="datetime-local"
+                      className="border p-1 w-44"
+                      value={load.plannedEndTime}
+                      onChange={e => handlePlannedEndTimeChange(load.loadId, e.target.value)}
+                    />
+                  </td>
+                  <td className="border px-2 py-1">
+                    <input
+                      type="number"
+                      className="border p-1 w-20"
+                      value={load.actualQuantity}
+                      onChange={e => handleActualQuantityChange(load.loadId, Number(e.target.value))}
+                      min={0}
+                    />
+                  </td>
+                  <td className="border px-2 py-1">
+                    <select
+                      className="border p-1"
+                      value={load.executor || ""}
+                      onChange={e => handleExecutorChange(load.loadId, e.target.value)}
+                    >
+                      <option value="">請選擇</option>
+                      {members.map(member => (
+                        <option key={member.memberId} value={member.memberId}>
+                          {member.name}（{member.role}）
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="border px-2 py-1">{load.notes || ''}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </main>
