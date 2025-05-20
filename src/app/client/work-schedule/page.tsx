@@ -4,7 +4,7 @@ import { getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getWorkSchedules } from "@/app/actions/workschedule.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
-import React, { useEffect, useReducer, useRef } from "react";
+import React, { useEffect, useReducer, useRef, useMemo } from "react";
 
 type WorkAssignment = {
     location: string;
@@ -36,7 +36,7 @@ type Action =
 
 const initialState: State = {
     offset: 0,
-    range: 7, // 預設顯示七天
+    range: 7,
     schedules: [],
     workLoads: [],
     horizontalAxis: "date",
@@ -65,12 +65,10 @@ const WorkSchedulePage: React.FC = () => {
     const [epics, setEpics] = React.useState<WorkEpicEntity[]>([]);
     const hasAutoSetRange = useRef(false);
 
-    // 取得所有標的（epic）
     useEffect(() => {
         getAllWorkEpics(false).then(data => setEpics(data as WorkEpicEntity[]));
     }, []);
 
-    // 只在初次載入時根據容器寬度自動調整 range
     useEffect(() => {
         if (hasAutoSetRange.current) return;
         const updateRange = () => {
@@ -85,26 +83,29 @@ const WorkSchedulePage: React.FC = () => {
         return () => observer.disconnect();
     }, []);
 
-    // 取得排班資料
     useEffect(() => {
         getWorkSchedules(state.offset, state.range, state.horizontalAxis).then(data => {
             dispatch({ type: "SET_SCHEDULES", payload: data });
         });
     }, [state.offset, state.range, state.horizontalAxis]);
 
-    // 取得工作量資料
     useEffect(() => {
         getAllWorkLoads(true).then(loads => {
             dispatch({ type: "SET_WORKLOADS", payload: loads as WorkLoadEntity[] });
         });
     }, []);
 
-    // 調整 calculateLabels 以 epic 為主
+    const epicIdToTitle = useMemo(() => {
+        const map = new Map<string, string>();
+        epics.forEach(e => map.set(e.epicId, e.title));
+        return map;
+    }, [epics]);
+
     const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) => {
         if (!schedules.length || !epics.length) return { horizontalLabels: [], verticalLabels: [] };
         if (horizontalAxis === "date") {
             const horizontalLabels = schedules.map(s => s.date);
-            const verticalLabels = epics.map(e => e.title); // 以 epic title 為地點
+            const verticalLabels = epics.map(e => e.title);
             return { horizontalLabels, verticalLabels };
         } else {
             const horizontalLabels = epics.map(e => e.title);
@@ -163,13 +164,16 @@ const WorkSchedulePage: React.FC = () => {
                             <tr key={vLabel}>
                                 <td className="border px-2 py-1 font-bold bg-gray-50 dark:bg-neutral-800">{vLabel}</td>
                                 {horizontalLabels.map(hLabel => {
-                                    // 找出該 epic（vLabel）在該日期（hLabel）的所有工作量
                                     const loads = state.workLoads.filter(load => {
-                                        // title 格式通常為 epicTitle-xxx
-                                        const epicTitle = vLabel;
-                                        // 僅比對 title 前綴與日期
-                                        return load.title?.startsWith(epicTitle) && load.plannedStartTime?.slice(0, 10) === hLabel;
+                                        const date = load.plannedStartTime?.slice(0, 10);
+                                        const epicTitle = epicIdToTitle.get(load.epicId) ?? "";
+                                        if (state.horizontalAxis === "date") {
+                                            return epicTitle === vLabel && date === hLabel;
+                                        } else {
+                                            return date === vLabel && epicTitle === hLabel;
+                                        }
                                     });
+
                                     return (
                                         <td key={hLabel} className="border px-2 py-1 align-top min-w-[120px]">
                                             {loads.length === 0 ? (
