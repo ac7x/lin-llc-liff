@@ -5,7 +5,7 @@ import { getAllWorkFlows } from "@/app/actions/workflow.action";
 import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getAllWorkTasks, updateWorkTask, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
-import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 
