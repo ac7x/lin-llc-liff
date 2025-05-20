@@ -35,8 +35,10 @@ export default function WorkTaskPage() {
           <tbody>
             {tasks.map(task => {
               const flow = workFlows.find(f => f.flowId === task.flowId);
-              const stepName = flow?.steps?.[0]?.stepName || task.flowId;
+              const orderedSteps = flow?.steps?.slice().sort((a, b) => a.order - b.order) || [];
+              const stepName = orderedSteps[0]?.stepName || task.flowId;
               const relatedLoads = workloads.filter(load => load.taskId === task.taskId);
+
               return (
                 <tr key={task.taskId}>
                   <td className="border px-2 py-1 align-top">
