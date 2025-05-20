@@ -160,11 +160,12 @@ const WorkTemplatePage: React.FC = () => {
         // 產生任務與工作量
         const newTasks: WorkTaskEntity[] = [];
         const newLoads: WorkLoadEntity[] = [];
-        selectedFlows.forEach(flow => {
+        const now = Date.now();
+        selectedFlows.forEach((flow, flowIdx) => {
             const quantity = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
-            const now = Date.now();
-            const taskId = `task-${flow.flowId}-${now}`;
+            // taskId: task-<epicId>-<flowIdx>-<timestamp>
+            const taskId = `task-${existingEpic.epicId}-${flowIdx}-${now}`;
             const stepName = flow.steps[0]?.stepName || '';
             const taskTitle = `${existingEpic.title}-${selectedType.title}-${stepName}`;
             const task: WorkTaskEntity = {
@@ -182,8 +183,8 @@ const WorkTemplatePage: React.FC = () => {
             const baseQty = Math.floor(quantity / split);
             const remainder = quantity % split;
             for (let j = 0; j < split; j++) {
-                // loadId 改為簡潔格式：load-<taskId>-<index>
-                const loadId = `load-${taskId}-${j}`;
+                // loadId: load-<epicId>-<flowIdx>-<j>-<timestamp>
+                const loadId = `load-${existingEpic.epicId}-${flowIdx}-${j}-${now}`;
                 const loadTitle = `${existingEpic.title}-${taskTitle}`;
                 let plannedQuantity = baseQty;
                 // 若有餘數，最後一筆 plannedQuantity 設為 0，讓用戶後續調整

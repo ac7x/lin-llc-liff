@@ -168,7 +168,7 @@ const WorkSchedulePage: React.FC = () => {
                     <thead>
                         <tr>
                             <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">負荷ID</th>
-                            <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">任務ID</th>
+                            <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">開始時間</th>
                             <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">計劃數量</th>
                             <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">單位</th>
                         </tr>
@@ -177,7 +177,7 @@ const WorkSchedulePage: React.FC = () => {
                         {state.workLoads.map((load, index) => (
                             <tr key={index} className="even:bg-gray-50 dark:even:bg-neutral-800">
                                 <td className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">{load.loadId}</td>
-                                <td className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">{load.taskId}</td>
+                                <td className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">{load.plannedStartTime ?? '-'}</td>
                                 <td className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">{load.plannedQuantity}</td>
                                 <td className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">{load.unit}</td>
                             </tr>
