@@ -95,6 +95,16 @@ export default function WorkTaskPage() {
     );
   };
 
+  // 新增：處理計劃數量變更
+  const handlePlannedQuantityChange = async (loadId: string, plannedQuantity: number) => {
+    await updateWorkLoad(loadId, { plannedQuantity });
+    setWorkloads(prev =>
+      prev.map(load =>
+        load.loadId === loadId ? { ...load, plannedQuantity } : load
+      )
+    );
+  };
+
   return (
     <>
       <main className="p-4">
@@ -144,7 +154,15 @@ export default function WorkTaskPage() {
               <tr key={load.loadId}>
                 <td className="border px-2 py-1">{load.loadId}</td>
                 <td className="border px-2 py-1">{load.taskId}</td>
-                <td className="border px-2 py-1">{load.plannedQuantity}</td>
+                <td className="border px-2 py-1">
+                  <input
+                    type="number"
+                    className="border p-1 w-20"
+                    value={load.plannedQuantity}
+                    onChange={e => handlePlannedQuantityChange(load.loadId, Number(e.target.value))}
+                    min={0}
+                  />
+                </td>
                 <td className="border px-2 py-1">{load.unit}</td>
                 <td className="border px-2 py-1">{load.plannedStartTime}</td>
                 <td className="border px-2 py-1">{load.plannedEndTime}</td>
