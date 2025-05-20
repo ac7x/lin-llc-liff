@@ -174,7 +174,7 @@ const WorkTemplatePage: React.FC = () => {
             const taskId = `task-${flow.flowId}-${taskOrderStr}-${now}`;
             const task: WorkTaskEntity = {
                 taskId,
-                itemId: flow.flowId,
+                flowId: flow.flowId, // 修正為 flowId
                 targetQuantity: quantity,
                 unit: "單位",
                 completedQuantity: 0,

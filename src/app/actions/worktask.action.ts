@@ -5,13 +5,13 @@ import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/fire
 /**
  * WorkTaskTemplate 代表一個工作任務的基本資料結構
  * @property taskId 唯一識別碼
- * @property itemId 關聯的 WorkItem
+ * @property flowId 關聯的 WorkFlow
  * @property targetQuantity 目標數量
  * @property unit 單位
  */
 export interface WorkTaskTemplate {
     taskId: string; // 唯一識別碼
-    itemId: string; // 關聯的 WorkItem
+    flowId: string; // 關聯的 WorkFlow
     targetQuantity: number; // 目標數量
     unit: string; // 單位
 }

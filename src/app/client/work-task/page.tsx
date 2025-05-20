@@ -133,7 +133,7 @@ export default function WorkTaskPage() {
           <thead>
             <tr>
               <th className="border px-2 py-1">任務ID</th>
-              <th className="border px-2 py-1">項目ID</th>
+              <th className="border px-2 py-1">流程ID</th>
               <th className="border px-2 py-1">目標數量</th>
               <th className="border px-2 py-1">單位</th>
               <th className="border px-2 py-1">已完成數量</th>
@@ -144,7 +144,7 @@ export default function WorkTaskPage() {
             {tasks.map(task => (
               <tr key={task.taskId}>
                 <td className="border px-2 py-1">{task.taskId}</td>
-                <td className="border px-2 py-1">{task.itemId}</td>
+                <td className="border px-2 py-1">{task.flowId}</td>
                 <td className="border px-2 py-1">{task.targetQuantity}</td>
                 <td className="border px-2 py-1">{task.unit}</td>
                 <td className="border px-2 py-1">{task.completedQuantity}</td>
