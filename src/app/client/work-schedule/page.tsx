@@ -170,51 +170,47 @@ const WorkSchedulePage: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {verticalLabels.map(label => (
-                            <tr key={label} className="even:bg-gray-50 dark:even:bg-neutral-800">
-                                <td className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">{label}</td>
+                        {verticalLabels.map(vLabel => (
+                            <tr key={vLabel} className="even:bg-gray-50 dark:even:bg-neutral-800">
+                                <td className="border px-2 py-1 font-bold">{vLabel}</td>
                                 {horizontalLabels.map(hLabel => {
-                                    const assignment =
-                                        state.horizontalAxis === "date"
-                                            ? getAssignment(hLabel, label)
-                                            : getAssignment(label, hLabel);
-                                    // 找出該 cell 對應的 workLoad(s)
-                                    const cellDate = state.horizontalAxis === "date" ? hLabel : label;
-                                    const cellLocation = state.horizontalAxis === "date" ? label : hLabel;
-                                    const cellLoads = state.workLoads.filter(load => {
-                                        // 假設 load.title 內含地點與日期資訊，這裡需根據實際資料結構調整
-                                        // 這裡假設 load.plannedStartTime 為日期，load.title 內含地點
-                                        return (load.plannedStartTime?.slice(0, 10) === cellDate) && (load.title?.includes(cellLocation));
-                                    });
+                                    const date = state.horizontalAxis === "date" ? hLabel : vLabel;
+                                    const location = state.horizontalAxis === "date" ? vLabel : hLabel;
+                                    // 找到 assignment
+                                    const assignment = getAssignment(date, location);
+                                    // 找到對應的工作量
+                                    const loads = state.workLoads.filter(l => l.title.includes(location));
                                     return (
-                                        <td key={label + "-" + hLabel} className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
-                                            <div>{assignment?.groupName ?? "-"}</div>
-                                            <div>{(assignment?.members ?? []).join("、")}</div>
-                                            {cellLoads.length > 0 && (
-                                                <div className="mt-1 text-xs text-blue-700 dark:text-blue-300">
-                                                    {cellLoads.map((load, idx) => (
-                                                        <div key={idx} className="mb-1">
-                                                            <span>負荷：{load.plannedQuantity}{load.unit} </span>
-                                                            <span>執行者：{load.executor ?? "-"}</span>
-                                                            <div className="flex items-center gap-1 mt-1">
+                                        <td key={hLabel} className="border px-2 py-1 align-top">
+                                            {assignment ? (
+                                                <div>
+                                                    <div>組別：{assignment.groupName}</div>
+                                                    <div>成員：{assignment.members.join(", ")}</div>
+                                                </div>
+                                            ) : <span className="text-gray-400">無排班</span>}
+                                            {/* 顯示工作量 */}
+                                            {loads.length > 0 && (
+                                                <ul className="mt-1 text-xs">
+                                                    {loads.map(load => (
+                                                        <li key={load.loadId} className="mb-1">
+                                                            <div>工作量：{load.title}</div>
+                                                            <div>
+                                                                執行者：
                                                                 <input
                                                                     type="text"
                                                                     value={executorInputs[load.loadId] ?? load.executor ?? ""}
                                                                     onChange={e => handleExecutorChange(load.loadId, e.target.value)}
-                                                                    className="border border-gray-300 dark:border-neutral-700 rounded px-1 py-0.5 text-neutral-900 dark:text-neutral-900 bg-white w-24 text-xs"
-                                                                    placeholder="輸入執行者"
+                                                                    className="border rounded px-1 py-0.5 text-xs w-24 mr-1"
                                                                 />
                                                                 <button
                                                                     onClick={() => handleSaveExecutor(load)}
                                                                     disabled={saving[load.loadId]}
-                                                                    className="ml-1 px-2 py-0.5 rounded bg-blue-500 text-white text-xs disabled:opacity-50"
-                                                                >
-                                                                    {saving[load.loadId] ? "儲存中" : "儲存"}
-                                                                </button>
+                                                                    className="bg-blue-500 text-white px-2 py-0.5 rounded text-xs disabled:opacity-50"
+                                                                >儲存</button>
                                                             </div>
-                                                        </div>
+                                                        </li>
                                                     ))}
-                                                </div>
+                                                </ul>
                                             )}
                                         </td>
                                     );

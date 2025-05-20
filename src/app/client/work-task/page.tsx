@@ -77,15 +77,6 @@ export default function WorkTaskPage() {
     fetchWorkFlows();
   }, []);
 
-  const handleExecutorChange = async (loadId: string, executor: string) => {
-    await updateWorkLoad(loadId, { executor });
-    setWorkloads(prev =>
-      prev.map(load =>
-        load.loadId === loadId ? { ...load, executor } : load
-      )
-    );
-  };
-
   // 新增：處理實際完成數量變更
   const handleActualQuantityChange = async (loadId: string, actualQuantity: number) => {
     await updateWorkLoad(loadId, { actualQuantity });
