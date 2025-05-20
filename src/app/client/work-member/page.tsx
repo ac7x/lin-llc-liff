@@ -60,20 +60,18 @@ export default function WorkMemberPage() {
   const handleSave = async (memberId: string) => {
     if (editingMember) {
       // skills 需轉為陣列，聯絡資訊需包裝
-      const updateData: any = { ...updatedFields };
-      if (updateData.skills !== undefined) {
-        updateData.skills = updateData.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
+      const { email, phone, lineId, skills, ...rest } = updatedFields;
+      const updateData: Partial<WorkMember> = { ...rest };
+      if (skills !== undefined) {
+        updateData.skills = skills.split(',').map(s => s.trim()).filter(Boolean);
       }
-      if (updateData.email !== undefined || updateData.phone !== undefined || updateData.lineId !== undefined) {
+      if (email !== undefined || phone !== undefined || lineId !== undefined) {
         updateData.contactInfo = {
           ...(members.find(m => m.memberId === memberId)?.contactInfo || {}),
-          email: updateData.email ?? members.find(m => m.memberId === memberId)?.contactInfo.email,
-          phone: updateData.phone ?? members.find(m => m.memberId === memberId)?.contactInfo.phone,
-          lineId: updateData.lineId ?? members.find(m => m.memberId === memberId)?.contactInfo.lineId,
+          email: email ?? members.find(m => m.memberId === memberId)?.contactInfo.email,
+          phone: phone ?? members.find(m => m.memberId === memberId)?.contactInfo.phone,
+          lineId: lineId ?? members.find(m => m.memberId === memberId)?.contactInfo.lineId,
         };
-        delete updateData.email;
-        delete updateData.phone;
-        delete updateData.lineId;
       }
       await updateWorkMember(memberId, updateData);
       setEditingMember(null);
