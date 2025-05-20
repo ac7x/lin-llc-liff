@@ -182,7 +182,8 @@ const WorkTemplatePage: React.FC = () => {
             const baseQty = Math.floor(quantity / split);
             const remainder = quantity % split;
             for (let j = 0; j < split; j++) {
-                const loadId = `load-${flow.flowId}-${taskId}-${j}`;
+                // loadId 改為簡潔格式：load-<taskId>-<index>
+                const loadId = `load-${taskId}-${j}`;
                 const loadTitle = `${existingEpic.title}-${taskTitle}`;
                 let plannedQuantity = baseQty;
                 // 若有餘數，最後一筆 plannedQuantity 設為 0，讓用戶後續調整
