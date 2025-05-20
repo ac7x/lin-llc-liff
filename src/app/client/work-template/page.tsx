@@ -323,7 +323,7 @@ const WorkTemplatePage: React.FC = () => {
                                         <td className="border border-gray-300 px-4 py-2">{step.workTypeTitle}</td>
                                         <td className="border border-gray-300 px-4 py-2">{step.stepName}</td>
                                         <td className="border border-gray-300 px-4 py-2">{step.order}</td>
-                                        <td className="border border-gray-300 px-4 py-2">{step.requiredSkills.join(", ")}</td>
+                                        <td className="border border-gray-300 px-4 py-2">{Array.isArray(step.requiredSkills) ? step.requiredSkills.join(', ') : step.requiredSkills}</td>
                                     </tr>
                                 ))}
                         </tbody>
@@ -380,7 +380,7 @@ const WorkTemplatePage: React.FC = () => {
                                             );
                                         }}
                                     />
-                                    <span className="flex-1">流程ID: {flow.flowId}</span>
+                                    <span className="flex-1">{flow.steps[0].stepName}</span>
                                     <input
                                         type="number"
                                         min={0}

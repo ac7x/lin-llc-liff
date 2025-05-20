@@ -209,24 +209,6 @@ const WorkSchedulePage: React.FC = () => {
                         ))}
                     </tbody>
                 </table>
-
-                <button
-                    onClick={() => {
-                        const newLoad: WorkLoadEntity = {
-                            loadId: `load-${Date.now()}`,
-                            taskId: "task-1",
-                            plannedQuantity: 10,
-                            unit: "件",
-                            plannedStartTime: new Date().toISOString(),
-                            plannedEndTime: new Date(Date.now() + 3600 * 1000).toISOString(),
-                            actualQuantity: 0,
-                            executor: "user-1",
-                        };
-                        dispatch({ type: "SET_WORKLOADS", payload: [...state.workLoads, newLoad] });
-                    }}
-                >
-                    新增工作負載
-                </button>
             </div>
             <GlobalBottomNav />
         </>
