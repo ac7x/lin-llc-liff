@@ -2,7 +2,7 @@
 import { WorkMember, updateWorkMember } from "@/app/actions/workmember.action";
 import { LiffContext } from "@/modules/line/liff/interfaces/Liff";
 import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
-import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import { collection, getDocs } from "firebase/firestore";
 import { useContext, useEffect, useState } from "react";
 
@@ -241,7 +241,7 @@ export default function WorkMemberPage() {
           ))}
         </ul>
       </main>
-      <ClientBottomNav />
+      <ManagementBottomNav />
     </>
   );
 }
