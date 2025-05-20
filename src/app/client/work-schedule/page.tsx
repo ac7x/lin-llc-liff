@@ -118,7 +118,17 @@ const WorkSchedulePage: React.FC = () => {
                 <h1 className="text-2xl font-bold mb-4">工作排班表</h1>
 
                 <div className="mb-4 flex flex-col gap-2">
-                    <div>顯示天數：{state.range}</div>
+                    <div className="flex items-center gap-2">
+                        <span>顯示天數：</span>
+                        <input
+                            type="number"
+                            min={1}
+                            max={31}
+                            value={state.range}
+                            onChange={e => dispatch({ type: "SET_RANGE", payload: Number(e.target.value) })}
+                            className="border border-gray-300 dark:border-neutral-700 rounded bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-2 py-1 w-20"
+                        />
+                    </div>
                     <div>
                         <select
                             value={state.horizontalAxis}
@@ -151,35 +161,31 @@ const WorkSchedulePage: React.FC = () => {
                                         state.horizontalAxis === "date"
                                             ? getAssignment(hLabel, label)
                                             : getAssignment(label, hLabel);
+                                    // 找出該 cell 對應的 workLoad(s)
+                                    const cellDate = state.horizontalAxis === "date" ? hLabel : label;
+                                    const cellLocation = state.horizontalAxis === "date" ? label : hLabel;
+                                    const cellLoads = state.workLoads.filter(load => {
+                                        // 假設 load.title 內含地點與日期資訊，這裡需根據實際資料結構調整
+                                        // 這裡假設 load.plannedStartTime 為日期，load.title 內含地點
+                                        return (load.plannedStartTime?.slice(0, 10) === cellDate) && (load.title?.includes(cellLocation));
+                                    });
                                     return (
                                         <td key={label + "-" + hLabel} className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
                                             <div>{assignment?.groupName ?? "-"}</div>
                                             <div>{(assignment?.members ?? []).join("、")}</div>
+                                            {cellLoads.length > 0 && (
+                                                <div className="mt-1 text-xs text-blue-700 dark:text-blue-300">
+                                                    {cellLoads.map((load, idx) => (
+                                                        <div key={idx} className="mb-1">
+                                                            <span>負荷：{load.plannedQuantity}{load.unit} </span>
+                                                            <span>執行者：{load.executor ?? "-"}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </td>
                                     );
                                 })}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-
-                <h2 className="text-xl font-bold mb-2">工作負荷</h2>
-                <table className="table-auto w-full mb-4 border-collapse bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
-                    <thead>
-                        <tr>
-                            <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">負荷ID</th>
-                            <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">開始時間</th>
-                            <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">計劃數量</th>
-                            <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">單位</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {state.workLoads.map((load, index) => (
-                            <tr key={index} className="even:bg-gray-50 dark:even:bg-neutral-800">
-                                <td className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">{load.loadId}</td>
-                                <td className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">{load.plannedStartTime ?? '-'}</td>
-                                <td className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">{load.plannedQuantity}</td>
-                                <td className="border px-2 py-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">{load.unit}</td>
                             </tr>
                         ))}
                     </tbody>
