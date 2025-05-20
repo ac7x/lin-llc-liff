@@ -206,17 +206,17 @@ export default function WorkTaskPage() {
                   <td className="border px-2 py-1">{load.unit}</td>
                   <td className="border px-2 py-1">
                     <input
-                      type="datetime-local"
+                      type="date"
                       className="border p-1 w-44"
-                      value={load.plannedStartTime}
+                      value={load.plannedStartTime ? load.plannedStartTime.slice(0, 10) : ''}
                       onChange={e => handlePlannedStartTimeChange(load.loadId, e.target.value)}
                     />
                   </td>
                   <td className="border px-2 py-1">
                     <input
-                      type="datetime-local"
+                      type="date"
                       className="border p-1 w-44"
-                      value={load.plannedEndTime}
+                      value={load.plannedEndTime ? load.plannedEndTime.slice(0, 10) : ''}
                       onChange={e => handlePlannedEndTimeChange(load.loadId, e.target.value)}
                     />
                   </td>
