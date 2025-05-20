@@ -1,19 +1,24 @@
 "use client";
 
-import type { WorkFlowEntity } from "@/app/actions/workflow.action";
-import { WorkLoadEntity } from "@/app/actions/workload.action";
-import { WorkTaskEntity } from "@/app/actions/worktask.action";
+import { getAllWorkFlows, WorkFlowEntity } from "@/app/actions/workflow.action";
+import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
+import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
+import { useEffect, useState } from "react";
 
 export default function WorkTaskPage() {
-  // 僅顯示 props 或 state 內容，不包含任何資料取得、更新、互動邏輯
-  // 假設 tasks、workloads、workFlows 由父層傳入或外部取得，這裡僅負責渲染
-  // 這裡用假資料作為展示
-  const tasks: WorkTaskEntity[] = [];
-  const workloads: WorkLoadEntity[] = [];
-  const workFlows: WorkFlowEntity[] = [];
-  const workloadPage = 1;
+  const [tasks, setTasks] = useState<WorkTaskEntity[]>([]);
+  const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
+  const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]);
+  const [workloadPage, setWorkloadPage] = useState(1);
   const workloadsPerPage = 10;
+
+  useEffect(() => {
+    getAllWorkTasks(false).then(data => setTasks(data as WorkTaskEntity[]));
+    getAllWorkLoads(false).then(data => setWorkloads(data as WorkLoadEntity[]));
+    getAllWorkFlows(true).then(data => setWorkFlows(data as WorkFlowEntity[]));
+  }, []);
+
   const totalWorkloads = workloads.length;
   const totalPages = Math.ceil(totalWorkloads / workloadsPerPage);
   const pagedWorkloads = workloads.slice(
@@ -56,14 +61,33 @@ export default function WorkTaskPage() {
 
         <h2 className="text-xl font-bold mb-4">任務分割（工作負載）</h2>
         <table className="table-auto w-full border-collapse border border-gray-300">
+          <thead>
+            <tr>
+              <th className="border px-2 py-1">工作量名稱</th>
+              <th className="border px-2 py-1">任務名稱</th>
+              <th className="border px-2 py-1">計畫數量</th>
+              <th className="border px-2 py-1">單位</th>
+              <th className="border px-2 py-1">計畫開始日期</th>
+              <th className="border px-2 py-1">計畫結束日期</th>
+              <th className="border px-2 py-1">實際完成數量</th>
+              <th className="border px-2 py-1">執行者</th>
+              <th className="border px-2 py-1">備註</th>
+            </tr>
+          </thead>
           <tbody>
             {pagedWorkloads.map(load => {
               const task = tasks.find(t => t.taskId === load.taskId);
               return (
                 <tr key={load.loadId}>
-                  <td className="border px-2 py-1">{task?.title || ""}</td>
+                  <td className="border px-2 py-1">{load.title || load.loadId}</td>
+                  <td className="border px-2 py-1">{task ? task.title : load.taskId}</td>
                   <td className="border px-2 py-1">{load.plannedQuantity}</td>
+                  <td className="border px-2 py-1">{load.unit}</td>
+                  <td className="border px-2 py-1">{load.plannedStartTime ? load.plannedStartTime.slice(0, 10) : ""}</td>
+                  <td className="border px-2 py-1">{load.plannedEndTime ? load.plannedEndTime.slice(0, 10) : ""}</td>
                   <td className="border px-2 py-1">{load.actualQuantity}</td>
+                  <td className="border px-2 py-1">{Array.isArray(load.executor) ? load.executor.join("、") : ""}</td>
+                  <td className="border px-2 py-1">{load.notes || ""}</td>
                 </tr>
               );
             })}
@@ -73,6 +97,7 @@ export default function WorkTaskPage() {
           <button
             disabled={workloadPage === 1}
             className="border rounded px-2 py-1 disabled:opacity-50"
+            onClick={() => setWorkloadPage(page => Math.max(1, page - 1))}
           >
             上一頁
           </button>
@@ -80,6 +105,7 @@ export default function WorkTaskPage() {
           <button
             disabled={workloadPage === totalPages || totalPages === 0}
             className="border rounded px-2 py-1 disabled:opacity-50"
+            onClick={() => setWorkloadPage(page => Math.min(totalPages, page + 1))}
           >
             下一頁
           </button>
