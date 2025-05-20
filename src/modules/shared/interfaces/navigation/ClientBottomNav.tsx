@@ -11,7 +11,7 @@ interface NavItem {
   active: boolean;
 }
 
-interface GlobalBottomNavProps {
+interface ClientBottomNavProps {
   items?: NavItem[];
 }
 
@@ -55,7 +55,7 @@ const defaultNavItems: NavItem[] = [
   }
 ];
 
-export function GlobalBottomNav({ items = defaultNavItems }: GlobalBottomNavProps) {
+export function ClientBottomNav({ items = defaultNavItems }: ClientBottomNavProps) {
   const pathname = usePathname();
 
   // 設 NavItem 如果沒有提供

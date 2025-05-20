@@ -23,7 +23,7 @@ import {
     getAllWorkTypes,
     WorkTypeEntity
 } from "@/app/actions/worktype.action";
-import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
+import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
 import React, { useEffect, useState } from "react";
 
 // 將下拉選單抽成簡單元件，減少重複
@@ -424,7 +424,7 @@ const WorkTemplatePage: React.FC = () => {
                     </button>
                 </div>
             </main>
-            <GlobalBottomNav />
+            <ClientBottomNav />
         </>
     );
 };

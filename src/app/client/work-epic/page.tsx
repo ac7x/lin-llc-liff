@@ -3,7 +3,7 @@
 import { addWorkEpic, deleteWorkEpic, getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { getAllWorkMembers, WorkMember } from "@/app/actions/workmember.action";
 import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
-import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
+import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
 import { useEffect, useState } from "react";
 
 export default function WorkEpicPage() {
@@ -229,7 +229,7 @@ export default function WorkEpicPage() {
                     </tbody>
                 </table>
             </main>
-            <GlobalBottomNav />
+            <ClientBottomNav />
         </>
     );
 }

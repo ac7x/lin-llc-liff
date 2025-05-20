@@ -2,7 +2,7 @@
 
 import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getWorkSchedules } from "@/app/actions/workschedule.action";
-import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
+import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
 import React, { useEffect, useReducer, useRef } from "react";
 
 type WorkAssignment = {
@@ -205,7 +205,7 @@ const WorkSchedulePage: React.FC = () => {
                     </tbody>
                 </table>
             </div>
-            <GlobalBottomNav />
+            <ClientBottomNav />
         </>
     );
 };

@@ -5,7 +5,7 @@ import { getAllWorkFlows } from "@/app/actions/workflow.action";
 import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getAllWorkTasks, updateWorkTask, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
-import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
+import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
 import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 
@@ -250,7 +250,7 @@ export default function WorkTaskPage() {
           </tbody>
         </table>
       </main>
-      <GlobalBottomNav />
+      <ClientBottomNav />
     </>
   );
 }
