@@ -4,7 +4,7 @@ import { getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getWorkSchedules } from "@/app/actions/workschedule.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
-import React, { useEffect, useReducer, useRef, useMemo } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 
 type WorkAssignment = {
     location: string;
@@ -62,11 +62,11 @@ const reducer = (state: State, action: Action): State => {
 const WorkSchedulePage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [state, dispatch] = useReducer(reducer, initialState);
-    const [epics, setEpics] = React.useState<WorkEpicEntity[]>([]);
+    const [epics, setEpics] = useState<WorkEpicEntity[]>([]);
     const hasAutoSetRange = useRef(false);
 
     useEffect(() => {
-        getAllWorkEpics(false).then(data => setEpics(data as WorkEpicEntity[]));
+        getAllWorkEpics(false).then((data) => setEpics(data as WorkEpicEntity[]));
     }, []);
 
     useEffect(() => {
@@ -84,32 +84,26 @@ const WorkSchedulePage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        getWorkSchedules(state.offset, state.range, state.horizontalAxis).then(data => {
+        getWorkSchedules(state.offset, state.range, state.horizontalAxis).then((data) => {
             dispatch({ type: "SET_SCHEDULES", payload: data });
         });
     }, [state.offset, state.range, state.horizontalAxis]);
 
     useEffect(() => {
-        getAllWorkLoads(true).then(loads => {
+        getAllWorkLoads(true).then((loads) => {
             dispatch({ type: "SET_WORKLOADS", payload: loads as WorkLoadEntity[] });
         });
     }, []);
 
-    const epicIdToTitle = useMemo(() => {
-        const map = new Map<string, string>();
-        epics.forEach(e => map.set(e.epicId, e.title));
-        return map;
-    }, [epics]);
-
     const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) => {
         if (!schedules.length || !epics.length) return { horizontalLabels: [], verticalLabels: [] };
         if (horizontalAxis === "date") {
-            const horizontalLabels = schedules.map(s => s.date);
-            const verticalLabels = epics.map(e => e.title);
+            const horizontalLabels = schedules.map((s) => s.date);
+            const verticalLabels = epics.map((e) => e.title);
             return { horizontalLabels, verticalLabels };
         } else {
-            const horizontalLabels = epics.map(e => e.title);
-            const verticalLabels = schedules.map(s => s.date);
+            const horizontalLabels = epics.map((e) => e.title);
+            const verticalLabels = schedules.map((s) => s.date);
             return { horizontalLabels, verticalLabels };
         }
     };
@@ -132,14 +126,21 @@ const WorkSchedulePage: React.FC = () => {
                             min={1}
                             max={31}
                             value={state.range}
-                            onChange={e => dispatch({ type: "SET_RANGE", payload: Number(e.target.value) })}
+                            onChange={(e) =>
+                                dispatch({ type: "SET_RANGE", payload: Number(e.target.value) })
+                            }
                             className="border border-gray-300 dark:border-neutral-700 rounded bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-2 py-1 w-20"
                         />
                     </div>
                     <div>
                         <select
                             value={state.horizontalAxis}
-                            onChange={e => dispatch({ type: "SET_HORIZONTAL_AXIS", payload: e.target.value as Axis })}
+                            onChange={(e) =>
+                                dispatch({
+                                    type: "SET_HORIZONTAL_AXIS",
+                                    payload: e.target.value as Axis,
+                                })
+                            }
                             className="border border-gray-300 dark:border-neutral-700 rounded bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-2 py-1"
                         >
                             <option value="date">橫向：日期</option>
@@ -154,41 +155,54 @@ const WorkSchedulePage: React.FC = () => {
                             <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">
                                 {state.horizontalAxis === "date" ? "標的" : "日期"}
                             </th>
-                            {horizontalLabels.map(label => (
-                                <th key={label} className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">{label}</th>
+                            {horizontalLabels.map((label) => (
+                                <th
+                                    key={label}
+                                    className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                                >
+                                    {label}
+                                </th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {verticalLabels.map(vLabel => (
+                        {verticalLabels.map((vLabel) => (
                             <tr key={vLabel}>
                                 <td className="border px-2 py-1 font-bold bg-gray-50 dark:bg-neutral-800">{vLabel}</td>
-                                {horizontalLabels.map(hLabel => {
-                                    const loads = state.workLoads.filter(load => {
-                                        const date = load.plannedStartTime?.slice(0, 10);
-                                        const epicTitle = epicIdToTitle.get(load.epicId) ?? "";
-                                        if (state.horizontalAxis === "date") {
-                                            return epicTitle === vLabel && date === hLabel;
-                                        } else {
-                                            return date === vLabel && epicTitle === hLabel;
-                                        }
-                                    });
+                                {horizontalLabels.map((hLabel) => {
+                                    const epicTitle =
+                                        state.horizontalAxis === "date" ? vLabel : hLabel;
+                                    const date =
+                                        state.horizontalAxis === "date" ? hLabel : vLabel;
+
+                                    const loads = state.workLoads.filter(
+                                        (load) =>
+                                            load.title?.startsWith(epicTitle) &&
+                                            load.plannedStartTime?.slice(0, 10) === date
+                                    );
 
                                     return (
-                                        <td key={hLabel} className="border px-2 py-1 align-top min-w-[120px]">
+                                        <td
+                                            key={hLabel}
+                                            className="border px-2 py-1 align-top min-w-[120px]"
+                                        >
                                             {loads.length === 0 ? (
                                                 <span className="text-gray-400">—</span>
                                             ) : (
                                                 <div className="flex flex-col gap-1">
-                                                    {loads.map(load => (
+                                                    {loads.map((load) => (
                                                         <div key={load.loadId} className="mb-1">
                                                             <div className="font-semibold">{load.title}</div>
                                                             <div className="text-xs text-gray-600 dark:text-gray-300">
                                                                 {Array.isArray(load.executor) && load.executor.length > 0
-                                                                    ? load.executor.join(', ')
-                                                                    : (load.executor && typeof load.executor === 'string' && load.executor)
+                                                                    ? load.executor.join(", ")
+                                                                    : typeof load.executor === "string" && load.executor
                                                                         ? load.executor
-                                                                        : <span className="italic text-gray-400">(無執行者)</span>}
+                                                                        : (
+                                                                            <span className="italic text-gray-400">
+                                                                                (無執行者)
+                                                                            </span>
+                                                                        )}
                                                             </div>
                                                         </div>
                                                     ))}
