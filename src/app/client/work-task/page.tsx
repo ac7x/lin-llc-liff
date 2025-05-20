@@ -105,6 +105,26 @@ export default function WorkTaskPage() {
     );
   };
 
+  // 新增：處理計劃開始時間變更
+  const handlePlannedStartTimeChange = async (loadId: string, plannedStartTime: string) => {
+    await updateWorkLoad(loadId, { plannedStartTime });
+    setWorkloads(prev =>
+      prev.map(load =>
+        load.loadId === loadId ? { ...load, plannedStartTime } : load
+      )
+    );
+  };
+
+  // 新增：處理計劃結束時間變更
+  const handlePlannedEndTimeChange = async (loadId: string, plannedEndTime: string) => {
+    await updateWorkLoad(loadId, { plannedEndTime });
+    setWorkloads(prev =>
+      prev.map(load =>
+        load.loadId === loadId ? { ...load, plannedEndTime } : load
+      )
+    );
+  };
+
   return (
     <>
       <main className="p-4">
@@ -164,8 +184,22 @@ export default function WorkTaskPage() {
                   />
                 </td>
                 <td className="border px-2 py-1">{load.unit}</td>
-                <td className="border px-2 py-1">{load.plannedStartTime}</td>
-                <td className="border px-2 py-1">{load.plannedEndTime}</td>
+                <td className="border px-2 py-1">
+                  <input
+                    type="datetime-local"
+                    className="border p-1 w-44"
+                    value={load.plannedStartTime}
+                    onChange={e => handlePlannedStartTimeChange(load.loadId, e.target.value)}
+                  />
+                </td>
+                <td className="border px-2 py-1">
+                  <input
+                    type="datetime-local"
+                    className="border p-1 w-44"
+                    value={load.plannedEndTime}
+                    onChange={e => handlePlannedEndTimeChange(load.loadId, e.target.value)}
+                  />
+                </td>
                 <td className="border px-2 py-1">
                   <input
                     type="number"
