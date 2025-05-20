@@ -1,79 +1,25 @@
 "use client";
 
 import type { WorkFlowEntity } from "@/app/actions/workflow.action";
-import { getAllWorkFlows } from "@/app/actions/workflow.action";
-import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
-import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
+import { WorkLoadEntity } from "@/app/actions/workload.action";
+import { WorkTaskEntity } from "@/app/actions/worktask.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
-import { useEffect, useState } from "react";
-
-interface WorkMember {
-  taskId?: string;
-  memberId: string;
-  name: string;
-  role: string;
-  skills: string[];
-  availability: string;
-  contactInfo?: {
-    phone?: string;
-    email?: string;
-  };
-  status: string;
-  lastActiveTime?: string;
-}
 
 export default function WorkTaskPage() {
-  const [tasks, setTasks] = useState<WorkTaskEntity[]>([]);
-  const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
-  // 移除未使用的 members 狀態與 useEffect
-  const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]); // 新增：儲存所有流程
-
-  // 分頁狀態
-  const [workloadPage, setWorkloadPage] = useState(1);
-  const workloadsPerPage = 10; // 每頁顯示 10 筆
-
-  // 計算分頁後的 workloads
+  // 僅顯示 props 或 state 內容，不包含任何資料取得、更新、互動邏輯
+  // 假設 tasks、workloads、workFlows 由父層傳入或外部取得，這裡僅負責渲染
+  // 這裡用假資料作為展示
+  const tasks: WorkTaskEntity[] = [];
+  const workloads: WorkLoadEntity[] = [];
+  const workFlows: WorkFlowEntity[] = [];
+  const workloadPage = 1;
+  const workloadsPerPage = 10;
   const totalWorkloads = workloads.length;
   const totalPages = Math.ceil(totalWorkloads / workloadsPerPage);
   const pagedWorkloads = workloads.slice(
     (workloadPage - 1) * workloadsPerPage,
     workloadPage * workloadsPerPage
   );
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      const data = await getAllWorkTasks(false);
-      setTasks(data as WorkTaskEntity[]);
-    };
-    fetchTasks();
-  }, []);
-
-  useEffect(() => {
-    const fetchWorkloads = async () => {
-      const data = await getAllWorkLoads(false);
-      setWorkloads(data as WorkLoadEntity[]);
-    };
-    fetchWorkloads();
-  }, []);
-
-  // useEffect(() => {
-  //   const fetchMembers = async () => {
-  //     const membersCollection = collection(firestore, "workMember");
-  //     const snapshot = await getDocs(membersCollection);
-  //     const data: WorkMember[] = snapshot.docs.map(doc => doc.data() as WorkMember);
-  //     setMembers(data);
-  //   };
-  //   fetchMembers();
-  // }, []);
-
-  // 新增：取得所有流程
-  useEffect(() => {
-    const fetchWorkFlows = async () => {
-      const flows = await getAllWorkFlows(true);
-      setWorkFlows(flows as WorkFlowEntity[]);
-    };
-    fetchWorkFlows();
-  }, []);
 
   return (
     <>
@@ -92,9 +38,7 @@ export default function WorkTaskPage() {
           </thead>
           <tbody>
             {tasks.map(task => {
-              // 取得對應流程
               const flow = workFlows.find(f => f.flowId === task.flowId);
-              // 取得第一個步驟名稱
               const stepName = flow?.steps?.[0]?.stepName || task.flowId;
               return (
                 <tr key={task.taskId}>
@@ -117,30 +61,18 @@ export default function WorkTaskPage() {
               const task = tasks.find(t => t.taskId === load.taskId);
               return (
                 <tr key={load.loadId}>
-                  <td className="border px-2 py-1">{load.title || load.loadId}</td>
-                  <td className="border px-2 py-1">{task ? task.title : load.taskId}</td>
+                  <td className="border px-2 py-1">{task?.title || ""}</td>
                   <td className="border px-2 py-1">{load.plannedQuantity}</td>
-                  <td className="border px-2 py-1">{load.unit}</td>
-                  <td className="border px-2 py-1">{load.plannedStartTime ? load.plannedStartTime.slice(0, 10) : ''}</td>
-                  <td className="border px-2 py-1">{load.plannedEndTime ? load.plannedEndTime.slice(0, 10) : ''}</td>
                   <td className="border px-2 py-1">{load.actualQuantity}</td>
-                  <td className="border px-2 py-1">
-                    <div className="text-xs text-blue-700 dark:text-blue-300">
-                      {Array.isArray(load.executor) ? load.executor.join('、') : ''}
-                    </div>
-                  </td>
-                  <td className="border px-2 py-1">{load.notes || ''}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-        {/* 分頁控制元件 */}
         <div className="flex items-center justify-center mt-4 gap-2">
           <button
             disabled={workloadPage === 1}
             className="border rounded px-2 py-1 disabled:opacity-50"
-            onClick={() => setWorkloadPage(page => Math.max(1, page - 1))}
           >
             上一頁
           </button>
@@ -148,7 +80,6 @@ export default function WorkTaskPage() {
           <button
             disabled={workloadPage === totalPages || totalPages === 0}
             className="border rounded px-2 py-1 disabled:opacity-50"
-            onClick={() => setWorkloadPage(page => Math.min(totalPages, page + 1))}
           >
             下一頁
           </button>
