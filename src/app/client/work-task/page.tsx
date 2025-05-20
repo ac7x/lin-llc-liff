@@ -30,6 +30,18 @@ export default function WorkTaskPage() {
   const [members, setMembers] = useState<WorkMember[]>([]);
   const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]); // 新增：儲存所有流程
 
+  // 分頁狀態
+  const [workloadPage, setWorkloadPage] = useState(1);
+  const workloadsPerPage = 10; // 每頁顯示 10 筆
+
+  // 計算分頁後的 workloads
+  const totalWorkloads = workloads.length;
+  const totalPages = Math.ceil(totalWorkloads / workloadsPerPage);
+  const pagedWorkloads = workloads.slice(
+    (workloadPage - 1) * workloadsPerPage,
+    workloadPage * workloadsPerPage
+  );
+
   useEffect(() => {
     const fetchTasks = async () => {
       const data = await getAllWorkTasks(false);
@@ -188,7 +200,7 @@ export default function WorkTaskPage() {
             </tr>
           </thead>
           <tbody>
-            {workloads.map(load => {
+            {pagedWorkloads.map(load => {
               const task = tasks.find(t => t.taskId === load.taskId);
               return (
                 <tr key={load.loadId}>
@@ -249,6 +261,24 @@ export default function WorkTaskPage() {
             })}
           </tbody>
         </table>
+        {/* 分頁控制元件 */}
+        <div className="flex items-center justify-center mt-4 gap-2">
+          <button
+            disabled={workloadPage === 1}
+            className="border rounded px-2 py-1 disabled:opacity-50"
+            onClick={() => setWorkloadPage(page => Math.max(1, page - 1))}
+          >
+            上一頁
+          </button>
+          <span>第 {workloadPage} / {totalPages} 頁</span>
+          <button
+            disabled={workloadPage === totalPages || totalPages === 0}
+            className="border rounded px-2 py-1 disabled:opacity-50"
+            onClick={() => setWorkloadPage(page => Math.min(totalPages, page + 1))}
+          >
+            下一頁
+          </button>
+        </div>
       </main>
       <ClientBottomNav />
     </>
