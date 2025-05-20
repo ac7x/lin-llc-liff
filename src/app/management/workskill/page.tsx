@@ -10,8 +10,9 @@ const AdminWorkSkillPage: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState<Partial<WorkSkill>>({})
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([])
   const [editingSkillId, setEditingSkillId] = useState<string | null>(null)
+  const [showMemberSelectForSkill, setShowMemberSelectForSkill] = useState<string | null>(null)
+  const [selectedAddMembers, setSelectedAddMembers] = useState<string[]>([])
 
   const fetchData = async () => {
     setLoading(true)
@@ -41,11 +42,6 @@ const AdminWorkSkillPage: React.FC = () => {
     }
   }
 
-  const handleMemberSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const options = Array.from(e.target.selectedOptions).map(o => o.value)
-    setSelectedMembers(options)
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -64,18 +60,8 @@ const AdminWorkSkillPage: React.FC = () => {
         await updateWorkSkill(editingSkillId, newSkill)
       } else {
         await addWorkSkill(newSkill)
-        if (selectedMembers.length > 0) {
-          await Promise.all(selectedMembers.map(async memberId => {
-            const member = members.find(m => m.memberId === memberId)
-            if (member) {
-              const newSkills = Array.from(new Set([...(member.skills || []), skillID]))
-              await updateWorkMember(memberId, { skills: newSkills })
-            }
-          }))
-        }
       }
       setForm({})
-      setSelectedMembers([])
       setEditingSkillId(null)
       await fetchData()
     } catch {
@@ -101,6 +87,25 @@ const AdminWorkSkillPage: React.FC = () => {
     setLoading(false)
   }
 
+  const handleAddSkillToMembers = async (skillID: string, memberIds: string[]) => {
+    if (memberIds.length === 0) return
+    setLoading(true)
+    setError(null)
+    try {
+      await Promise.all(memberIds.map(async memberId => {
+        const member = members.find(m => m.memberId === memberId)
+        if (member) {
+          const newSkills = Array.from(new Set([...(member.skills || []), skillID]))
+          await updateWorkMember(memberId, { skills: newSkills })
+        }
+      }))
+      await fetchData()
+    } catch {
+      setError('加入用戶失敗')
+    }
+    setLoading(false)
+  }
+
   return (
     <div className="p-8 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">技能表</h1>
@@ -116,15 +121,9 @@ const AdminWorkSkillPage: React.FC = () => {
           </label>
         </div>
         <textarea name="description" value={form.description || ''} onChange={handleInput} placeholder="說明" className="border p-2 rounded w-full" />
-        <div>
-          <label>將此技能加入用戶：</label>
-          <select multiple value={selectedMembers} onChange={handleMemberSelect} className="border p-2 rounded w-full max-h-32">
-            {members.map(m => <option key={m.memberId} value={m.memberId}>{m.name}（{m.role}）</option>)}
-          </select>
-        </div>
         <div className="flex gap-2 mt-2">
           <button type="submit" className="bg-primary text-white px-4 py-2 rounded shadow" disabled={loading}>{editingSkillId ? '儲存編輯' : '建立'}</button>
-          {editingSkillId && <button type="button" className="bg-muted text-muted-foreground px-4 py-2 rounded" onClick={() => { setForm({}); setEditingSkillId(null); setSelectedMembers([]) }}>取消</button>}
+          {editingSkillId && <button type="button" className="bg-muted text-muted-foreground px-4 py-2 rounded" onClick={() => { setForm({}); setEditingSkillId(null) }}>取消</button>}
         </div>
       </form>
       <table className="w-full border-collapse mb-8">
@@ -148,7 +147,20 @@ const AdminWorkSkillPage: React.FC = () => {
               <td className="border px-2 py-1">{skill.description}</td>
               <td className="border px-2 py-1">
                 <button className="text-blue-600 mr-2" onClick={() => handleEdit(skill)}>編輯</button>
-                <button className="text-red-600" onClick={() => handleDelete(skill.skillID)}>刪除</button>
+                <button className="text-red-600 mr-2" onClick={() => handleDelete(skill.skillID)}>刪除</button>
+                <button className="text-green-600" onClick={() => { setShowMemberSelectForSkill(skill.skillID); setSelectedAddMembers([]) }}>加入用戶</button>
+                {showMemberSelectForSkill === skill.skillID && (
+                  <div className="mt-2 bg-white border rounded p-2 shadow">
+                    <label>選擇用戶：</label>
+                    <select multiple value={selectedAddMembers} onChange={e => setSelectedAddMembers(Array.from(e.target.selectedOptions).map(o => o.value))} className="border p-1 rounded w-full max-h-32">
+                      {members.map(m => <option key={m.memberId} value={m.memberId}>{m.name}（{m.role}）</option>)}
+                    </select>
+                    <div className="flex gap-2 mt-2">
+                      <button className="bg-primary text-white px-2 py-1 rounded" onClick={async () => { await handleAddSkillToMembers(skill.skillID, selectedAddMembers); setShowMemberSelectForSkill(null) }}>確認</button>
+                      <button className="bg-muted text-muted-foreground px-2 py-1 rounded" onClick={() => setShowMemberSelectForSkill(null)}>取消</button>
+                    </div>
+                  </div>
+                )}
               </td>
             </tr>
           ))}
