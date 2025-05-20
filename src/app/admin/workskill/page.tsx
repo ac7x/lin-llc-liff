@@ -1,6 +1,7 @@
 "use client"
 import { getAllWorkMembers, updateWorkMember, WorkMember } from '@/app/actions/workmember.action'
 import { addWorkSkill, deleteWorkSkill, getAllWorkSkills, updateWorkSkill, WorkSkill } from '@/app/actions/workskill.action'
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav'
 import React, { useEffect, useState } from 'react'
 
 const AdminWorkSkillPage: React.FC = () => {
@@ -153,6 +154,7 @@ const AdminWorkSkillPage: React.FC = () => {
           ))}
         </tbody>
       </table>
+      <ManagementBottomNav />
     </div>
   )
 }

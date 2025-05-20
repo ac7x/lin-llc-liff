@@ -1,3 +1,4 @@
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import Link from 'next/link';
 import React from 'react';
 
@@ -21,6 +22,7 @@ const AdminPage: React.FC = () => {
         <h1 className="text-2xl font-bold mb-4">管理主頁</h1>
         <p className="text-gray-700">請使用左側選單切換管理功能。</p>
       </main>
+      <ManagementBottomNav />
     </div>
   );
 };
