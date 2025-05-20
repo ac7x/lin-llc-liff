@@ -59,52 +59,47 @@ const reducer = (state: State, action: Action): State => {
 };
 
 const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) => {
-    const horizontalLabels =
-        horizontalAxis === "date"
-            ? schedules.map(s => s.date)
-            : [...new Set(schedules.flatMap(s => s.assignments.map(a => a.location)))];
-
-    const verticalLabels =
-        horizontalAxis === "date"
-            ? [...new Set(schedules.flatMap(s => s.assignments.map(a => a.location)))]
-            : schedules.map(s => s.date);
-
-    return { horizontalLabels, verticalLabels };
+    if (!schedules.length) return { horizontalLabels: [], verticalLabels: [] };
+    if (horizontalAxis === "date") {
+        const horizontalLabels = schedules.map(s => s.date);
+        const verticalLabels = Array.from(new Set(schedules.flatMap(s => s.assignments.map(a => a.location))));
+        return { horizontalLabels, verticalLabels };
+    } else {
+        const horizontalLabels = Array.from(new Set(schedules.flatMap(s => s.assignments.map(a => a.location))));
+        const verticalLabels = schedules.map(s => s.date);
+        return { horizontalLabels, verticalLabels };
+    }
 };
 
 const WorkSchedulePage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [state, dispatch] = useReducer(reducer, initialState);
 
+    // 自動根據容器寬度調整 range
     useEffect(() => {
         const updateRange = () => {
-            const containerWidth = containerRef.current?.offsetWidth ?? 0;
-            const approxCellWidth = 120;
-            const maxCols = Math.max(1, Math.floor((containerWidth - 100) / approxCellWidth));
+            const width = containerRef.current?.offsetWidth ?? 0;
+            const maxCols = Math.max(1, Math.floor((width - 100) / 120));
             dispatch({ type: "SET_RANGE", payload: maxCols });
         };
-
         const observer = new ResizeObserver(updateRange);
         if (containerRef.current) observer.observe(containerRef.current);
         updateRange();
-
         return () => observer.disconnect();
     }, []);
 
+    // 取得排班資料
     useEffect(() => {
-        const fetchSchedules = async () => {
-            const data = await getWorkSchedules(state.offset, state.range, state.horizontalAxis);
+        getWorkSchedules(state.offset, state.range, state.horizontalAxis).then(data => {
             dispatch({ type: "SET_SCHEDULES", payload: data });
-        };
-        fetchSchedules();
+        });
     }, [state.offset, state.range, state.horizontalAxis]);
 
+    // 取得工作量資料
     useEffect(() => {
-        const fetchWorkLoads = async () => {
-            const loads = await getAllWorkLoads(false);
+        getAllWorkLoads(true).then(loads => {
             dispatch({ type: "SET_WORKLOADS", payload: loads as WorkLoadEntity[] });
-        };
-        fetchWorkLoads();
+        });
     }, []);
 
     const { horizontalLabels, verticalLabels } = calculateLabels(state.schedules, state.horizontalAxis);
