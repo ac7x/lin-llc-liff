@@ -76,6 +76,8 @@ const WorkSchedulePage: React.FC = () => {
     const [state, dispatch] = useReducer(reducer, initialState);
     const [executorInputs, setExecutorInputs] = useState<Record<string, string>>({});
     const [saving, setSaving] = useState<Record<string, boolean>>({});
+    // 新增一個 flag，僅初次載入時自動調整 range
+    const hasAutoSetRange = useRef(false);
 
     const handleExecutorChange = (loadId: string, value: string) => {
         setExecutorInputs(inputs => ({ ...inputs, [loadId]: value }));
@@ -92,12 +94,14 @@ const WorkSchedulePage: React.FC = () => {
         }
     };
 
-    // 自動根據容器寬度調整 range
+    // 只在初次載入時根據容器寬度自動調整 range
     useEffect(() => {
+        if (hasAutoSetRange.current) return;
         const updateRange = () => {
             const width = containerRef.current?.offsetWidth ?? 0;
             const maxCols = Math.max(1, Math.floor((width - 100) / 120));
             dispatch({ type: "SET_RANGE", payload: maxCols });
+            hasAutoSetRange.current = true;
         };
         const observer = new ResizeObserver(updateRange);
         if (containerRef.current) observer.observe(containerRef.current);
