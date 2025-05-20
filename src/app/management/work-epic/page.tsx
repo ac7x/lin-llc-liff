@@ -342,7 +342,7 @@ export default function WorkEpicPage() {
                     </tbody>
                 </table>
             </main>
-            <ClientBottomNav />
+            <ManagementBottomNav />
         </>
     );
 }
