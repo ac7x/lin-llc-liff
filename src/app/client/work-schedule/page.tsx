@@ -115,14 +115,11 @@ const WorkSchedulePage: React.FC = () => {
 
     const { horizontalLabels, verticalLabels } = calculateLabels(state.schedules, state.horizontalAxis);
 
-    // 根據 epic title 找出對應的工作量
-    const getLoadsForCell = (date: string, epicTitle: string) => {
-        // 僅顯示該日期的 workLoad，且 title 需包含 epicTitle
+    // 根據日期找出對應的工作量（不再比對 epicTitle）
+    const getLoadsForCell = (date: string) => {
         return state.workLoads.filter(l => {
-            // 需有 plannedStartTime 且等於 date
-            const matchEpic = l.title.includes(epicTitle);
             const matchDate = l.plannedStartTime && l.plannedStartTime.startsWith(date);
-            return matchEpic && matchDate;
+            return matchDate;
         });
     };
 
@@ -174,9 +171,9 @@ const WorkSchedulePage: React.FC = () => {
                             <tr key={vLabel} className="even:bg-gray-50 dark:even:bg-neutral-800">
                                 <td className="border px-2 py-1 font-bold">{vLabel}</td>
                                 {horizontalLabels.map(hLabel => {
+                                    // 只根據日期比對
                                     const date = state.horizontalAxis === "date" ? hLabel : vLabel;
-                                    const epicTitle = state.horizontalAxis === "date" ? vLabel : hLabel;
-                                    const loads = getLoadsForCell(date, epicTitle);
+                                    const loads = getLoadsForCell(date);
                                     return (
                                         <td key={hLabel} className="border px-2 py-1 align-top">
                                             {loads.length > 0 ? (
@@ -184,9 +181,6 @@ const WorkSchedulePage: React.FC = () => {
                                                     {loads.map(load => (
                                                         <li key={load.loadId} className="mb-1">
                                                             <div>工作量：{load.title}</div>
-                                                            <div>
-                                                                執行人：{(load.executor && load.executor.length > 0) ? load.executor.join('、') : <span className="text-gray-400">未指定</span>}
-                                                            </div>
                                                         </li>
                                                     ))}
                                                 </ul>
