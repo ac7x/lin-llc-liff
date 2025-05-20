@@ -9,11 +9,12 @@ export interface WorkLoadTemplate {
     unit: string; // 單位
     plannedStartTime: string; // 計劃開始時間
     plannedEndTime: string; // 計劃結束時間
+    executor?: string | string[]; // 允許模板也有 executor 欄位，兼容單人/多人
 }
 
 export interface WorkLoadEntity extends WorkLoadTemplate {
     actualQuantity: number; // 實際完成數量
-    executor: string; // 執行者
+    executor: string[]; // 執行者（多位）
     title: string; // 標題，格式：epicTitle-workTaskTitle
     notes?: string; // 備註
 }
@@ -38,7 +39,12 @@ export async function getAllWorkLoads(isTemplate: boolean): Promise<WorkLoadTemp
  * @returns 無回傳值，僅執行新增動作
  */
 export async function addWorkLoad(load: WorkLoadTemplate | WorkLoadEntity): Promise<void> {
-    await firestoreAdmin.collection("workLoad").doc(load.loadId).set(load);
+    // 兼容單一 string 或 string[]
+    const data = {
+        ...load,
+        executor: Array.isArray(load.executor) ? load.executor : load.executor ? [load.executor] : []
+    };
+    await firestoreAdmin.collection("workLoad").doc(load.loadId).set(data);
 }
 
 /**
@@ -48,7 +54,12 @@ export async function addWorkLoad(load: WorkLoadTemplate | WorkLoadEntity): Prom
  * @returns 無回傳值，僅執行更新動作
  */
 export async function updateWorkLoad(loadId: string, updates: Partial<WorkLoadEntity>): Promise<void> {
-    await firestoreAdmin.collection("workLoad").doc(loadId).update(updates);
+    // 兼容單一 string 或 string[]
+    const patch = updates.executor !== undefined ? {
+        ...updates,
+        executor: Array.isArray(updates.executor) ? updates.executor : updates.executor ? [updates.executor] : []
+    } : updates;
+    await firestoreAdmin.collection("workLoad").doc(loadId).update(patch);
 }
 
 /**

@@ -2,8 +2,8 @@
 
 import type { WorkFlowEntity } from "@/app/actions/workflow.action";
 import { getAllWorkFlows } from "@/app/actions/workflow.action";
-import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from "@/app/actions/workload.action";
-import { getAllWorkTasks, updateWorkTask, WorkTaskEntity } from "@/app/actions/worktask.action";
+import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
+import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
 import { collection, getDocs } from "firebase/firestore";
@@ -77,69 +77,6 @@ export default function WorkTaskPage() {
     fetchWorkFlows();
   }, []);
 
-  // 新增：處理實際完成數量變更
-  const handleActualQuantityChange = async (loadId: string, actualQuantity: number) => {
-    await updateWorkLoad(loadId, { actualQuantity });
-    // 先更新 workloads 狀態
-    setWorkloads(prev =>
-      prev.map(load =>
-        load.loadId === loadId ? { ...load, actualQuantity } : load
-      )
-    );
-
-    // 取得該 load 對應的 taskId
-    // 注意：此時 workloads 尚未 set 完成，需用 prev 狀態計算
-    const updatedLoad = workloads.find(load => load.loadId === loadId);
-    if (!updatedLoad) return;
-    const taskId = updatedLoad.taskId;
-
-    // 取得所有屬於該 taskId 的 workloads，並將本次變更的 actualQuantity 帶入
-    const relatedLoads = workloads
-      .map(load => load.loadId === loadId ? { ...load, actualQuantity } : load)
-      .filter(load => load.taskId === taskId);
-
-    // 加總 actualQuantity
-    const totalActual = relatedLoads.reduce((sum, load) => sum + (load.actualQuantity || 0), 0);
-
-    // 更新對應的 workTask.completedQuantity
-    await updateWorkTask(taskId, { completedQuantity: totalActual });
-    setTasks(prev =>
-      prev.map(task =>
-        task.taskId === taskId ? { ...task, completedQuantity: totalActual } : task
-      )
-    );
-  };
-
-  // 新增：處理計劃數量變更
-  const handlePlannedQuantityChange = async (loadId: string, plannedQuantity: number) => {
-    await updateWorkLoad(loadId, { plannedQuantity });
-    setWorkloads(prev =>
-      prev.map(load =>
-        load.loadId === loadId ? { ...load, plannedQuantity } : load
-      )
-    );
-  };
-
-  // 新增：處理計劃開始時間變更
-  const handlePlannedStartTimeChange = async (loadId: string, plannedStartTime: string) => {
-    await updateWorkLoad(loadId, { plannedStartTime });
-    setWorkloads(prev =>
-      prev.map(load =>
-        load.loadId === loadId ? { ...load, plannedStartTime } : load
-      )
-    );
-  };
-
-  // 新增：處理計劃結束時間變更
-  const handlePlannedEndTimeChange = async (loadId: string, plannedEndTime: string) => {
-    await updateWorkLoad(loadId, { plannedEndTime });
-    setWorkloads(prev =>
-      prev.map(load =>
-        load.loadId === loadId ? { ...load, plannedEndTime } : load
-      )
-    );
-  };
-
   return (
     <>
       <main className="p-4">
@@ -177,19 +114,6 @@ export default function WorkTaskPage() {
 
         <h2 className="text-xl font-bold mb-4">任務分割（工作負載）</h2>
         <table className="table-auto w-full border-collapse border border-gray-300">
-          <thead>
-            <tr>
-              <th className="border px-2 py-1">工作量名稱</th>
-              <th className="border px-2 py-1">任務名稱</th>
-              <th className="border px-2 py-1">計畫數量</th>
-              <th className="border px-2 py-1">單位</th>
-              <th className="border px-2 py-1">計畫開始日期</th>
-              <th className="border px-2 py-1">計畫結束日期</th>
-              <th className="border px-2 py-1">實際完成數量</th>
-              <th className="border px-2 py-1">執行者</th>
-              <th className="border px-2 py-1">備註</th>
-            </tr>
-          </thead>
           <tbody>
             {pagedWorkloads.map(load => {
               const task = tasks.find(t => t.taskId === load.taskId);
@@ -197,62 +121,14 @@ export default function WorkTaskPage() {
                 <tr key={load.loadId}>
                   <td className="border px-2 py-1">{load.title || load.loadId}</td>
                   <td className="border px-2 py-1">{task ? task.title : load.taskId}</td>
-                  <td className="border px-2 py-1">
-                    <input
-                      type="number"
-                      className="border p-1 w-20"
-                      value={load.plannedQuantity}
-                      onChange={e => handlePlannedQuantityChange(load.loadId, Number(e.target.value))}
-                      min={0}
-                    />
-                  </td>
+                  <td className="border px-2 py-1">{load.plannedQuantity}</td>
                   <td className="border px-2 py-1">{load.unit}</td>
+                  <td className="border px-2 py-1">{load.plannedStartTime ? load.plannedStartTime.slice(0, 10) : ''}</td>
+                  <td className="border px-2 py-1">{load.plannedEndTime ? load.plannedEndTime.slice(0, 10) : ''}</td>
+                  <td className="border px-2 py-1">{load.actualQuantity}</td>
                   <td className="border px-2 py-1">
-                    <input
-                      type="date"
-                      className="border p-1 w-44"
-                      value={load.plannedStartTime ? load.plannedStartTime.slice(0, 10) : ''}
-                      onChange={e => handlePlannedStartTimeChange(load.loadId, e.target.value)}
-                    />
-                  </td>
-                  <td className="border px-2 py-1">
-                    <input
-                      type="date"
-                      className="border p-1 w-44"
-                      value={load.plannedEndTime ? load.plannedEndTime.slice(0, 10) : ''}
-                      onChange={e => handlePlannedEndTimeChange(load.loadId, e.target.value)}
-                    />
-                  </td>
-                  <td className="border px-2 py-1">
-                    <input
-                      type="number"
-                      className="border p-1 w-20"
-                      value={load.actualQuantity}
-                      onChange={e => handleActualQuantityChange(load.loadId, Number(e.target.value))}
-                      min={0}
-                    />
-                  </td>
-                  <td className="border px-2 py-1">
-                    <select
-                      multiple
-                      value={load.executor ? load.executor.split(',') : []}
-                      onChange={async e => {
-                        const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                        await updateWorkLoad(load.loadId, { executor: selected.join(',') });
-                        setWorkloads(prev =>
-                          prev.map(l =>
-                            l.loadId === load.loadId ? { ...l, executor: selected.join(',') } : l
-                          )
-                        );
-                      }}
-                      className="border rounded px-1 py-0.5 w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-                    >
-                      {members.map(member => (
-                        <option key={member.memberId} value={member.name}>{member.name}</option>
-                      ))}
-                    </select>
-                    <div className="text-xs mt-1 text-blue-700 dark:text-blue-300">
-                      {(load.executor || '').split(',').filter(Boolean).join('、')}
+                    <div className="text-xs text-blue-700 dark:text-blue-300">
+                      {Array.isArray(load.executor) ? load.executor.join('、') : ''}
                     </div>
                   </td>
                   <td className="border px-2 py-1">{load.notes || ''}</td>

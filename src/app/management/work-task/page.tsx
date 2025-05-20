@@ -235,13 +235,13 @@ export default function WorkTaskPage() {
                   <td className="border px-2 py-1">
                     <select
                       multiple
-                      value={load.executor ? load.executor.split(',') : []}
+                      value={Array.isArray(load.executor) ? load.executor : (typeof load.executor === 'string' && load.executor ? [load.executor] : [])}
                       onChange={async e => {
                         const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                        await updateWorkLoad(load.loadId, { executor: selected.join(',') });
+                        await updateWorkLoad(load.loadId, { executor: selected });
                         setWorkloads(prev =>
                           prev.map(l =>
-                            l.loadId === load.loadId ? { ...l, executor: selected.join(',') } : l
+                            l.loadId === load.loadId ? { ...l, executor: selected } : l
                           )
                         );
                       }}
@@ -252,7 +252,7 @@ export default function WorkTaskPage() {
                       ))}
                     </select>
                     <div className="text-xs mt-1 text-blue-700 dark:text-blue-300">
-                      {(load.executor || '').split(',').filter(Boolean).join('、')}
+                      {(Array.isArray(load.executor) ? load.executor : (typeof load.executor === 'string' && load.executor ? [load.executor] : [])).join('、')}
                     </div>
                   </td>
                   <td className="border px-2 py-1">{load.notes || ''}</td>

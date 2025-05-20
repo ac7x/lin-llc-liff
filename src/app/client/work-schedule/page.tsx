@@ -1,6 +1,7 @@
 "use client";
 
 import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from "@/app/actions/workload.action";
+import { getAllWorkMembers, WorkMember } from "@/app/actions/workmember.action";
 import { getWorkSchedules } from "@/app/actions/workschedule.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
 import React, { useEffect, useReducer, useRef, useState } from "react";
@@ -74,21 +75,25 @@ const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) =
 const WorkSchedulePage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [state, dispatch] = useReducer(reducer, initialState);
-    const [executorInputs, setExecutorInputs] = useState<Record<string, string>>({});
+    const [executorInputs, setExecutorInputs] = useState<Record<string, string[]>>({});
     const [saving, setSaving] = useState<Record<string, boolean>>({});
-    // 新增一個 flag，僅初次載入時自動調整 range
+    const [members, setMembers] = useState<WorkMember[]>([]);
     const hasAutoSetRange = useRef(false);
 
-    const handleExecutorChange = (loadId: string, value: string) => {
+    useEffect(() => {
+        getAllWorkMembers().then(setMembers);
+    }, []);
+
+    const handleExecutorChange = (loadId: string, value: string[]) => {
         setExecutorInputs(inputs => ({ ...inputs, [loadId]: value }));
     };
 
     const handleSaveExecutor = async (load: WorkLoadEntity) => {
         setSaving(s => ({ ...s, [load.loadId]: true }));
         try {
-            await updateWorkLoad(load.loadId, { executor: executorInputs[load.loadId] ?? "" });
-            // 更新本地 workLoads 狀態
-            dispatch({ type: "SET_WORKLOADS", payload: state.workLoads.map(l => l.loadId === load.loadId ? { ...l, executor: executorInputs[load.loadId] ?? "" } : l) });
+            const newExecutors = executorInputs[load.loadId] ?? load.executor ?? [];
+            await updateWorkLoad(load.loadId, { executor: newExecutors });
+            dispatch({ type: "SET_WORKLOADS", payload: state.workLoads.map(l => l.loadId === load.loadId ? { ...l, executor: newExecutors } : l) });
         } finally {
             setSaving(s => ({ ...s, [load.loadId]: false }));
         }
@@ -200,17 +205,27 @@ const WorkSchedulePage: React.FC = () => {
                                                             <div>工作量：{load.title}</div>
                                                             <div>
                                                                 執行者：
-                                                                <input
-                                                                    type="text"
-                                                                    value={executorInputs[load.loadId] ?? load.executor ?? ""}
-                                                                    onChange={e => handleExecutorChange(load.loadId, e.target.value)}
-                                                                    className="border rounded px-1 py-0.5 text-xs w-24 mr-1"
-                                                                />
+                                                                <select
+                                                                    multiple
+                                                                    value={executorInputs[load.loadId] ?? load.executor ?? []}
+                                                                    onChange={e => {
+                                                                        const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                                                                        handleExecutorChange(load.loadId, selected);
+                                                                    }}
+                                                                    className="border rounded px-1 py-0.5 w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                                                                >
+                                                                    {members.map(member => (
+                                                                        <option key={member.memberId} value={member.name}>{member.name}</option>
+                                                                    ))}
+                                                                </select>
                                                                 <button
                                                                     onClick={() => handleSaveExecutor(load)}
                                                                     disabled={saving[load.loadId]}
-                                                                    className="bg-blue-500 text-white px-2 py-0.5 rounded text-xs disabled:opacity-50"
+                                                                    className="bg-blue-500 text-white px-2 py-0.5 rounded text-xs disabled:opacity-50 mt-1"
                                                                 >儲存</button>
+                                                                <div className="text-xs mt-1 text-blue-700 dark:text-blue-300">
+                                                                    {(executorInputs[load.loadId] ?? load.executor ?? []).join('、')}
+                                                                </div>
                                                             </div>
                                                         </li>
                                                     ))}
