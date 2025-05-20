@@ -163,16 +163,13 @@ const WorkTemplatePage: React.FC = () => {
         selectedFlows.forEach(flow => {
             const quantity = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
-            // 使用 flowId 與 timestamp 組合產生唯一 taskId
             const now = Date.now();
             const taskId = `task-${flow.flowId}-${now}`;
-            // 取第一個步驟名稱
             const stepName = flow.steps[0]?.stepName || '';
-            // 組合 task title
             const taskTitle = `${existingEpic.title}-${selectedType.title}-${stepName}`;
             const task: WorkTaskEntity = {
                 taskId,
-                flowId: flow.flowId, // 修正為 flowId
+                flowId: flow.flowId,
                 targetQuantity: quantity,
                 unit: "單位",
                 completedQuantity: 0,
@@ -181,20 +178,26 @@ const WorkTemplatePage: React.FC = () => {
             };
             newTasks.push(task);
 
-            // 依 split 產生 load，loadId 格式為 load-${flow.flowId}-${taskId}-${j}
+            // 分割數量計算
+            const baseQty = Math.floor(quantity / split);
+            const remainder = quantity % split;
             for (let j = 0; j < split; j++) {
                 const loadId = `load-${flow.flowId}-${taskId}-${j}`;
-                // 組合 load title
                 const loadTitle = `${existingEpic.title}-${taskTitle}`;
+                let plannedQuantity = baseQty;
+                // 若有餘數，最後一筆 plannedQuantity 設為 0，讓用戶後續調整
+                if (remainder > 0 && j === split - 1) {
+                    plannedQuantity = 0;
+                }
                 const load: WorkLoadEntity = {
                     loadId,
                     taskId,
-                    plannedQuantity: 0,
+                    plannedQuantity,
                     unit: "單位",
                     plannedStartTime: "",
                     plannedEndTime: "",
-                    actualQuantity: 0, // 確保有 actualQuantity
-                    executor: "",      // 確保有 executor
+                    actualQuantity: 0,
+                    executor: "",
                     title: loadTitle
                 };
                 newLoads.push(load);
