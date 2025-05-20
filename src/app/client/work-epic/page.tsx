@@ -1,6 +1,7 @@
 "use client";
 
 import { addWorkEpic, deleteWorkEpic, getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from "@/app/actions/workepic.action";
+import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import { useEffect, useState } from "react";
 
@@ -12,8 +13,15 @@ export default function WorkEpicPage() {
 
     useEffect(() => {
         const fetchWorkEpics = async () => {
-            const epics = await getAllWorkEpics(false); // 使用 false 表示實體階段
-            setWorkEpics(epics as WorkEpicEntity[]);
+            const epics = await getAllWorkEpics(false) as WorkEpicEntity[];
+            // 取得所有 workTask
+            const allTasks = await getAllWorkTasks(false) as WorkTaskEntity[];
+            // 將每個 epic 關聯的 workTasks 合併進去
+            const epicsWithTasks = epics.map(epic => ({
+                ...epic,
+                workTasks: allTasks.filter(task => task.flowId && epic.workTasks && epic.workTasks.some(t => t.taskId === task.taskId) ? true : false)
+            }));
+            setWorkEpics(epicsWithTasks);
         };
         fetchWorkEpics();
     }, []);
