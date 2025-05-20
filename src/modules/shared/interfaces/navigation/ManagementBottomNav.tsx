@@ -23,19 +23,25 @@ const defaultAdminNavItems: NavItem[] = [
         active: false
     },
     {
-        href: '/admin/workskill',
+        href: '/admin/work-skill',
         icon: '🛠️',
         label: '技能管理',
         active: false
     },
     {
-        href: '/admin/workasset',
+        href: '/admin/work-asset',
         icon: '🏗️',
         label: '資產管理',
         active: false
     },
     {
-        href: '/management/workmember',
+        href: '/client/work-template',
+        icon: '📂',
+        label: '工作範本',
+        active: false
+    },
+    {
+        href: '/management/work-member',
         icon: '👥',
         label: '成員管理',
         active: false
