@@ -1,5 +1,7 @@
 "use client";
 
+import type { WorkFlowEntity } from "@/app/actions/workflow.action";
+import { getAllWorkFlows } from "@/app/actions/workflow.action";
 import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getAllWorkTasks, updateWorkTask, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
@@ -26,6 +28,7 @@ export default function WorkTaskPage() {
   const [tasks, setTasks] = useState<WorkTaskEntity[]>([]);
   const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
   const [members, setMembers] = useState<WorkMember[]>([]);
+  const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]); // 新增：儲存所有流程
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -51,6 +54,15 @@ export default function WorkTaskPage() {
       setMembers(data);
     };
     fetchMembers();
+  }, []);
+
+  // 新增：取得所有流程
+  useEffect(() => {
+    const fetchWorkFlows = async () => {
+      const flows = await getAllWorkFlows(true);
+      setWorkFlows(flows as WorkFlowEntity[]);
+    };
+    fetchWorkFlows();
   }, []);
 
   const handleExecutorChange = async (loadId: string, executor: string) => {
@@ -133,7 +145,7 @@ export default function WorkTaskPage() {
           <thead>
             <tr>
               <th className="border px-2 py-1">任務名稱</th>
-              <th className="border px-2 py-1">流程ID</th>
+              <th className="border px-2 py-1">流程步驟</th>
               <th className="border px-2 py-1">目標數量</th>
               <th className="border px-2 py-1">單位</th>
               <th className="border px-2 py-1">已完成數量</th>
@@ -141,16 +153,22 @@ export default function WorkTaskPage() {
             </tr>
           </thead>
           <tbody>
-            {tasks.map(task => (
-              <tr key={task.taskId}>
-                <td className="border px-2 py-1">{task.title}</td>
-                <td className="border px-2 py-1">{task.flowId}</td>
-                <td className="border px-2 py-1">{task.targetQuantity}</td>
-                <td className="border px-2 py-1">{task.unit}</td>
-                <td className="border px-2 py-1">{task.completedQuantity}</td>
-                <td className="border px-2 py-1">{task.status}</td>
-              </tr>
-            ))}
+            {tasks.map(task => {
+              // 取得對應流程
+              const flow = workFlows.find(f => f.flowId === task.flowId);
+              // 取得第一個步驟名稱
+              const stepName = flow?.steps?.[0]?.stepName || task.flowId;
+              return (
+                <tr key={task.taskId}>
+                  <td className="border px-2 py-1">{task.title}</td>
+                  <td className="border px-2 py-1">{stepName}</td>
+                  <td className="border px-2 py-1">{task.targetQuantity}</td>
+                  <td className="border px-2 py-1">{task.unit}</td>
+                  <td className="border px-2 py-1">{task.completedQuantity}</td>
+                  <td className="border px-2 py-1">{task.status}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
