@@ -1,9 +1,9 @@
 "use client";
 
-import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
+import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getWorkSchedules } from "@/app/actions/workschedule.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
-import React, { useEffect, useReducer, useRef } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 
 type WorkAssignment = {
     location: string;
@@ -74,6 +74,23 @@ const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) =
 const WorkSchedulePage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [state, dispatch] = useReducer(reducer, initialState);
+    const [executorInputs, setExecutorInputs] = useState<Record<string, string>>({});
+    const [saving, setSaving] = useState<Record<string, boolean>>({});
+
+    const handleExecutorChange = (loadId: string, value: string) => {
+        setExecutorInputs(inputs => ({ ...inputs, [loadId]: value }));
+    };
+
+    const handleSaveExecutor = async (load: WorkLoadEntity) => {
+        setSaving(s => ({ ...s, [load.loadId]: true }));
+        try {
+            await updateWorkLoad(load.loadId, { executor: executorInputs[load.loadId] ?? "" });
+            // 更新本地 workLoads 狀態
+            dispatch({ type: "SET_WORKLOADS", payload: state.workLoads.map(l => l.loadId === load.loadId ? { ...l, executor: executorInputs[load.loadId] ?? "" } : l) });
+        } finally {
+            setSaving(s => ({ ...s, [load.loadId]: false }));
+        }
+    };
 
     // 自動根據容器寬度調整 range
     useEffect(() => {
@@ -179,6 +196,22 @@ const WorkSchedulePage: React.FC = () => {
                                                         <div key={idx} className="mb-1">
                                                             <span>負荷：{load.plannedQuantity}{load.unit} </span>
                                                             <span>執行者：{load.executor ?? "-"}</span>
+                                                            <div className="flex items-center gap-1 mt-1">
+                                                                <input
+                                                                    type="text"
+                                                                    value={executorInputs[load.loadId] ?? load.executor ?? ""}
+                                                                    onChange={e => handleExecutorChange(load.loadId, e.target.value)}
+                                                                    className="border border-gray-300 dark:border-neutral-700 rounded px-1 py-0.5 text-neutral-900 dark:text-neutral-900 bg-white w-24 text-xs"
+                                                                    placeholder="輸入執行者"
+                                                                />
+                                                                <button
+                                                                    onClick={() => handleSaveExecutor(load)}
+                                                                    disabled={saving[load.loadId]}
+                                                                    className="ml-1 px-2 py-0.5 rounded bg-blue-500 text-white text-xs disabled:opacity-50"
+                                                                >
+                                                                    {saving[load.loadId] ? "儲存中" : "儲存"}
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>

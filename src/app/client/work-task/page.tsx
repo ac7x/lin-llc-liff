@@ -243,17 +243,26 @@ export default function WorkTaskPage() {
                   </td>
                   <td className="border px-2 py-1">
                     <select
-                      className="border p-1"
-                      value={load.executor || ""}
-                      onChange={e => handleExecutorChange(load.loadId, e.target.value)}
+                      multiple
+                      value={load.executor ? load.executor.split(',') : []}
+                      onChange={async e => {
+                        const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                        await updateWorkLoad(load.loadId, { executor: selected.join(',') });
+                        setWorkloads(prev =>
+                          prev.map(l =>
+                            l.loadId === load.loadId ? { ...l, executor: selected.join(',') } : l
+                          )
+                        );
+                      }}
+                      className="border rounded px-1 py-0.5 w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                     >
-                      <option value="">請選擇</option>
                       {members.map(member => (
-                        <option key={member.memberId} value={member.memberId}>
-                          {member.name}（{member.role}）
-                        </option>
+                        <option key={member.memberId} value={member.name}>{member.name}</option>
                       ))}
                     </select>
+                    <div className="text-xs mt-1 text-blue-700 dark:text-blue-300">
+                      {(load.executor || '').split(',').filter(Boolean).join('、')}
+                    </div>
                   </td>
                   <td className="border px-2 py-1">{load.notes || ''}</td>
                 </tr>
