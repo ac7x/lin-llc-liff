@@ -1,7 +1,6 @@
 "use client";
 
-import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from "@/app/actions/workload.action";
-import { getAllWorkMembers, WorkMember } from "@/app/actions/workmember.action";
+import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getWorkSchedules } from "@/app/actions/workschedule.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
 import React, { useEffect, useReducer, useRef, useState } from "react";
@@ -75,29 +74,7 @@ const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) =
 const WorkSchedulePage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [state, dispatch] = useReducer(reducer, initialState);
-    const [executorInputs, setExecutorInputs] = useState<Record<string, string[]>>({});
-    const [saving, setSaving] = useState<Record<string, boolean>>({});
-    const [members, setMembers] = useState<WorkMember[]>([]);
     const hasAutoSetRange = useRef(false);
-
-    useEffect(() => {
-        getAllWorkMembers().then(setMembers);
-    }, []);
-
-    const handleExecutorChange = (loadId: string, value: string[]) => {
-        setExecutorInputs(inputs => ({ ...inputs, [loadId]: value }));
-    };
-
-    const handleSaveExecutor = async (load: WorkLoadEntity) => {
-        setSaving(s => ({ ...s, [load.loadId]: true }));
-        try {
-            const newExecutors = executorInputs[load.loadId] ?? load.executor ?? [];
-            await updateWorkLoad(load.loadId, { executor: newExecutors });
-            dispatch({ type: "SET_WORKLOADS", payload: state.workLoads.map(l => l.loadId === load.loadId ? { ...l, executor: newExecutors } : l) });
-        } finally {
-            setSaving(s => ({ ...s, [load.loadId]: false }));
-        }
-    };
 
     // 只在初次載入時根據容器寬度自動調整 range
     useEffect(() => {
