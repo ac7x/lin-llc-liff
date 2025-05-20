@@ -176,13 +176,13 @@ export default function WorkTaskPage() {
         <table className="table-auto w-full border-collapse border border-gray-300">
           <thead>
             <tr>
-              <th className="border px-2 py-1">負載名稱</th>
+              <th className="border px-2 py-1">工作量名稱</th>
               <th className="border px-2 py-1">任務名稱</th>
-              <th className="border px-2 py-1">計劃數量</th>
+              <th className="border px-2 py-1">計畫數量</th>
               <th className="border px-2 py-1">單位</th>
-              <th className="border px-2 py-1">計劃開始</th>
-              <th className="border px-2 py-1">計劃結束</th>
-              <th className="border px-2 py-1">實際完成</th>
+              <th className="border px-2 py-1">計畫開始日期</th>
+              <th className="border px-2 py-1">計畫結束日期</th>
+              <th className="border px-2 py-1">實際完成數量</th>
               <th className="border px-2 py-1">執行者</th>
               <th className="border px-2 py-1">備註</th>
             </tr>
