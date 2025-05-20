@@ -115,14 +115,6 @@ const WorkSchedulePage: React.FC = () => {
 
     const { horizontalLabels, verticalLabels } = calculateLabels(state.schedules, state.horizontalAxis);
 
-    // 根據日期找出對應的工作量（不再比對 epicTitle）
-    const getLoadsForCell = (date: string) => {
-        return state.workLoads.filter(l => {
-            const matchDate = l.plannedStartTime && l.plannedStartTime.startsWith(date);
-            return matchDate;
-        });
-    };
-
     return (
         <>
             <div
@@ -168,23 +160,36 @@ const WorkSchedulePage: React.FC = () => {
                     </thead>
                     <tbody>
                         {verticalLabels.map(vLabel => (
-                            <tr key={vLabel} className="even:bg-gray-50 dark:even:bg-neutral-800">
-                                <td className="border px-2 py-1 font-bold">{vLabel}</td>
+                            <tr key={vLabel}>
+                                <td className="border px-2 py-1 font-bold bg-gray-50 dark:bg-neutral-800">{vLabel}</td>
                                 {horizontalLabels.map(hLabel => {
-                                    // 只根據日期比對
-                                    const date = state.horizontalAxis === "date" ? hLabel : vLabel;
-                                    const loads = getLoadsForCell(date);
+                                    // 找出該 epic（vLabel）在該日期（hLabel）的所有工作量
+                                    const loads = state.workLoads.filter(load => {
+                                        // title 格式通常為 epicTitle-xxx
+                                        const epicTitle = vLabel;
+                                        // 僅比對 title 前綴與日期
+                                        return load.title?.startsWith(epicTitle) && load.plannedStartTime?.slice(0, 10) === hLabel;
+                                    });
                                     return (
-                                        <td key={hLabel} className="border px-2 py-1 align-top">
-                                            {loads.length > 0 ? (
-                                                <ul className="mt-1 text-xs">
+                                        <td key={hLabel} className="border px-2 py-1 align-top min-w-[120px]">
+                                            {loads.length === 0 ? (
+                                                <span className="text-gray-400">—</span>
+                                            ) : (
+                                                <div className="flex flex-col gap-1">
                                                     {loads.map(load => (
-                                                        <li key={load.loadId} className="mb-1">
-                                                            <div>工作量：{load.title}</div>
-                                                        </li>
+                                                        <div key={load.loadId} className="mb-1">
+                                                            <div className="font-semibold">{load.title}</div>
+                                                            <div className="text-xs text-gray-600 dark:text-gray-300">
+                                                                {Array.isArray(load.executor) && load.executor.length > 0
+                                                                    ? load.executor.join(', ')
+                                                                    : (load.executor && typeof load.executor === 'string' && load.executor)
+                                                                        ? load.executor
+                                                                        : <span className="italic text-gray-400">(無執行者)</span>}
+                                                            </div>
+                                                        </div>
                                                     ))}
-                                                </ul>
-                                            ) : <span className="text-gray-400">無工作量</span>}
+                                                </div>
+                                            )}
                                         </td>
                                     );
                                 })}
