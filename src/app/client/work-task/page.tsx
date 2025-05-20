@@ -4,9 +4,7 @@ import type { WorkFlowEntity } from "@/app/actions/workflow.action";
 import { getAllWorkFlows } from "@/app/actions/workflow.action";
 import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
-import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
-import { collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 
 interface WorkMember {
@@ -27,7 +25,7 @@ interface WorkMember {
 export default function WorkTaskPage() {
   const [tasks, setTasks] = useState<WorkTaskEntity[]>([]);
   const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
-  const [members, setMembers] = useState<WorkMember[]>([]);
+  // 移除未使用的 members 狀態與 useEffect
   const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]); // 新增：儲存所有流程
 
   // 分頁狀態
@@ -58,15 +56,15 @@ export default function WorkTaskPage() {
     fetchWorkloads();
   }, []);
 
-  useEffect(() => {
-    const fetchMembers = async () => {
-      const membersCollection = collection(firestore, "workMember");
-      const snapshot = await getDocs(membersCollection);
-      const data: WorkMember[] = snapshot.docs.map(doc => doc.data() as WorkMember);
-      setMembers(data);
-    };
-    fetchMembers();
-  }, []);
+  // useEffect(() => {
+  //   const fetchMembers = async () => {
+  //     const membersCollection = collection(firestore, "workMember");
+  //     const snapshot = await getDocs(membersCollection);
+  //     const data: WorkMember[] = snapshot.docs.map(doc => doc.data() as WorkMember);
+  //     setMembers(data);
+  //   };
+  //   fetchMembers();
+  // }, []);
 
   // 新增：取得所有流程
   useEffect(() => {
