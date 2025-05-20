@@ -262,7 +262,13 @@ export default function WorkEpicPage() {
                                             <select
                                                 multiple
                                                 value={editFields.siteSupervisors?.map(s => s.memberId) || []}
-                                                onChange={e => handleEditFieldChange('siteSupervisors', Array.from(e.target.selectedOptions).map(opt => members.find(m => m.memberId === opt.value) || undefined).filter(Boolean))}
+                                                onChange={e => handleEditFieldChange(
+                                                    'siteSupervisors',
+                                                    Array.from(e.target.selectedOptions)
+                                                        .map(opt => members.find(m => m.memberId === opt.value))
+                                                        .filter((m): m is WorkMember => Boolean(m))
+                                                        .map(m => ({ memberId: m.memberId, name: m.name }))
+                                                )}
                                                 className="border p-1 w-full"
                                             >
                                                 {members.map(member => (
