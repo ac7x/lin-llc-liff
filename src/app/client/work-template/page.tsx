@@ -161,13 +161,17 @@ const WorkTemplatePage: React.FC = () => {
         const newTasks: WorkTaskEntity[] = [];
         const newLoads: WorkLoadEntity[] = [];
         const now = Date.now();
+        // 取標的簡稱（epicTitle 前 3 碼，若不足則全取）
+        const epicShort = existingEpic.title.slice(0, 3);
         selectedFlows.forEach((flow, flowIdx) => {
             const quantity = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
+            // 取步驟名稱
+            const stepName = flow.steps[0]?.stepName || '';
             // taskId: task-<epicId>-<flowIdx>-<timestamp>
             const taskId = `task-${existingEpic.epicId}-${flowIdx}-${now}`;
-            const stepName = flow.steps[0]?.stepName || '';
-            const taskTitle = `${existingEpic.title}-${selectedType.title}-${stepName}`;
+            // title: <標的簡稱>-<種類>-<步驟>
+            const taskTitle = `${epicShort}-${selectedType.title}-${stepName}`;
             const task: WorkTaskEntity = {
                 taskId,
                 flowId: flow.flowId,
@@ -185,7 +189,8 @@ const WorkTemplatePage: React.FC = () => {
             for (let j = 0; j < split; j++) {
                 // loadId: load-<epicId>-<flowIdx>-<j>-<timestamp>
                 const loadId = `load-${existingEpic.epicId}-${flowIdx}-${j}-${now}`;
-                const loadTitle = `${existingEpic.title}-${taskTitle}`;
+                // title: <標的簡稱>-<種類>-<步驟>-<分割序號>
+                const loadTitle = `${epicShort}-${selectedType.title}-${stepName}-${j + 1}`;
                 let plannedQuantity = baseQty;
                 // 若有餘數，最後一筆 plannedQuantity 設為 0，讓用戶後續調整
                 if (remainder > 0 && j === split - 1) {
