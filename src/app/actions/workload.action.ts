@@ -14,6 +14,7 @@ export interface WorkLoadTemplate {
 export interface WorkLoadEntity extends WorkLoadTemplate {
     actualQuantity: number; // 實際完成數量
     executor: string; // 執行者
+    title: string; // 標題，格式：epicTitle-workTaskTitle
     notes?: string; // 備註
 }
 

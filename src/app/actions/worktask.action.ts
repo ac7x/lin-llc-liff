@@ -19,10 +19,12 @@ export interface WorkTaskTemplate {
 /**
  * WorkTaskEntity 擴充自 WorkTaskTemplate，包含任務執行狀態
  * @property completedQuantity 已完成數量
+ * @property title 標題，格式：epicTitle-workTypeTitle-workFlowStepName
  * @property status 任務狀態（待分配、執行中、已完成）
  */
 export interface WorkTaskEntity extends WorkTaskTemplate {
     completedQuantity: number; // 已完成數量
+    title: string; // 標題，格式：epicTitle-workTypeTitle-workFlowStepName
     status: "待分配" | "執行中" | "已完成"; // 狀態
 }
 

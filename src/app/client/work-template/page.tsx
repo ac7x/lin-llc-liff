@@ -115,13 +115,8 @@ const WorkTemplatePage: React.FC = () => {
             return;
         }
 
-        // 取得種類名稱
-        const type = workTypes.find(t => t.typeId === selectedWorkTypeId);
-        const typeTitle = type ? type.title : '未知';
-
-        // flowId 改為 flow-種類-順序（順序補零兩位數）
-        const orderStr = newStepOrder.toString().padStart(2, '0');
-        const newFlowId = `flow-${typeTitle}-${orderStr}`;
+        // flowId 改為 flow-${Date.now()}
+        const newFlowId = `flow-${Date.now()}`;
 
         const newFlow: WorkFlowEntity = {
             flowId: newFlowId,
@@ -168,24 +163,29 @@ const WorkTemplatePage: React.FC = () => {
         selectedFlows.forEach(flow => {
             const quantity = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
-            // 只產生一筆 task，taskId 補零兩位數
+            // 產生一筆 task，taskId 格式為 task-${Date.now()}
             const now = Date.now();
-            const taskOrderStr = split.toString().padStart(2, '0');
-            const taskId = `task-${flow.flowId}-${taskOrderStr}-${now}`;
+            const taskId = `task-${now}`;
+            // 取第一個步驟名稱
+            const stepName = flow.steps[0]?.stepName || '';
+            // 組合 task title
+            const taskTitle = `${existingEpic.title}-${selectedType.title}-${stepName}`;
             const task: WorkTaskEntity = {
                 taskId,
                 flowId: flow.flowId, // 修正為 flowId
                 targetQuantity: quantity,
                 unit: "單位",
                 completedQuantity: 0,
-                status: "待分配"
+                status: "待分配",
+                title: taskTitle
             };
             newTasks.push(task);
 
-            // 只依 split 產生 load，loadId 補零兩位數
+            // 依 split 產生 load，loadId 格式為 load-${Date.now()}-${j}
             for (let j = 0; j < split; j++) {
-                const loadOrderStr = j.toString().padStart(2, '0');
-                const loadId = `load-${taskId}-${loadOrderStr}`;
+                const loadId = `load-${Date.now()}-${j}`;
+                // 組合 load title
+                const loadTitle = `${existingEpic.title}-${taskTitle}`;
                 const load: WorkLoadEntity = {
                     loadId,
                     taskId,
@@ -195,6 +195,7 @@ const WorkTemplatePage: React.FC = () => {
                     plannedEndTime: "",
                     actualQuantity: 0, // 確保有 actualQuantity
                     executor: "",      // 確保有 executor
+                    title: loadTitle
                 };
                 newLoads.push(load);
             }
