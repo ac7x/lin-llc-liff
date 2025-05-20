@@ -12,7 +12,16 @@ export default function WorkMemberPage() {
   const [filter, setFilter] = useState({ role: "", status: "" });
   const [sortKey, setSortKey] = useState<"name" | "role">("name");
   const [editingMember, setEditingMember] = useState<string | null>(null);
-  const [updatedFields, setUpdatedFields] = useState<{ name?: string }>({});
+  const [updatedFields, setUpdatedFields] = useState<{
+    name?: string;
+    role?: string;
+    skills?: string;
+    availability?: WorkMember['availability'];
+    status?: WorkMember['status'];
+    email?: string;
+    phone?: string;
+    lineId?: string;
+  }>({});
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -39,14 +48,34 @@ export default function WorkMemberPage() {
     fetchMembers();
   }, [filter, sortKey, isLoggedIn, firebaseLogin]);
 
-  const handleEdit = (memberId: string, field: keyof typeof updatedFields, value: string) => {
+  const handleEdit = (
+    memberId: string,
+    field: keyof typeof updatedFields,
+    value: string
+  ) => {
     setEditingMember(memberId);
     setUpdatedFields(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async (memberId: string) => {
     if (editingMember) {
-      await updateWorkMember(memberId, updatedFields);
+      // skills 需轉為陣列，聯絡資訊需包裝
+      const updateData: any = { ...updatedFields };
+      if (updateData.skills !== undefined) {
+        updateData.skills = updateData.skills.split(',').map((s: string) => s.trim()).filter(Boolean);
+      }
+      if (updateData.email !== undefined || updateData.phone !== undefined || updateData.lineId !== undefined) {
+        updateData.contactInfo = {
+          ...(members.find(m => m.memberId === memberId)?.contactInfo || {}),
+          email: updateData.email ?? members.find(m => m.memberId === memberId)?.contactInfo.email,
+          phone: updateData.phone ?? members.find(m => m.memberId === memberId)?.contactInfo.phone,
+          lineId: updateData.lineId ?? members.find(m => m.memberId === memberId)?.contactInfo.lineId,
+        };
+        delete updateData.email;
+        delete updateData.phone;
+        delete updateData.lineId;
+      }
+      await updateWorkMember(memberId, updateData);
       setEditingMember(null);
       setUpdatedFields({});
     }
@@ -110,16 +139,80 @@ export default function WorkMemberPage() {
                 <div className="flex flex-col gap-3">
                   <input
                     type="text"
-                    value={updatedFields.name || member.name}
-                    onChange={e => handleEdit(member.memberId, "name", e.target.value)}
+                    value={updatedFields.name ?? member.name}
+                    onChange={e => handleEdit(member.memberId, 'name', e.target.value)}
                     className="border border-border bg-background text-foreground p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="姓名"
                   />
-                  <button
-                    onClick={() => handleSave(member.memberId)}
-                    className="bg-primary text-white px-4 py-2 rounded shadow hover:bg-primary-dark transition-colors"
+                  <input
+                    type="text"
+                    value={updatedFields.role ?? member.role}
+                    onChange={e => handleEdit(member.memberId, 'role', e.target.value)}
+                    className="border border-border bg-background text-foreground p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="角色"
+                  />
+                  <input
+                    type="text"
+                    value={updatedFields.skills ?? member.skills.join(', ')}
+                    onChange={e => handleEdit(member.memberId, 'skills', e.target.value)}
+                    className="border border-border bg-background text-foreground p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="技能 (以逗號分隔)"
+                  />
+                  <select
+                    value={updatedFields.availability ?? member.availability}
+                    onChange={e => handleEdit(member.memberId, 'availability', e.target.value)}
+                    className="border border-border bg-background text-foreground p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    儲存
-                  </button>
+                    <option value="空閒">空閒</option>
+                    <option value="忙碌">忙碌</option>
+                    <option value="請假">請假</option>
+                    <option value="離線">離線</option>
+                  </select>
+                  <select
+                    value={updatedFields.status ?? member.status}
+                    onChange={e => handleEdit(member.memberId, 'status', e.target.value)}
+                    className="border border-border bg-background text-foreground p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="在職">在職</option>
+                    <option value="離職">離職</option>
+                    <option value="暫停合作">暫停合作</option>
+                    <option value="黑名單">黑名單</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={updatedFields.email ?? member.contactInfo.email ?? ''}
+                    onChange={e => handleEdit(member.memberId, 'email', e.target.value)}
+                    className="border border-border bg-background text-foreground p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Email"
+                  />
+                  <input
+                    type="text"
+                    value={updatedFields.phone ?? member.contactInfo.phone ?? ''}
+                    onChange={e => handleEdit(member.memberId, 'phone', e.target.value)}
+                    className="border border-border bg-background text-foreground p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="電話"
+                  />
+                  <input
+                    type="text"
+                    value={updatedFields.lineId ?? member.contactInfo.lineId ?? ''}
+                    onChange={e => handleEdit(member.memberId, 'lineId', e.target.value)}
+                    className="border border-border bg-background text-foreground p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Line ID"
+                  />
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      onClick={() => handleSave(member.memberId)}
+                      className="bg-primary text-white px-4 py-2 rounded shadow hover:bg-primary-dark transition-colors"
+                    >
+                      儲存
+                    </button>
+                    <button
+                      onClick={() => { setEditingMember(null); setUpdatedFields({}); }}
+                      className="bg-muted text-muted-foreground px-4 py-2 rounded shadow hover:bg-muted-dark transition-colors"
+                    >
+                      取消
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">

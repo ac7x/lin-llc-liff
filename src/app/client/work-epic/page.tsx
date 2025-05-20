@@ -1,6 +1,7 @@
 "use client";
 
 import { addWorkEpic, deleteWorkEpic, getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from "@/app/actions/workepic.action";
+import { getAllWorkMembers, WorkMember } from "@/app/actions/workmember.action";
 import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { GlobalBottomNav } from "@/modules/shared/interfaces/navigation/GlobalBottomNav";
 import { useEffect, useState } from "react";
@@ -10,6 +11,7 @@ export default function WorkEpicPage() {
     const [newEpicTitle, setNewEpicTitle] = useState("");
     const [editingEpicId, setEditingEpicId] = useState<string | null>(null);
     const [editFields, setEditFields] = useState<Partial<WorkEpicEntity>>({});
+    const [members, setMembers] = useState<WorkMember[]>([]);
 
     useEffect(() => {
         const fetchWorkEpics = async () => {
@@ -23,7 +25,12 @@ export default function WorkEpicPage() {
             }));
             setWorkEpics(epicsWithTasks);
         };
+        const fetchMembers = async () => {
+            const data = await getAllWorkMembers();
+            setMembers(data);
+        };
         fetchWorkEpics();
+        fetchMembers();
     }, []);
 
     const handleAddEpic = async () => {
@@ -166,7 +173,18 @@ export default function WorkEpicPage() {
                                                 <option value="有">有</option>
                                             </select>
                                         </td>
-                                        <td className="border px-2 py-1"><input value={editFields.owner || ''} onChange={e => handleEditFieldChange('owner', e.target.value)} className="border p-1 w-full" /></td>
+                                        <td className="border px-2 py-1">
+                                            <select
+                                                value={editFields.owner || ''}
+                                                onChange={e => handleEditFieldChange('owner', e.target.value)}
+                                                className="border p-1 w-full"
+                                            >
+                                                <option value="">請選擇</option>
+                                                {members.map(member => (
+                                                    <option key={member.memberId} value={member.name}>{member.name}</option>
+                                                ))}
+                                            </select>
+                                        </td>
                                         <td className="border px-2 py-1">
                                             <select value={editFields.status || '待開始'} onChange={e => handleEditFieldChange('status', e.target.value)} className="border p-1 w-full">
                                                 <option value="待開始">待開始</option>
