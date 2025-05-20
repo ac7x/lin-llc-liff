@@ -10,6 +10,7 @@ export default function WorkEpicPage() {
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
     const [newEpicTitle, setNewEpicTitle] = useState("");
     const [newEpicOwner, setNewEpicOwner] = useState("");
+    const [newEpicAddress, setNewEpicAddress] = useState("");
     const [editingEpicId, setEditingEpicId] = useState<string | null>(null);
     const [editFields, setEditFields] = useState<Partial<WorkEpicEntity>>({});
     const [members, setMembers] = useState<WorkMember[]>([]);
@@ -43,6 +44,10 @@ export default function WorkEpicPage() {
             alert("請選擇負責人！");
             return;
         }
+        if (!newEpicAddress.trim()) {
+            alert("請輸入地址！");
+            return;
+        }
 
         const newEpic: WorkEpicEntity = {
             epicId: `epic-${Date.now()}`,
@@ -54,7 +59,7 @@ export default function WorkEpicPage() {
             status: "待開始",
             priority: 1,
             region: "北部", // 預設區域
-            address: "未指定", // 預設地址
+            address: newEpicAddress, // 使用輸入的地址
             createdAt: new Date().toISOString() // 新增 createdAt 屬性
         };
 
@@ -62,6 +67,7 @@ export default function WorkEpicPage() {
         setWorkEpics(prev => [...prev, newEpic]);
         setNewEpicTitle("");
         setNewEpicOwner("");
+        setNewEpicAddress("");
     };
 
     const handleEditClick = (epic: WorkEpicEntity) => {
@@ -153,6 +159,13 @@ export default function WorkEpicPage() {
                             <option key={member.memberId} value={member.name}>{member.name}</option>
                         ))}
                     </select>
+                    <input
+                        type="text"
+                        value={newEpicAddress}
+                        onChange={e => setNewEpicAddress(e.target.value)}
+                        placeholder="輸入地址"
+                        className="border p-2 mr-2"
+                    />
                     <button
                         onClick={handleAddEpic}
                         className="bg-blue-500 text-white px-4 py-2"
@@ -172,6 +185,7 @@ export default function WorkEpicPage() {
                             <th className="border border-gray-300 px-4 py-2">狀態</th>
                             <th className="border border-gray-300 px-4 py-2">優先級</th>
                             <th className="border border-gray-300 px-4 py-2">地點</th>
+                            <th className="border border-gray-300 px-4 py-2">地址</th>
                             <th className="border border-gray-300 px-4 py-2">操作</th>
                         </tr>
                     </thead>
@@ -219,6 +233,7 @@ export default function WorkEpicPage() {
                                                 <option value="離島">離島</option>
                                             </select>
                                         </td>
+                                        <td className="border px-2 py-1"><input value={editFields.address || ''} onChange={e => handleEditFieldChange('address', e.target.value)} className="border p-1 w-full" /></td>
                                         <td className="border px-2 py-1 flex gap-2">
                                             <button onClick={() => handleSaveEdit(epic.epicId)} className="bg-green-500 text-white px-2 py-1 rounded">儲存</button>
                                             <button onClick={handleCancelEdit} className="bg-gray-300 px-2 py-1 rounded">取消</button>
@@ -234,6 +249,7 @@ export default function WorkEpicPage() {
                                         <td className="border px-2 py-1">{epic.status}</td>
                                         <td className="border px-2 py-1">{epic.priority}</td>
                                         <td className="border px-2 py-1">{epic.region}</td>
+                                        <td className="border px-2 py-1">{epic.address}</td>
                                         <td className="border px-2 py-1 flex gap-2">
                                             <button onClick={() => handleEditClick(epic)} className="bg-yellow-400 text-white px-2 py-1 rounded">編輯</button>
                                             <button onClick={() => handleDeleteEpic(epic.epicId)} className="bg-red-500 text-white px-2 py-1 rounded">刪除</button>
