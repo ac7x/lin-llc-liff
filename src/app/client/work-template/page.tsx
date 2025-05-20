@@ -163,9 +163,9 @@ const WorkTemplatePage: React.FC = () => {
         selectedFlows.forEach(flow => {
             const quantity = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
-            // 產生一筆 task，taskId 格式為 task-${Date.now()}
+            // 使用 flowId 與 timestamp 組合產生唯一 taskId
             const now = Date.now();
-            const taskId = `task-${now}`;
+            const taskId = `task-${flow.flowId}-${now}`;
             // 取第一個步驟名稱
             const stepName = flow.steps[0]?.stepName || '';
             // 組合 task title
@@ -181,9 +181,9 @@ const WorkTemplatePage: React.FC = () => {
             };
             newTasks.push(task);
 
-            // 依 split 產生 load，loadId 格式為 load-${Date.now()}-${j}
+            // 依 split 產生 load，loadId 格式為 load-${flow.flowId}-${taskId}-${j}
             for (let j = 0; j < split; j++) {
-                const loadId = `load-${Date.now()}-${j}`;
+                const loadId = `load-${flow.flowId}-${taskId}-${j}`;
                 // 組合 load title
                 const loadTitle = `${existingEpic.title}-${taskTitle}`;
                 const load: WorkLoadEntity = {
