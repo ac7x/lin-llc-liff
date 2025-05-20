@@ -429,7 +429,7 @@ const WorkTemplatePage: React.FC = () => {
                     </button>
                 </div>
             </main>
-            <ClientBottomNav />
+            <ManagementBottomNav />
         </>
     );
 };
