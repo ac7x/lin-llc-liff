@@ -17,6 +17,12 @@ interface FinanceBottomNavProps {
 
 const defaultFinanceNavItems: NavItem[] = [
     {
+        href: '/management/work-asset',
+        icon: '🏗️',
+        label: '資產管理',
+        active: false
+    },
+    {
         href: '/finance/dashboard',
         icon: '💰',
         label: '財務總覽',

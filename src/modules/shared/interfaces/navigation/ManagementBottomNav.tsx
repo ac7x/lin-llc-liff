@@ -23,31 +23,25 @@ const defaultAdminNavItems: NavItem[] = [
         active: false
     },
     {
-        href: '/admin/work-skill',
+        href: '/management/work-skill',
         icon: '🛠️',
         label: '技能管理',
         active: false
     },
     {
-        href: '/admin/work-asset',
-        icon: '🏗️',
-        label: '資產管理',
-        active: false
-    },
-    {
-        href: '/client/work-task',
+        href: '/management/work-task',
         icon: '📝',
         label: '工作任務',
         active: false
     },
     {
-        href: '/client/work-epic',
+        href: '/management/work-epic',
         icon: '📖',
         label: '工作史詩',
         active: false
     },
     {
-        href: '/client/work-template',
+        href: '/management/work-template',
         icon: '📂',
         label: '工作範本',
         active: false

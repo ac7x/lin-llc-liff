@@ -204,7 +204,7 @@ const WorkTemplatePage: React.FC = () => {
                     plannedStartTime: "",
                     plannedEndTime: "",
                     actualQuantity: 0,
-                    executor: "",
+                    executor: [],
                     title: loadTitle
                 };
                 newLoads.push(load);
