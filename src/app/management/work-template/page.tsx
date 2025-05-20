@@ -23,7 +23,7 @@ import {
     getAllWorkTypes,
     WorkTypeEntity
 } from "@/app/actions/worktype.action";
-import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import React, { useEffect, useState } from "react";
 
 // 將下拉選單抽成簡單元件，減少重複
