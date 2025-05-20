@@ -280,7 +280,7 @@ export default function WorkTaskPage() {
           </button>
         </div>
       </main>
-      <ClientBottomNav />
+      <ManagementBottomNav />
     </>
   );
 }
