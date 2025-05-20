@@ -135,6 +135,18 @@ const WorkSchedulePage: React.FC = () => {
         return day?.assignments.find(a => a.location === location);
     };
 
+    // 根據 assignment 的日期與地點，找出對應的工作量
+    const getLoadsForCell = (date: string, location: string) => {
+        // 假設 load.title 格式為 "epicTitle-workTaskTitle"，可根據 location 進行部分比對
+        // 若有更精確的 mapping，請根據資料結構調整
+        return state.workLoads.filter(l => {
+            // 這裡假設 title 內含 location 名稱
+            const matchLocation = l.title.includes(location);
+            // 若有日期欄位可比對，請加上日期比對條件
+            return matchLocation;
+        });
+    };
+
     return (
         <>
             <div
@@ -185,10 +197,8 @@ const WorkSchedulePage: React.FC = () => {
                                 {horizontalLabels.map(hLabel => {
                                     const date = state.horizontalAxis === "date" ? hLabel : vLabel;
                                     const location = state.horizontalAxis === "date" ? vLabel : hLabel;
-                                    // 找到 assignment
                                     const assignment = getAssignment(date, location);
-                                    // 找到對應的工作量
-                                    const loads = state.workLoads.filter(l => l.title.includes(location));
+                                    const loads = getLoadsForCell(date, location);
                                     return (
                                         <td key={hLabel} className="border px-2 py-1 align-top">
                                             {assignment ? (
@@ -204,28 +214,7 @@ const WorkSchedulePage: React.FC = () => {
                                                         <li key={load.loadId} className="mb-1">
                                                             <div>工作量：{load.title}</div>
                                                             <div>
-                                                                執行者：
-                                                                <select
-                                                                    multiple
-                                                                    value={executorInputs[load.loadId] ?? load.executor ?? []}
-                                                                    onChange={e => {
-                                                                        const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                                                                        handleExecutorChange(load.loadId, selected);
-                                                                    }}
-                                                                    className="border rounded px-1 py-0.5 w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-                                                                >
-                                                                    {members.map(member => (
-                                                                        <option key={member.memberId} value={member.name}>{member.name}</option>
-                                                                    ))}
-                                                                </select>
-                                                                <button
-                                                                    onClick={() => handleSaveExecutor(load)}
-                                                                    disabled={saving[load.loadId]}
-                                                                    className="bg-blue-500 text-white px-2 py-0.5 rounded text-xs disabled:opacity-50 mt-1"
-                                                                >儲存</button>
-                                                                <div className="text-xs mt-1 text-blue-700 dark:text-blue-300">
-                                                                    {(executorInputs[load.loadId] ?? load.executor ?? []).join('、')}
-                                                                </div>
+                                                                執行者：{(load.executor && load.executor.length > 0) ? load.executor.join('、') : <span className="text-gray-400">未指定</span>}
                                                             </div>
                                                         </li>
                                                     ))}
