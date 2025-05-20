@@ -42,12 +42,6 @@ const defaultNavItems: NavItem[] = [
     active: false
   },
   {
-    href: '/client/work-member',
-    icon: '👥',
-    label: '成員',
-    active: false
-  },
-  {
     href: '/client/profile',
     icon: '🧑‍💼',
     label: '用戶',

@@ -33,6 +33,12 @@ const defaultAdminNavItems: NavItem[] = [
         icon: '🏗️',
         label: '資產管理',
         active: false
+    },
+    {
+        href: '/management/position',
+        icon: '👥',
+        label: '成員管理',
+        active: false
     }
 ];
 
