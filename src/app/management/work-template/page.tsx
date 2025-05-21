@@ -161,19 +161,13 @@ const WorkTemplatePage: React.FC = () => {
         const newTasks: WorkTaskEntity[] = [];
         const newLoads: WorkLoadEntity[] = [];
         const now = Date.now();
-        // 取標的簡稱（epicTitle 前 3 碼，若不足則全取）
-        const epicShort = existingEpic.title.slice(0, 3);
         selectedFlows.forEach((flow, flowIdx) => {
             const quantity = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
-            // 取步驟名稱
             const stepName = flow.steps[0]?.stepName || '';
-            // taskId: task-<epicId>-<flowIdx>-<timestamp>
-            const taskId = `task-${existingEpic.epicId}-${flowIdx}-${now}`;
-            // title: <標的簡稱>-<種類>-<步驟>
-            const taskTitle = `${epicShort}-${selectedType.title}-${stepName}`;
+            const taskTitle = `${existingEpic.title}-${selectedType.title}-${stepName}`;
             const task: WorkTaskEntity = {
-                taskId,
+                taskId: `task-${existingEpic.epicId}-${flowIdx}-${now}`,
                 flowId: flow.flowId,
                 targetQuantity: quantity,
                 unit: "單位",
@@ -183,23 +177,12 @@ const WorkTemplatePage: React.FC = () => {
             };
             newTasks.push(task);
 
-            // 分割數量計算
-            const baseQty = Math.floor(quantity / split);
-            const remainder = quantity % split;
             for (let j = 0; j < split; j++) {
-                // loadId: load-<epicId>-<flowIdx>-<j>-<timestamp>
-                const loadId = `load-${existingEpic.epicId}-${flowIdx}-${j}-${now}`;
-                // title: <標的簡稱>-<種類>-<步驟>-<分割序號>
-                const loadTitle = `${epicShort}-${selectedType.title}-${stepName}-${j + 1}`;
-                let plannedQuantity = baseQty;
-                // 若有餘數，最後一筆 plannedQuantity 設為 0，讓用戶後續調整
-                if (remainder > 0 && j === split - 1) {
-                    plannedQuantity = 0;
-                }
+                const loadTitle = `${existingEpic.title}-${selectedType.title}-${stepName}-${j + 1}`;
                 const load: WorkLoadEntity = {
-                    loadId,
-                    taskId,
-                    plannedQuantity,
+                    loadId: `load-${existingEpic.epicId}-${flowIdx}-${j}-${now}`,
+                    taskId: task.taskId,
+                    plannedQuantity: Math.floor(quantity / split),
                     unit: "單位",
                     plannedStartTime: "",
                     plannedEndTime: "",

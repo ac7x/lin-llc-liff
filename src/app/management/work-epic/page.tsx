@@ -171,32 +171,47 @@ export default function WorkEpicPage() {
                             <option key={member.memberId} value={member.memberId}>{member.name}</option>
                         ))}
                     </select>
+
+                    {/* 現場監督 多選下拉 */}
                     <select
                         multiple
                         value={newSiteSupervisors.map(s => s.memberId)}
                         onChange={e => {
                             const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                            setNewSiteSupervisors(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })));
+                            setNewSiteSupervisors(
+                                members
+                                    .filter(m => selected.includes(m.memberId))
+                                    .map(m => ({ memberId: m.memberId, name: m.name }))
+                            );
                         }}
                         className="border p-2 mr-2"
                     >
+                        <option disabled value="">選擇現場監督</option>
                         {members.map(member => (
                             <option key={member.memberId} value={member.memberId}>{member.name}</option>
                         ))}
                     </select>
+
+                    {/* 安全員 多選下拉 */}
                     <select
                         multiple
                         value={newSafetyOfficers.map(s => s.memberId)}
                         onChange={e => {
                             const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                            setNewSafetyOfficers(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })));
+                            setNewSafetyOfficers(
+                                members
+                                    .filter(m => selected.includes(m.memberId))
+                                    .map(m => ({ memberId: m.memberId, name: m.name }))
+                            );
                         }}
                         className="border p-2 mr-2"
                     >
+                        <option disabled value="">選擇安全員</option>
                         {members.map(member => (
                             <option key={member.memberId} value={member.memberId}>{member.name}</option>
                         ))}
                     </select>
+
                     <input
                         type="text"
                         value={newEpicAddress}
