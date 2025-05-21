@@ -81,7 +81,18 @@ export default function WorkEpicPage() {
                                     <td className="border border-gray-300 px-4 py-2">{epic.status}</td>
                                     <td className="border border-gray-300 px-4 py-2">{epic.priority}</td>
                                     <td className="border border-gray-300 px-4 py-2">{epic.region}</td>
-                                    <td className="border border-gray-300 px-4 py-2">{epic.address}</td>
+                                    <td className="border border-gray-300 px-4 py-2">{epic.address}
+                                        {epic.address && (
+                                            <a
+                                                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(epic.address)}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="ml-2 text-blue-600 underline"
+                                            >
+                                                導航
+                                            </a>
+                                        )}
+                                    </td>
                                 </tr>
                             );
                         })}

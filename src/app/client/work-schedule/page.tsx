@@ -152,13 +152,13 @@ const WorkSchedulePage: React.FC = () => {
                 <table className="table-auto w-full mb-6 border-collapse">
                     <thead>
                         <tr>
-                            <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800">
+                            <th className="border px-2 py-1 bg-white dark:bg-neutral-900">
                                 {state.horizontalAxis === "date" ? "標的" : "日期"}
                             </th>
                             {horizontalLabels.map((label) => (
                                 <th
                                     key={label}
-                                    className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800"
+                                    className="border px-2 py-1 bg-white dark:bg-neutral-900"
                                 >
                                     {label}
                                 </th>
@@ -168,7 +168,7 @@ const WorkSchedulePage: React.FC = () => {
                     <tbody>
                         {verticalLabels.map((vLabel) => (
                             <tr key={vLabel}>
-                                <td className="border px-2 py-1 font-bold bg-gray-50 dark:bg-neutral-800">{vLabel}</td>
+                                <td className="border px-2 py-1 font-bold bg-white dark:bg-neutral-900">{vLabel}</td>
                                 {horizontalLabels.map((hLabel) => {
                                     const epicTitle =
                                         state.horizontalAxis === "date" ? vLabel : hLabel;
