@@ -4,8 +4,10 @@ import { getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getWorkSchedules } from "@/app/actions/workschedule.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
-import { format, isSameDay, parseISO } from 'date-fns';
 import React, { useEffect, useReducer, useRef, useState } from "react";
+// 新增 vis-timeline 相關 import
+import { DataGroup, DataItem, DataSet, Timeline, TimelineOptions } from "vis-timeline/standalone";
+import "vis-timeline/styles/vis-timeline-graph2d.min.css";
 
 type WorkAssignment = {
     location: string;
@@ -62,6 +64,7 @@ const reducer = (state: State, action: Action): State => {
 
 const WorkSchedulePage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
+    const timelineRef = useRef<HTMLDivElement>(null);
     const [state, dispatch] = useReducer(reducer, initialState);
     const [epics, setEpics] = useState<WorkEpicEntity[]>([]);
     const hasAutoSetRange = useRef(false);
@@ -96,20 +99,60 @@ const WorkSchedulePage: React.FC = () => {
         });
     }, []);
 
-    const calculateLabels = (schedules: DailyWorkSchedule[], horizontalAxis: Axis) => {
-        if (!schedules.length || !epics.length) return { horizontalLabels: [], verticalLabels: [] };
-        if (horizontalAxis === "date") {
-            const horizontalLabels = schedules.map((s) => s.date);
-            const verticalLabels = epics.map((e) => e.title);
-            return { horizontalLabels, verticalLabels };
-        } else {
-            const horizontalLabels = epics.map((e) => e.title);
-            const verticalLabels = schedules.map((s) => s.date);
-            return { horizontalLabels, verticalLabels };
-        }
+    // vis-timeline groups/items 轉換
+    const getTimelineGroupsAndItems = (): { groups: DataGroup[]; items: DataItem[] } => {
+        if (!epics.length || !state.workLoads.length) return { groups: [], items: [] };
+        const groups: DataGroup[] = epics.map(e => ({
+            id: e.title,
+            content: e.title
+        }));
+        const items: DataItem[] = state.workLoads.map(load => {
+            const epicTitle = load.title?.split("-")[0] || "";
+            return {
+                id: load.loadId,
+                group: epicTitle,
+                content: load.title,
+                start: load.plannedStartTime,
+                end: load.plannedEndTime,
+                title: [
+                    load.title,
+                    Array.isArray(load.executor) && load.executor.length > 0
+                        ? load.executor.join(", ")
+                        : typeof load.executor === "string" && load.executor
+                            ? load.executor
+                            : "(無執行者)"
+                ].join("<br/>")
+            };
+        });
+        return { groups, items };
     };
 
-    const { horizontalLabels, verticalLabels } = calculateLabels(state.schedules, state.horizontalAxis);
+    // 初始化與更新 vis-timeline
+    useEffect(() => {
+        if (!timelineRef.current) return;
+        const { groups, items } = getTimelineGroupsAndItems();
+        if (!groups.length || !items.length) return;
+
+        const timeline = new Timeline(
+            timelineRef.current,
+            new DataSet(items),
+            new DataSet(groups),
+            {
+                stack: false,
+                orientation: "top",
+                editable: false,
+                locale: "zh-tw",
+                tooltip: { followMouse: true },
+                margin: { item: 10, axis: 5 },
+                // 可根據需求調整 options
+            } as TimelineOptions
+        );
+
+        return () => {
+            timeline.destroy();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [epics, state.workLoads]);
 
     return (
         <>
@@ -118,7 +161,6 @@ const WorkSchedulePage: React.FC = () => {
                 className="border border-gray-300 dark:border-neutral-700 rounded-lg p-4 m-4"
             >
                 <h1 className="text-2xl font-bold mb-4">工作排班表</h1>
-
                 <div className="mb-4 flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                         <span>顯示天數：</span>
@@ -127,7 +169,7 @@ const WorkSchedulePage: React.FC = () => {
                             min={1}
                             max={31}
                             value={state.range}
-                            onChange={(e) =>
+                            onChange={e =>
                                 dispatch({ type: "SET_RANGE", payload: Number(e.target.value) })
                             }
                             className="border border-gray-300 dark:border-neutral-700 rounded bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-2 py-1 w-20"
@@ -136,7 +178,7 @@ const WorkSchedulePage: React.FC = () => {
                     <div>
                         <select
                             value={state.horizontalAxis}
-                            onChange={(e) =>
+                            onChange={e =>
                                 dispatch({
                                     type: "SET_HORIZONTAL_AXIS",
                                     payload: e.target.value as Axis,
@@ -149,74 +191,8 @@ const WorkSchedulePage: React.FC = () => {
                         </select>
                     </div>
                 </div>
-
-                <table className="table-auto w-full mb-6 border-collapse">
-                    <thead>
-                        <tr>
-                            <th className="border px-2 py-1 bg-white dark:bg-neutral-900">
-                                {state.horizontalAxis === "date" ? "標的" : "日期"}
-                            </th>
-                            {horizontalLabels.map(label => (
-                                <th key={label} className="border px-2 py-1 bg-white dark:bg-neutral-900">
-                                    {state.horizontalAxis === 'date'
-                                        ? format(parseISO(label), 'MM/dd')
-                                        : label}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {verticalLabels.map((vLabel) => (
-                            <tr key={vLabel}>
-                                <td className="border px-2 py-1 font-bold bg-white dark:bg-neutral-900">{vLabel}</td>
-                                {horizontalLabels.map((hLabel) => {
-                                    const epicTitle =
-                                        state.horizontalAxis === "date" ? vLabel : hLabel;
-                                    const date =
-                                        state.horizontalAxis === "date" ? hLabel : vLabel;
-
-                                    const loads = state.workLoads.filter(load => {
-                                        const loadDate = load.plannedStartTime ? parseISO(load.plannedStartTime) : null;
-                                        const cellDate = parseISO(date);
-                                        return load.title?.startsWith(epicTitle)
-                                            && loadDate
-                                            && isSameDay(loadDate, cellDate);
-                                    });
-
-                                    return (
-                                        <td
-                                            key={hLabel}
-                                            className="border px-2 py-1 align-top min-w-[120px]"
-                                        >
-                                            {loads.length === 0 ? (
-                                                <span className="text-gray-400">—</span>
-                                            ) : (
-                                                <div className="flex flex-col gap-1">
-                                                    {loads.map((load) => (
-                                                        <div key={load.loadId} className="mb-1">
-                                                            <div className="font-semibold">{load.title}</div>
-                                                            <div className="text-xs text-gray-600 dark:text-gray-300">
-                                                                {Array.isArray(load.executor) && load.executor.length > 0
-                                                                    ? load.executor.join(", ")
-                                                                    : typeof load.executor === "string" && load.executor
-                                                                        ? load.executor
-                                                                        : (
-                                                                            <span className="italic text-gray-400">
-                                                                                (無執行者)
-                                                                            </span>
-                                                                        )}
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </td>
-                                    );
-                                })}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                {/* vis-timeline 容器 */}
+                <div ref={timelineRef} style={{ height: 400, minHeight: 300 }} />
             </div>
             <ClientBottomNav />
         </>
