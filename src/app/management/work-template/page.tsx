@@ -221,7 +221,6 @@ const WorkTemplatePage: React.FC = () => {
                     actualQuantity: 0,
                     executor: [],
                     title: `${existingEpic.title}-${selectedType.title}-${stepName}-${j + 1}`,
-                    epicId: existingEpic.epicId
                 });
             }
         });

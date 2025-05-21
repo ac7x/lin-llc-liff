@@ -96,12 +96,3 @@ export async function updateWorkEpic(epicId: string, updates: Partial<WorkEpicEn
 export async function deleteWorkEpic(epicId: string): Promise<void> {
     await firestoreAdmin.collection("workEpic").doc(epicId).delete();
 }
-
-/**
- * 取得所有 WorkEpic 的原始資料清單
- * @returns WorkEpicEntity 陣列
- */
-export async function listWorkEpic(): Promise<WorkEpicEntity[]> {
-    const snapshot = await firestoreAdmin.collection("workEpic").get();
-    return snapshot.docs.map(doc => doc.data() as WorkEpicEntity);
-}
