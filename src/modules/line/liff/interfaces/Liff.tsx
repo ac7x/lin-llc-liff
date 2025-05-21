@@ -7,7 +7,7 @@ import { logout as liffLogout } from "@liff/logout";
 import { ready as liffReady } from "@liff/ready";
 import liff from "@line/liff";
 import { getAuth, onAuthStateChanged, signInWithCustomToken, signOut, type User } from "firebase/auth";
-import { createContext, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 import { loginWithLine } from "../infrastructure/line-login.action";
 
 export const LiffContext = createContext<{
@@ -73,6 +73,17 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
     setIsLiffLoggedIn(liffObject.isLoggedIn());
   }, [liffObject]);
 
+  // 取得 Line Profile - 用 useCallback 包裝，依賴 liffObject
+  const fetchLineProfile = useCallback(async () => {
+    if (!liffObject) return;
+    try {
+      const profile = await getProfile();
+      setLineProfile(profile);
+    } catch (err) {
+      setLiffError("取得 Line Profile 失敗: " + (err as Error).message);
+    }
+  }, [liffObject]);
+
   // 監聽 Firebase 登入狀態變化
   useEffect(() => {
     const auth = getAuth(firebaseApp);
@@ -83,21 +94,10 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
       }
     });
     return () => unsubscribe();
-  }, [lineProfile]);
-
-  // 取得 Line Profile
-  const fetchLineProfile = async () => {
-    if (!liffObject) return;
-    try {
-      const profile = await getProfile();
-      setLineProfile(profile);
-    } catch (err) {
-      setLiffError("取得 Line Profile 失敗: " + (err as Error).message);
-    }
-  };
+  }, [lineProfile, fetchLineProfile]);
 
   // 登入並連接 Firebase（不再手動設定 firebaseUser）
-  const firebaseLogin = async () => {
+  const firebaseLogin = useCallback(async () => {
     if (!liffObject) return;
     const accessToken = liffObject.getAccessToken();
     if (!accessToken) {
@@ -112,20 +112,20 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       setLiffError("Firebase 登入失敗: " + (err as Error).message);
     }
-  };
+  }, [liffObject]);
 
   // LIFF login
-  const login = async () => {
+  const login = useCallback(async () => {
     try {
       await liffLogin();
       setIsLiffLoggedIn(true);
     } catch (err) {
       setLiffError("LIFF 登入失敗: " + (err as Error).message);
     }
-  };
+  }, []);
 
   // LIFF logout
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       const auth = getAuth(firebaseApp);
       await signOut(auth);           // ✅ 登出 Firebase
@@ -137,7 +137,7 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       setLiffError("LIFF 登出失敗: " + (err as Error).message);
     }
-  };
+  }, []);
 
   return (
     <LiffContext.Provider

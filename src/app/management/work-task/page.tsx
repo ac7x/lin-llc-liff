@@ -1,13 +1,12 @@
 "use client";
 
-import type { WorkFlowEntity } from "@/app/actions/workflow.action";
-import { getAllWorkFlows } from "@/app/actions/workflow.action";
-import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from "@/app/actions/workload.action";
-import { getAllWorkTasks, updateWorkTask, WorkTaskEntity } from "@/app/actions/worktask.action";
-import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/client";
+import { getAllWorkFlows, WorkFlowEntity } from '@/app/actions/workflow.action';
+import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from '@/app/actions/workload.action';
+import { getAllWorkTasks, updateWorkTask, WorkTaskEntity } from '@/app/actions/worktask.action';
+import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/client';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
-import { collection, getDocs } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { collection, getDocs } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
 interface WorkMember {
   taskId?: string;
@@ -16,129 +15,58 @@ interface WorkMember {
   role: string;
   skills: string[];
   availability: string;
-  contactInfo?: {
-    phone?: string;
-    email?: string;
-  };
+  contactInfo?: { phone?: string; email?: string };
   status: string;
   lastActiveTime?: string;
 }
+
+const workloadsPerPage = 10;
 
 export default function WorkTaskPage() {
   const [tasks, setTasks] = useState<WorkTaskEntity[]>([]);
   const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
   const [members, setMembers] = useState<WorkMember[]>([]);
-  const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]); // 新增：儲存所有流程
-
-  // 分頁狀態
+  const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]);
   const [workloadPage, setWorkloadPage] = useState(1);
-  const workloadsPerPage = 10; // 每頁顯示 10 筆
-
-  // 計算分頁後的 workloads
-  const totalWorkloads = workloads.length;
-  const totalPages = Math.ceil(totalWorkloads / workloadsPerPage);
-  const pagedWorkloads = workloads.slice(
-    (workloadPage - 1) * workloadsPerPage,
-    workloadPage * workloadsPerPage
-  );
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      const data = await getAllWorkTasks(false);
-      setTasks(data as WorkTaskEntity[]);
-    };
-    fetchTasks();
+    getAllWorkTasks(false).then((data) => setTasks(data as WorkTaskEntity[]));
+    getAllWorkLoads(false).then((data) => setWorkloads(data as WorkLoadEntity[]));
+    getAllWorkFlows(true).then((flows) => setWorkFlows(flows as WorkFlowEntity[]));
+    getDocs(collection(firestore, 'workMember')).then(snapshot => {
+      setMembers(snapshot.docs.map(doc => doc.data() as WorkMember));
+    });
   }, []);
 
-  useEffect(() => {
-    const fetchWorkloads = async () => {
-      const data = await getAllWorkLoads(false);
-      setWorkloads(data as WorkLoadEntity[]);
-    };
-    fetchWorkloads();
-  }, []);
+  const handleWorkLoadChange = async (loadId: string, changes: Partial<WorkLoadEntity>) => {
+    await updateWorkLoad(loadId, changes);
+    setWorkloads(prev => prev.map(load => load.loadId === loadId ? { ...load, ...changes } : load));
+  };
 
-  useEffect(() => {
-    const fetchMembers = async () => {
-      const membersCollection = collection(firestore, "workMember");
-      const snapshot = await getDocs(membersCollection);
-      const data: WorkMember[] = snapshot.docs.map(doc => doc.data() as WorkMember);
-      setMembers(data);
-    };
-    fetchMembers();
-  }, []);
-
-  // 新增：取得所有流程
-  useEffect(() => {
-    const fetchWorkFlows = async () => {
-      const flows = await getAllWorkFlows(true);
-      setWorkFlows(flows as WorkFlowEntity[]);
-    };
-    fetchWorkFlows();
-  }, []);
-
-  // 新增：處理實際完成數量變更
   const handleActualQuantityChange = async (loadId: string, actualQuantity: number) => {
-    await updateWorkLoad(loadId, { actualQuantity });
-    // 先更新 workloads 狀態
-    setWorkloads(prev =>
-      prev.map(load =>
-        load.loadId === loadId ? { ...load, actualQuantity } : load
-      )
-    );
-
-    // 取得該 load 對應的 taskId
-    // 注意：此時 workloads 尚未 set 完成，需用 prev 狀態計算
-    const updatedLoad = workloads.find(load => load.loadId === loadId);
-    if (!updatedLoad) return;
-    const taskId = updatedLoad.taskId;
-
-    // 取得所有屬於該 taskId 的 workloads，並將本次變更的 actualQuantity 帶入
-    const relatedLoads = workloads
-      .map(load => load.loadId === loadId ? { ...load, actualQuantity } : load)
-      .filter(load => load.taskId === taskId);
-
-    // 加總 actualQuantity
-    const totalActual = relatedLoads.reduce((sum, load) => sum + (load.actualQuantity || 0), 0);
-
-    // 更新對應的 workTask.completedQuantity
-    await updateWorkTask(taskId, { completedQuantity: totalActual });
-    setTasks(prev =>
-      prev.map(task =>
-        task.taskId === taskId ? { ...task, completedQuantity: totalActual } : task
-      )
-    );
+    await handleWorkLoadChange(loadId, { actualQuantity });
+    // 用 prev 狀態計算，不要用 workloads，避免異步問題
+    setWorkloads(prev => {
+      const updated = prev.map(load => load.loadId === loadId ? { ...load, actualQuantity } : load);
+      const updatedLoad = updated.find(load => load.loadId === loadId);
+      if (!updatedLoad) return prev;
+      const relatedLoads = updated.filter(load => load.taskId === updatedLoad.taskId);
+      const totalActual = relatedLoads.reduce((sum, load) => sum + (load.actualQuantity || 0), 0);
+      updateWorkTask(updatedLoad.taskId, { completedQuantity: totalActual });
+      setTasks(prevTask =>
+        prevTask.map(task =>
+          task.taskId === updatedLoad.taskId ? { ...task, completedQuantity: totalActual } : task
+        )
+      );
+      return updated;
+    });
   };
 
-  // 新增：處理計劃數量變更
-  const handlePlannedQuantityChange = async (loadId: string, plannedQuantity: number) => {
-    await updateWorkLoad(loadId, { plannedQuantity });
-    setWorkloads(prev =>
-      prev.map(load =>
-        load.loadId === loadId ? { ...load, plannedQuantity } : load
-      )
-    );
-  };
+  const pagedWorkloads = workloads.slice((workloadPage - 1) * workloadsPerPage, workloadPage * workloadsPerPage);
+  const totalPages = Math.ceil(workloads.length / workloadsPerPage);
 
-  // 新增：處理計劃開始時間變更
-  const handlePlannedStartTimeChange = async (loadId: string, plannedStartTime: string) => {
-    await updateWorkLoad(loadId, { plannedStartTime });
-    setWorkloads(prev =>
-      prev.map(load =>
-        load.loadId === loadId ? { ...load, plannedStartTime } : load
-      )
-    );
-  };
-
-  // 新增：處理計劃結束時間變更
-  const handlePlannedEndTimeChange = async (loadId: string, plannedEndTime: string) => {
-    await updateWorkLoad(loadId, { plannedEndTime });
-    setWorkloads(prev =>
-      prev.map(load =>
-        load.loadId === loadId ? { ...load, plannedEndTime } : load
-      )
-    );
-  };
+  const getExecutorArray = (executor: string[] | string | undefined) =>
+    Array.isArray(executor) ? executor : (typeof executor === 'string' && executor ? [executor] : []);
 
   return (
     <>
@@ -158,16 +86,12 @@ export default function WorkTaskPage() {
           <tbody>
             {[...tasks]
               .sort((a, b) => {
-                const flowA = workFlows.find(f => f.flowId === a.flowId)
-                const flowB = workFlows.find(f => f.flowId === b.flowId)
-                const orderA = flowA?.steps?.[0]?.order ?? 0
-                const orderB = flowB?.steps?.[0]?.order ?? 0
-                return orderA - orderB
+                const orderA = workFlows.find(f => f.flowId === a.flowId)?.steps?.[0]?.order ?? 0;
+                const orderB = workFlows.find(f => f.flowId === b.flowId)?.steps?.[0]?.order ?? 0;
+                return orderA - orderB;
               })
               .map(task => {
-                // 取得對應流程
                 const flow = workFlows.find(f => f.flowId === task.flowId);
-                // 取得第一個步驟名稱
                 const stepName = flow?.steps?.[0]?.stepName || task.flowId;
                 return (
                   <tr key={task.taskId}>
@@ -210,7 +134,7 @@ export default function WorkTaskPage() {
                       type="number"
                       className="border p-1 w-20"
                       value={load.plannedQuantity}
-                      onChange={e => handlePlannedQuantityChange(load.loadId, Number(e.target.value))}
+                      onChange={e => handleWorkLoadChange(load.loadId, { plannedQuantity: Number(e.target.value) })}
                       min={0}
                     />
                   </td>
@@ -219,16 +143,16 @@ export default function WorkTaskPage() {
                     <input
                       type="date"
                       className="border p-1 w-44"
-                      value={load.plannedStartTime ? load.plannedStartTime.slice(0, 10) : ''}
-                      onChange={e => handlePlannedStartTimeChange(load.loadId, e.target.value)}
+                      value={load.plannedStartTime?.slice(0, 10) || ''}
+                      onChange={e => handleWorkLoadChange(load.loadId, { plannedStartTime: e.target.value })}
                     />
                   </td>
                   <td className="border px-2 py-1">
                     <input
                       type="date"
                       className="border p-1 w-44"
-                      value={load.plannedEndTime ? load.plannedEndTime.slice(0, 10) : ''}
-                      onChange={e => handlePlannedEndTimeChange(load.loadId, e.target.value)}
+                      value={load.plannedEndTime?.slice(0, 10) || ''}
+                      onChange={e => handleWorkLoadChange(load.loadId, { plannedEndTime: e.target.value })}
                     />
                   </td>
                   <td className="border px-2 py-1">
@@ -243,15 +167,10 @@ export default function WorkTaskPage() {
                   <td className="border px-2 py-1">
                     <select
                       multiple
-                      value={Array.isArray(load.executor) ? load.executor : (typeof load.executor === 'string' && load.executor ? [load.executor] : [])}
+                      value={getExecutorArray(load.executor)}
                       onChange={async e => {
                         const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                        await updateWorkLoad(load.loadId, { executor: selected });
-                        setWorkloads(prev =>
-                          prev.map(l =>
-                            l.loadId === load.loadId ? { ...l, executor: selected } : l
-                          )
-                        );
+                        await handleWorkLoadChange(load.loadId, { executor: selected });
                       }}
                       className="border rounded px-1 py-0.5 w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                     >
@@ -260,7 +179,7 @@ export default function WorkTaskPage() {
                       ))}
                     </select>
                     <div className="text-xs mt-1 text-blue-700 dark:text-blue-300">
-                      {(Array.isArray(load.executor) ? load.executor : (typeof load.executor === 'string' && load.executor ? [load.executor] : [])).join('、')}
+                      {getExecutorArray(load.executor).join('、')}
                     </div>
                   </td>
                   <td className="border px-2 py-1">{load.notes || ''}</td>
@@ -269,23 +188,18 @@ export default function WorkTaskPage() {
             })}
           </tbody>
         </table>
-        {/* 分頁控制元件 */}
         <div className="flex items-center justify-center mt-4 gap-2">
           <button
             disabled={workloadPage === 1}
             className="border rounded px-2 py-1 disabled:opacity-50"
             onClick={() => setWorkloadPage(page => Math.max(1, page - 1))}
-          >
-            上一頁
-          </button>
+          >上一頁</button>
           <span>第 {workloadPage} / {totalPages} 頁</span>
           <button
             disabled={workloadPage === totalPages || totalPages === 0}
             className="border rounded px-2 py-1 disabled:opacity-50"
             onClick={() => setWorkloadPage(page => Math.min(totalPages, page + 1))}
-          >
-            下一頁
-          </button>
+          >下一頁</button>
         </div>
       </main>
       <ManagementBottomNav />
