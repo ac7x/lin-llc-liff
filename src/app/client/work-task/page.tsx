@@ -1,5 +1,6 @@
 "use client";
 
+import { getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { getAllWorkFlows, WorkFlowEntity } from "@/app/actions/workflow.action";
 import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
@@ -10,17 +11,34 @@ export default function WorkTaskPage() {
   const [tasks, setTasks] = useState<WorkTaskEntity[]>([]);
   const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
   const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]);
+  const [epics, setEpics] = useState<WorkEpicEntity[]>([]);
+  const [selectedEpicId, setSelectedEpicId] = useState<string>("");
 
   useEffect(() => {
     getAllWorkTasks(false).then(data => setTasks(data as WorkTaskEntity[]));
     getAllWorkLoads(false).then(data => setWorkloads(data as WorkLoadEntity[]));
     getAllWorkFlows(true).then(data => setWorkFlows(data as WorkFlowEntity[]));
+    getAllWorkEpics(false).then(data => setEpics(data as WorkEpicEntity[]));
   }, []);
+
+  const selectedEpic = epics.find(e => e.epicId === selectedEpicId);
+  const epicTitle = selectedEpic?.title;
+  const filteredTasks = selectedEpicId
+    ? tasks.filter(task => epicTitle && task.title.startsWith(epicTitle))
+    : tasks;
 
   return (
     <>
       <main className="p-4">
         <h1 className="text-2xl font-bold mb-4">工作任務與工作負載</h1>
+        <div className="mb-4">
+          <select className="border p-2" value={selectedEpicId} onChange={e => setSelectedEpicId(e.target.value)}>
+            <option value="">全部標的</option>
+            {epics.map(epic => (
+              <option key={epic.epicId} value={epic.epicId}>{epic.title}</option>
+            ))}
+          </select>
+        </div>
         <table className="table-auto w-full border-collapse border border-gray-300 mb-8">
           <thead>
             <tr className="bg-gray-100">
@@ -33,7 +51,7 @@ export default function WorkTaskPage() {
             </tr>
           </thead>
           <tbody>
-            {tasks.map(task => {
+            {filteredTasks.map(task => {
               const flow = workFlows.find(f => f.flowId === task.flowId);
               const orderedSteps = flow?.steps?.slice().sort((a, b) => a.order - b.order) || [];
               const stepName = orderedSteps[0]?.stepName || task.flowId;
