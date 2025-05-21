@@ -1,7 +1,7 @@
 "use client";
 import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from '@/app/actions/workepic.action';
 import { addWorkFlow, getAllWorkFlows, WorkFlowEntity } from '@/app/actions/workflow.action';
-import { addWorkLoad, WorkLoadEntity } from '@/app/actions/workload.action';
+import { WorkLoadEntity } from '@/app/actions/workload.action';
 import { addWorkTask, WorkTaskEntity } from '@/app/actions/worktask.action';
 import { addWorkType, getAllWorkTypes, WorkTypeEntity } from '@/app/actions/worktype.action';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
@@ -221,12 +221,12 @@ const WorkTemplatePage: React.FC = () => {
                     actualQuantity: 0,
                     executor: [],
                     title: `${existingEpic.title}-${selectedType.title}-${stepName}-${j + 1}`,
+                    epicIds: [existingEpic.epicId]
                 });
             }
         });
         await Promise.all([
-            ...newTasks.map(task => addWorkTask(task)),
-            ...newLoads.map(load => addWorkLoad(load))
+            ...newTasks.map(task => addWorkTask(task))
         ]);
         const updates: Partial<WorkEpicEntity> = {
             workTypes: [...(existingEpic.workTypes || []), selectedType],

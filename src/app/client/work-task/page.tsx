@@ -2,7 +2,7 @@
 
 import { getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { getAllWorkFlows, WorkFlowEntity } from "@/app/actions/workflow.action";
-import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
+import { WorkLoadEntity } from "@/app/actions/workload.action";
 import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
 import { useEffect, useState } from "react";
@@ -16,9 +16,13 @@ export default function WorkTaskPage() {
 
   useEffect(() => {
     getAllWorkTasks(false).then(data => setTasks(data as WorkTaskEntity[]));
-    getAllWorkLoads(false).then(data => setWorkloads(data as WorkLoadEntity[]));
     getAllWorkFlows(true).then(data => setWorkFlows(data as WorkFlowEntity[]));
-    getAllWorkEpics(false).then(data => setEpics(data as WorkEpicEntity[]));
+    getAllWorkEpics(false).then(data => {
+      const epicArr = data as WorkEpicEntity[];
+      setEpics(epicArr);
+      const allLoads = epicArr.flatMap(e => Array.isArray(e.workLoads) ? e.workLoads : []);
+      setWorkloads(allLoads);
+    });
   }, []);
 
   const selectedEpic = epics.find(e => e.epicId === selectedEpicId);

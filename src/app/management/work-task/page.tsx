@@ -1,7 +1,8 @@
 "use client";
 
+import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from '@/app/actions/workepic.action';
 import { getAllWorkFlows, WorkFlowEntity } from '@/app/actions/workflow.action';
-import { getAllWorkLoads, updateWorkLoad, WorkLoadEntity } from '@/app/actions/workload.action';
+import { WorkLoadEntity } from '@/app/actions/workload.action';
 import { getAllWorkTasks, updateWorkTask, WorkTaskEntity } from '@/app/actions/worktask.action';
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/client';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
@@ -27,19 +28,31 @@ export default function WorkTaskPage() {
   const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
   const [members, setMembers] = useState<WorkMember[]>([]);
   const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]);
+  const [epics, setEpics] = useState<WorkEpicEntity[]>([]);
   const [workloadPage, setWorkloadPage] = useState(1);
 
   useEffect(() => {
     getAllWorkTasks(false).then((data) => setTasks(data as WorkTaskEntity[]));
-    getAllWorkLoads(false).then((data) => setWorkloads(data as WorkLoadEntity[]));
     getAllWorkFlows(true).then((flows) => setWorkFlows(flows as WorkFlowEntity[]));
+    getAllWorkEpics(false).then(data => {
+      const epicArr = data as WorkEpicEntity[];
+      setEpics(epicArr);
+      // 將所有 epic 的 workLoads 合併為一個陣列
+      const allLoads = epicArr.flatMap(e => Array.isArray(e.workLoads) ? e.workLoads : []);
+      setWorkloads(allLoads);
+    });
     getDocs(collection(firestore, 'workMember')).then(snapshot => {
       setMembers(snapshot.docs.map(doc => doc.data() as WorkMember));
     });
   }, []);
 
   const handleWorkLoadChange = async (loadId: string, changes: Partial<WorkLoadEntity>) => {
-    await updateWorkLoad(loadId, changes);
+    // 找到對應 epic
+    const epic = epics.find(e => Array.isArray(e.workLoads) && e.workLoads.some(l => l.loadId === loadId));
+    if (!epic) return;
+    const updatedLoads = (epic.workLoads || []).map(load => load.loadId === loadId ? { ...load, ...changes } : load);
+    await updateWorkEpic(epic.epicId, { workLoads: updatedLoads });
+    setEpics(prev => prev.map(e => e.epicId === epic.epicId ? { ...e, workLoads: updatedLoads } : e));
     setWorkloads(prev => prev.map(load => load.loadId === loadId ? { ...load, ...changes } : load));
   };
 
@@ -60,6 +73,10 @@ export default function WorkTaskPage() {
       );
       return updated;
     });
+  };
+
+  const handleEpicIdsChange = async (loadId: string, epicIds: string[]) => {
+    await handleWorkLoadChange(loadId, { epicIds });
   };
 
   const pagedWorkloads = workloads.slice((workloadPage - 1) * workloadsPerPage, workloadPage * workloadsPerPage);
@@ -120,6 +137,7 @@ export default function WorkTaskPage() {
               <th className="border px-2 py-1">實際完成數量</th>
               <th className="border px-2 py-1">執行者</th>
               <th className="border px-2 py-1">備註</th>
+              <th className="border px-2 py-1">標的</th>
             </tr>
           </thead>
           <tbody>
@@ -183,6 +201,27 @@ export default function WorkTaskPage() {
                     </div>
                   </td>
                   <td className="border px-2 py-1">{load.notes || ''}</td>
+                  <td className="border px-2 py-1">
+                    <select
+                      multiple
+                      value={Array.isArray(load.epicIds) ? load.epicIds : []}
+                      onChange={e => {
+                        const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                        handleEpicIdsChange(load.loadId, selected);
+                      }}
+                      className="border rounded px-1 py-0.5 w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                    >
+                      {epics.map(epic => (
+                        <option key={epic.epicId} value={epic.epicId}>{epic.title}</option>
+                      ))}
+                    </select>
+                    <div className="text-xs mt-1 text-green-700 dark:text-green-300">
+                      {Array.isArray(load.epicIds) && load.epicIds.length > 0
+                        ? load.epicIds.map(id => epics.find(e => e.epicId === id)?.title || id).join('、')
+                        : <span className="text-gray-400">尚未選擇</span>
+                      }
+                    </div>
+                  </td>
                 </tr>
               );
             })}
