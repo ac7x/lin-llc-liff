@@ -47,13 +47,7 @@ export default function UserProfilePage() {
   }, [isLiffLoggedIn, isLoggedIn, isLiffInitialized, firebaseLogin, firebaseUser]);
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      setActionMessage("已登出");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setActionMessage(`登出失敗: ${msg || "未知錯誤"}`);
-    }
+    await logout();
   };
 
   return (
