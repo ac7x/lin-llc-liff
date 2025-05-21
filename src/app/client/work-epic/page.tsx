@@ -63,7 +63,7 @@ export default function WorkEpicPage() {
                                     <td className="border border-gray-300 px-4 py-2">
                                         <div className="flex flex-col">
                                             <span className="font-semibold">{epic.title}</span>
-                                            <span className="text-xs text-gray-500">({progress.completed}/{progress.total}，{progress.percent}%)</span>
+                                            <span className="text-xs text-gray-500">（{progress.percent}％）</span>
                                             <div className="w-full h-2 bg-gray-200 rounded mt-1">
                                                 <div
                                                     className="h-2 bg-blue-500 rounded"
