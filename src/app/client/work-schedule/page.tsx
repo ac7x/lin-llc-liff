@@ -27,10 +27,12 @@ const reducer = (state: State, action: Action): State => {
 
 function getTimelineGroupsAndItems(epics: WorkEpicEntity[]): { groups: DataGroup[]; items: DataItem[] } {
   if (!epics.length) return { groups: [], items: [] };
+
   const groups: DataGroup[] = epics.map(epic => ({
     id: epic.epicId,
     content: `<span style="font-weight:bold">${epic.title}</span>`
   }));
+
   const items: DataItem[] = epics.flatMap(epic =>
     (epic.workLoads || []).map((load: WorkLoadEntity) => {
       const executorStr = Array.isArray(load.executor) && load.executor.length > 0
@@ -38,7 +40,8 @@ function getTimelineGroupsAndItems(epics: WorkEpicEntity[]): { groups: DataGroup
         : typeof load.executor === "string" && load.executor
           ? load.executor
           : "(無執行者)";
-      return {
+
+      const item: DataItem = {
         id: load.loadId,
         group: epic.epicId,
         content: `<div>
@@ -46,11 +49,18 @@ function getTimelineGroupsAndItems(epics: WorkEpicEntity[]): { groups: DataGroup
                     <div style="font-size:0.9rem;color:#888">${executorStr}</div>
                   </div>`,
         start: load.plannedStartTime,
-        end: load.plannedEndTime,
         title: `${load.title}<br/>${executorStr}`
       };
+
+      // 只有在 end 存在時才加入，避免區段顯示
+      if (load.plannedEndTime) {
+        item.end = load.plannedEndTime;
+      }
+
+      return item;
     })
   );
+
   return { groups, items };
 }
 
@@ -69,6 +79,7 @@ const WorkSchedulePage: React.FC = () => {
 
   useEffect(() => {
     if (!timelineRef.current || !state.epics.length) return;
+
     const { groups, items } = getTimelineGroupsAndItems(state.epics);
 
     const groupsDataSet = new DataSet<DataGroup>(groups);
