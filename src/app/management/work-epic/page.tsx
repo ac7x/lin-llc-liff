@@ -271,8 +271,8 @@ export default function WorkEpicPage() {
                                                 )}
                                                 className="border p-1 w-full"
                                             >
-                                                {members.map(member => (
-                                                    <option key={member.memberId} value={member.memberId}>{member.name}</option>
+                                                {members.map(m => (
+                                                    <option key={m.memberId} value={m.memberId}>{m.name}</option>
                                                 ))}
                                             </select>
                                         </td>
