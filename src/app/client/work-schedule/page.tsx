@@ -51,15 +51,19 @@ const WorkSchedulePage: React.FC = () => {
     // vis-timeline groups/items 轉換
     const getTimelineGroupsAndItems = (): { groups: DataGroup[]; items: DataItem[] } => {
         if (!state.epics.length || !state.workLoads.length) return { groups: [], items: [] };
+        // 用 epicId 當 group id，content 用 title
         const groups: DataGroup[] = state.epics.map(e => ({
-            id: e.title,
+            id: e.epicId,
             content: e.title
         }));
+        // item 的 group 要對應 epicId
         const items: DataItem[] = state.workLoads.map(load => {
+            // 從 load.title 拆出 epic title，再找對應 epicId
             const epicTitle = load.title?.split("-")[0] || "";
+            const epic = state.epics.find(e => e.title === epicTitle);
             return {
                 id: load.loadId,
-                group: epicTitle,
+                group: epic ? epic.epicId : undefined,
                 content: load.title,
                 start: load.plannedStartTime,
                 end: load.plannedEndTime,
