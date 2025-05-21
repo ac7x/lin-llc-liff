@@ -27,15 +27,10 @@ interface SingleSelectProps {
     options: MemberOption[];
     placeholder: string;
 }
-
 const SingleSelect = ({ value, onChange, options, placeholder }: SingleSelectProps) => (
-    <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="border p-2 mr-2"
-    >
+    <select value={value} onChange={e => onChange(e.target.value)} className="border p-2 mr-2">
         <option value="">{placeholder}</option>
-        {options.map((opt) => (
+        {options.map(opt => (
             <option key={opt.memberId} value={opt.memberId}>{opt.name}</option>
         ))}
     </select>
@@ -47,23 +42,25 @@ interface MultiSelectProps {
     options: MemberOption[];
     placeholder: string;
 }
-
 const MultiSelect = ({ value, onChange, options, placeholder }: MultiSelectProps) => (
     <select
         multiple
         value={value}
-        onChange={(e) => {
+        onChange={e => {
             const selected = Array.from(e.target.selectedOptions).map((opt: HTMLOptionElement) => opt.value);
             onChange(selected);
         }}
-        className="border p-2 mr-2"
+        className="border p-2 mr-2 min-w-[120px] max-w-[220px] h-[90px]"
+        style={{ verticalAlign: 'top' }}
     >
         <option disabled value="">{placeholder}</option>
-        {options.map((opt) => (
+        {options.map(opt => (
             <option key={opt.memberId} value={opt.memberId}>{opt.name}</option>
         ))}
     </select>
 );
+
+type MemberWithIdName = { memberId: string; name: string };
 
 // 編輯列
 interface EpicEditRowProps {
@@ -71,13 +68,15 @@ interface EpicEditRowProps {
     members: WorkMember[];
     onFieldChange: (
         field: keyof WorkEpicEntity,
-        value: string | number | boolean | { memberId: string; name: string } | { memberId: string; name: string }[] | undefined
+        value: string | number | boolean | MemberWithIdName | MemberWithIdName[] | undefined
     ) => void;
     onSave: () => void;
     onCancel: () => void;
     progress: { completed: number; total: number; percent: number };
 }
-const EpicEditRow = ({ editFields, members, onFieldChange, onSave, onCancel, progress }: EpicEditRowProps & { progress: { completed: number; total: number; percent: number } }) => (
+const EpicEditRow = ({
+    editFields, members, onFieldChange, onSave, onCancel, progress
+}: EpicEditRowProps & { progress: { completed: number; total: number; percent: number } }) => (
     <>
         <td className="border px-2 py-1 w-52"><ProgressBar {...progress} /></td>
         <td className="border px-2 py-1"><input value={editFields.title || ''} onChange={e => onFieldChange('title', e.target.value)} className="border p-1 w-full" /></td>
@@ -92,7 +91,7 @@ const EpicEditRow = ({ editFields, members, onFieldChange, onSave, onCancel, pro
         <td className="border px-2 py-1">
             <SingleSelect
                 value={editFields.owner?.memberId || ''}
-                onChange={(val: string) => {
+                onChange={val => {
                     const member = members.find((m: WorkMember) => m.memberId === val);
                     onFieldChange('owner', member ? { memberId: member.memberId, name: member.name } : undefined);
                 }}
@@ -102,19 +101,37 @@ const EpicEditRow = ({ editFields, members, onFieldChange, onSave, onCancel, pro
         </td>
         <td className="border px-2 py-1">
             <MultiSelect
-                value={editFields.siteSupervisors?.map((s: { memberId: string }) => s.memberId) || []}
-                onChange={(selected: string[]) => onFieldChange('siteSupervisors', members.filter((m: WorkMember) => selected.includes(m.memberId)).map((m: WorkMember) => ({ memberId: m.memberId, name: m.name })))}
+                value={Array.isArray(editFields.siteSupervisors) ? editFields.siteSupervisors.map((s: MemberWithIdName) => s.memberId) : []}
+                onChange={selected => onFieldChange(
+                    'siteSupervisors',
+                    members.filter((m: WorkMember) => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name }))
+                )}
                 options={members}
                 placeholder="選擇現場監督"
             />
+            <div className="text-xs mt-1 text-gray-700 break-words">
+                {Array.isArray(editFields.siteSupervisors) && editFields.siteSupervisors.length > 0
+                    ? (editFields.siteSupervisors as MemberWithIdName[]).map(s => s.name).join('、')
+                    : <span className="text-gray-400">尚未選擇</span>
+                }
+            </div>
         </td>
         <td className="border px-2 py-1">
             <MultiSelect
-                value={editFields.safetyOfficers?.map((s: { memberId: string }) => s.memberId) || []}
-                onChange={(selected: string[]) => onFieldChange('safetyOfficers', members.filter((m: WorkMember) => selected.includes(m.memberId)).map((m: WorkMember) => ({ memberId: m.memberId, name: m.name })))}
+                value={Array.isArray(editFields.safetyOfficers) ? editFields.safetyOfficers.map((s: MemberWithIdName) => s.memberId) : []}
+                onChange={selected => onFieldChange(
+                    'safetyOfficers',
+                    members.filter((m: WorkMember) => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name }))
+                )}
                 options={members}
                 placeholder="選擇安全員"
             />
+            <div className="text-xs mt-1 text-gray-700 break-words">
+                {Array.isArray(editFields.safetyOfficers) && editFields.safetyOfficers.length > 0
+                    ? (editFields.safetyOfficers as MemberWithIdName[]).map(s => s.name).join('、')
+                    : <span className="text-gray-400">尚未選擇</span>
+                }
+            </div>
         </td>
         <td className="border px-2 py-1">
             <select value={editFields.status || '待開始'} onChange={e => onFieldChange('status', e.target.value)} className="border p-1 w-full">
@@ -157,8 +174,8 @@ const EpicViewRow = ({ epic, onEdit, onDelete, progress }: EpicViewRowProps) => 
         <td className="border px-2 py-1">{epic.endDate}</td>
         <td className="border px-2 py-1">{epic.insuranceStatus || '無'}</td>
         <td className="border px-2 py-1">{epic.owner?.name}</td>
-        <td className="border px-2 py-1">{Array.isArray(epic.siteSupervisors) ? epic.siteSupervisors.map((s: { name: string }) => s.name).join('、') : '-'}</td>
-        <td className="border px-2 py-1">{Array.isArray(epic.safetyOfficers) ? epic.safetyOfficers.map((s: { name: string }) => s.name).join('、') : '-'}</td>
+        <td className="border px-2 py-1">{Array.isArray(epic.siteSupervisors) && epic.siteSupervisors.length > 0 ? (epic.siteSupervisors as MemberWithIdName[]).map(s => s.name).join('、') : '-'}</td>
+        <td className="border px-2 py-1">{Array.isArray(epic.safetyOfficers) && epic.safetyOfficers.length > 0 ? (epic.safetyOfficers as MemberWithIdName[]).map(s => s.name).join('、') : '-'}</td>
         <td className="border px-2 py-1">{epic.status}</td>
         <td className="border px-2 py-1">{epic.priority}</td>
         <td className="border px-2 py-1">{epic.region}</td>
@@ -172,11 +189,11 @@ const EpicViewRow = ({ epic, onEdit, onDelete, progress }: EpicViewRowProps) => 
 
 export default function WorkEpicPage() {
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
-    const [newEpicTitle, setNewEpicTitle] = useState("");
-    const [newEpicOwner, setNewEpicOwner] = useState<{ memberId: string; name: string } | null>(null);
-    const [newSiteSupervisors, setNewSiteSupervisors] = useState<{ memberId: string; name: string }[]>([]);
-    const [newSafetyOfficers, setNewSafetyOfficers] = useState<{ memberId: string; name: string }[]>([]);
-    const [newEpicAddress, setNewEpicAddress] = useState("");
+    const [newEpicTitle, setNewEpicTitle] = useState('');
+    const [newEpicOwner, setNewEpicOwner] = useState<MemberWithIdName | null>(null);
+    const [newSiteSupervisors, setNewSiteSupervisors] = useState<MemberWithIdName[]>([]);
+    const [newSafetyOfficers, setNewSafetyOfficers] = useState<MemberWithIdName[]>([]);
+    const [newEpicAddress, setNewEpicAddress] = useState('');
     const [editingEpicId, setEditingEpicId] = useState<string | null>(null);
     const [editFields, setEditFields] = useState<Partial<WorkEpicEntity>>({});
     const [members, setMembers] = useState<WorkMember[]>([]);
@@ -216,26 +233,26 @@ export default function WorkEpicPage() {
         const newEpic: WorkEpicEntity = {
             epicId: `epic-${Date.now()}`,
             title: newEpicTitle,
-            startDate: "",
-            endDate: "",
-            insuranceStatus: "無",
+            startDate: '',
+            endDate: '',
+            insuranceStatus: '無',
             owner: newEpicOwner,
             siteSupervisors: newSiteSupervisors,
             safetyOfficers: newSafetyOfficers,
-            status: "待開始",
+            status: '待開始',
             priority: 1,
-            region: "北部",
+            region: '北部',
             address: newEpicAddress,
             createdAt: new Date().toISOString()
         };
 
         await addWorkEpic(newEpic);
         setWorkEpics(prev => [...prev, newEpic]);
-        setNewEpicTitle("");
+        setNewEpicTitle('');
         setNewEpicOwner(null);
         setNewSiteSupervisors([]);
         setNewSafetyOfficers([]);
-        setNewEpicAddress("");
+        setNewEpicAddress('');
     };
 
     const handleEditClick = (epic: WorkEpicEntity) => {
@@ -245,7 +262,7 @@ export default function WorkEpicPage() {
 
     const handleEditFieldChange = (
         field: keyof WorkEpicEntity,
-        value: string | number | boolean | { memberId: string; name: string } | { memberId: string; name: string }[] | undefined
+        value: string | number | boolean | MemberWithIdName | MemberWithIdName[] | undefined
     ) => {
         setEditFields(prev => ({ ...prev, [field]: value }));
     };
@@ -286,7 +303,7 @@ export default function WorkEpicPage() {
             <main className="p-4">
                 <h1 className="text-2xl font-bold mb-4">工作標的列表</h1>
                 {/* 新增標的區域 */}
-                <div className="mb-4 flex items-center gap-2">
+                <div className="mb-4 flex items-center gap-2 flex-wrap">
                     <input
                         type="text"
                         value={newEpicTitle}
@@ -295,26 +312,42 @@ export default function WorkEpicPage() {
                         className="border p-2 mr-2"
                     />
                     <SingleSelect
-                        value={newEpicOwner?.memberId || ""}
-                        onChange={(val: string) => {
+                        value={newEpicOwner?.memberId || ''}
+                        onChange={val => {
                             const member = members.find(m => m.memberId === val);
                             setNewEpicOwner(member ? { memberId: member.memberId, name: member.name } : null);
                         }}
                         options={members}
                         placeholder="選擇負責人"
                     />
-                    <MultiSelect
-                        value={newSiteSupervisors.map(s => s.memberId)}
-                        onChange={(selected: string[]) => setNewSiteSupervisors(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
-                        options={members}
-                        placeholder="選擇現場監督"
-                    />
-                    <MultiSelect
-                        value={newSafetyOfficers.map(s => s.memberId)}
-                        onChange={(selected: string[]) => setNewSafetyOfficers(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
-                        options={members}
-                        placeholder="選擇安全員"
-                    />
+                    <div className="flex flex-col">
+                        <MultiSelect
+                            value={newSiteSupervisors.map(s => s.memberId)}
+                            onChange={selected => setNewSiteSupervisors(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
+                            options={members}
+                            placeholder="選擇現場監督"
+                        />
+                        <div className="text-xs mt-1 text-gray-700 break-words min-h-[19px]">
+                            {newSiteSupervisors.length > 0
+                                ? newSiteSupervisors.map(s => s.name).join('、')
+                                : <span className="text-gray-400">尚未選擇</span>
+                            }
+                        </div>
+                    </div>
+                    <div className="flex flex-col">
+                        <MultiSelect
+                            value={newSafetyOfficers.map(s => s.memberId)}
+                            onChange={selected => setNewSafetyOfficers(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
+                            options={members}
+                            placeholder="選擇安全員"
+                        />
+                        <div className="text-xs mt-1 text-gray-700 break-words min-h-[19px]">
+                            {newSafetyOfficers.length > 0
+                                ? newSafetyOfficers.map(s => s.name).join('、')
+                                : <span className="text-gray-400">尚未選擇</span>
+                            }
+                        </div>
+                    </div>
                     <input
                         type="text"
                         value={newEpicAddress}
