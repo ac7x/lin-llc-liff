@@ -6,7 +6,7 @@ import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBo
 import React, { useEffect, useReducer, useRef, useState } from "react";
 import { DataGroup, DataItem, DataSet, Timeline, TimelineOptions } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.min.css";
-import styles from "./page.module.css"; // ✅ 加入 CSS 模組
+import styles from "./page.module.css";
 
 type State = {
     epics: WorkEpicEntity[];
