@@ -6,51 +6,20 @@ import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import { useEffect, useState } from "react";
 
-interface ProgressBarProps {
-    title: string;
-    completed: number;
-    total: number;
-    percent: number;
-}
-const ProgressBar = ({ title, completed, total, percent }: ProgressBarProps) => (
-    <div className="mb-2">
-        <div className="flex justify-between items-center mb-1">
-            <span className="font-semibold">{title}</span>
-            <span className="text-sm text-gray-600">{completed}/{total}（{percent}%）</span>
-        </div>
+// 進度條元件
+const ProgressBar = ({ completed, total, percent }: { completed: number, total: number, percent: number }) => (
+    <div>
         <div className="w-full bg-gray-200 rounded h-3">
             <div className="bg-green-500 h-3 rounded" style={{ width: `${percent}%` }} />
         </div>
+        <div className="text-xs text-right">{completed}/{total}（{percent}%）</div>
     </div>
-)
+);
 
 interface MemberOption {
     memberId: string;
     name: string;
 }
-
-interface MultiSelectProps {
-    value: string[];
-    onChange: (selected: string[]) => void;
-    options: MemberOption[];
-    placeholder: string;
-}
-const MultiSelect = ({ value, onChange, options, placeholder }: MultiSelectProps) => (
-    <select
-        multiple
-        value={value}
-        onChange={e => {
-            const selected = Array.from(e.target.selectedOptions).map((opt: HTMLOptionElement) => opt.value)
-            onChange(selected)
-        }}
-        className="border p-2 mr-2"
-    >
-        <option disabled value="">{placeholder}</option>
-        {options.map((opt: MemberOption) => (
-            <option key={opt.memberId} value={opt.memberId}>{opt.name}</option>
-        ))}
-    </select>
-)
 
 interface SingleSelectProps {
     value: string;
@@ -58,19 +27,45 @@ interface SingleSelectProps {
     options: MemberOption[];
     placeholder: string;
 }
+
 const SingleSelect = ({ value, onChange, options, placeholder }: SingleSelectProps) => (
     <select
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         className="border p-2 mr-2"
     >
         <option value="">{placeholder}</option>
-        {options.map((opt: MemberOption) => (
+        {options.map((opt) => (
             <option key={opt.memberId} value={opt.memberId}>{opt.name}</option>
         ))}
     </select>
-)
+);
 
+interface MultiSelectProps {
+    value: string[];
+    onChange: (selected: string[]) => void;
+    options: MemberOption[];
+    placeholder: string;
+}
+
+const MultiSelect = ({ value, onChange, options, placeholder }: MultiSelectProps) => (
+    <select
+        multiple
+        value={value}
+        onChange={(e) => {
+            const selected = Array.from(e.target.selectedOptions).map((opt: HTMLOptionElement) => opt.value);
+            onChange(selected);
+        }}
+        className="border p-2 mr-2"
+    >
+        <option disabled value="">{placeholder}</option>
+        {options.map((opt) => (
+            <option key={opt.memberId} value={opt.memberId}>{opt.name}</option>
+        ))}
+    </select>
+);
+
+// 編輯列
 interface EpicEditRowProps {
     editFields: Partial<WorkEpicEntity>;
     members: WorkMember[];
@@ -80,9 +75,11 @@ interface EpicEditRowProps {
     ) => void;
     onSave: () => void;
     onCancel: () => void;
+    progress: { completed: number; total: number; percent: number };
 }
-const EpicEditRow = ({ editFields, members, onFieldChange, onSave, onCancel }: EpicEditRowProps) => (
+const EpicEditRow = ({ editFields, members, onFieldChange, onSave, onCancel, progress }: EpicEditRowProps & { progress: { completed: number; total: number; percent: number } }) => (
     <>
+        <td className="border px-2 py-1 w-52"><ProgressBar {...progress} /></td>
         <td className="border px-2 py-1"><input value={editFields.title || ''} onChange={e => onFieldChange('title', e.target.value)} className="border p-1 w-full" /></td>
         <td className="border px-2 py-1"><input type="date" value={editFields.startDate || ''} onChange={e => onFieldChange('startDate', e.target.value)} className="border p-1 w-full" /></td>
         <td className="border px-2 py-1"><input type="date" value={editFields.endDate || ''} onChange={e => onFieldChange('endDate', e.target.value)} className="border p-1 w-full" /></td>
@@ -96,8 +93,8 @@ const EpicEditRow = ({ editFields, members, onFieldChange, onSave, onCancel }: E
             <SingleSelect
                 value={editFields.owner?.memberId || ''}
                 onChange={(val: string) => {
-                    const member = members.find((m: WorkMember) => m.memberId === val)
-                    onFieldChange('owner', member ? { memberId: member.memberId, name: member.name } : undefined)
+                    const member = members.find((m: WorkMember) => m.memberId === val);
+                    onFieldChange('owner', member ? { memberId: member.memberId, name: member.name } : undefined);
                 }}
                 options={members}
                 placeholder="請選擇"
@@ -143,15 +140,18 @@ const EpicEditRow = ({ editFields, members, onFieldChange, onSave, onCancel }: E
             <button onClick={onCancel} className="bg-gray-300 px-2 py-1 rounded">取消</button>
         </td>
     </>
-)
+);
 
+// 檢視列
 interface EpicViewRowProps {
     epic: WorkEpicEntity;
     onEdit: () => void;
     onDelete: () => void;
+    progress: { completed: number; total: number; percent: number };
 }
-const EpicViewRow = ({ epic, onEdit, onDelete }: EpicViewRowProps) => (
+const EpicViewRow = ({ epic, onEdit, onDelete, progress }: EpicViewRowProps) => (
     <>
+        <td className="border px-2 py-1 w-52"><ProgressBar {...progress} /></td>
         <td className="border px-2 py-1">{epic.title}</td>
         <td className="border px-2 py-1">{epic.startDate}</td>
         <td className="border px-2 py-1">{epic.endDate}</td>
@@ -168,7 +168,7 @@ const EpicViewRow = ({ epic, onEdit, onDelete }: EpicViewRowProps) => (
             <button onClick={onDelete} className="bg-red-500 text-white px-2 py-1 rounded">刪除</button>
         </td>
     </>
-)
+);
 
 export default function WorkEpicPage() {
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
@@ -184,9 +184,7 @@ export default function WorkEpicPage() {
     useEffect(() => {
         const fetchWorkEpics = async () => {
             const epics = await getAllWorkEpics(false) as WorkEpicEntity[];
-            // 取得所有 workTask
             const allTasks = await getAllWorkTasks(false) as WorkTaskEntity[];
-            // 將每個 epic 關聯的 workTasks 合併進去
             const epicsWithTasks = epics.map(epic => ({
                 ...epic,
                 workTasks: allTasks.filter(task => task.flowId && epic.workTasks && epic.workTasks.some(t => t.taskId === task.taskId) ? true : false)
@@ -226,9 +224,9 @@ export default function WorkEpicPage() {
             safetyOfficers: newSafetyOfficers,
             status: "待開始",
             priority: 1,
-            region: "北部", // 預設區域
-            address: newEpicAddress, // 使用輸入的地址
-            createdAt: new Date().toISOString() // 新增 createdAt 屬性
+            region: "北部",
+            address: newEpicAddress,
+            createdAt: new Date().toISOString()
         };
 
         await addWorkEpic(newEpic);
@@ -272,34 +270,21 @@ export default function WorkEpicPage() {
 
     // 計算進度
     const getEpicProgress = (epic: WorkEpicEntity) => {
-        let total = 0
-        let completed = 0
-
-        // 只統計每個 workTask 一次，避免重複加總
+        let total = 0, completed = 0;
         if (epic.workTasks) {
             epic.workTasks.forEach(task => {
-                total += task.targetQuantity
-                completed += task.completedQuantity
-            })
+                total += task.targetQuantity;
+                completed += task.completedQuantity;
+            });
         }
-
-        const percent = total > 0 ? Math.round((completed / total) * 100) : 0
-        return { percent, completed, total }
-    }
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+        return { completed, total, percent };
+    };
 
     return (
         <>
             <main className="p-4">
                 <h1 className="text-2xl font-bold mb-4">工作標的列表</h1>
-                {/* 進度表區塊 */}
-                <div className="mb-6">
-                    {workEpics.map(epic => {
-                        const progress = getEpicProgress(epic)
-                        return (
-                            <ProgressBar key={epic.epicId} title={epic.title} completed={progress.completed} total={progress.total} percent={progress.percent} />
-                        )
-                    })}
-                </div>
                 {/* 新增標的區域 */}
                 <div className="mb-4 flex items-center gap-2">
                     <input
@@ -311,22 +296,22 @@ export default function WorkEpicPage() {
                     />
                     <SingleSelect
                         value={newEpicOwner?.memberId || ""}
-                        onChange={val => {
-                            const member = members.find(m => m.memberId === val)
-                            setNewEpicOwner(member ? { memberId: member.memberId, name: member.name } : null)
+                        onChange={(val: string) => {
+                            const member = members.find(m => m.memberId === val);
+                            setNewEpicOwner(member ? { memberId: member.memberId, name: member.name } : null);
                         }}
                         options={members}
                         placeholder="選擇負責人"
                     />
                     <MultiSelect
                         value={newSiteSupervisors.map(s => s.memberId)}
-                        onChange={selected => setNewSiteSupervisors(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
+                        onChange={(selected: string[]) => setNewSiteSupervisors(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
                         options={members}
                         placeholder="選擇現場監督"
                     />
                     <MultiSelect
                         value={newSafetyOfficers.map(s => s.memberId)}
-                        onChange={selected => setNewSafetyOfficers(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
+                        onChange={(selected: string[]) => setNewSafetyOfficers(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
                         options={members}
                         placeholder="選擇安全員"
                     />
@@ -347,6 +332,7 @@ export default function WorkEpicPage() {
                 <table className="table-auto w-full border-collapse border border-gray-300">
                     <thead>
                         <tr>
+                            <th className="border border-gray-300 px-4 py-2 w-52">進度</th>
                             <th className="border border-gray-300 px-4 py-2">標題</th>
                             <th className="border border-gray-300 px-4 py-2">開始時間</th>
                             <th className="border border-gray-300 px-4 py-2">結束時間</th>
@@ -362,29 +348,34 @@ export default function WorkEpicPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {workEpics.map(epic => (
-                            <tr key={epic.epicId}>
-                                {editingEpicId === epic.epicId ? (
-                                    <EpicEditRow
-                                        editFields={editFields}
-                                        members={members}
-                                        onFieldChange={handleEditFieldChange}
-                                        onSave={() => handleSaveEdit(epic.epicId)}
-                                        onCancel={handleCancelEdit}
-                                    />
-                                ) : (
-                                    <EpicViewRow
-                                        epic={epic}
-                                        onEdit={() => handleEditClick(epic)}
-                                        onDelete={() => handleDeleteEpic(epic.epicId)}
-                                    />
-                                )}
-                            </tr>
-                        ))}
+                        {workEpics.map(epic => {
+                            const progress = getEpicProgress(epic);
+                            return (
+                                <tr key={epic.epicId}>
+                                    {editingEpicId === epic.epicId ? (
+                                        <EpicEditRow
+                                            editFields={editFields}
+                                            members={members}
+                                            onFieldChange={handleEditFieldChange}
+                                            onSave={() => handleSaveEdit(epic.epicId)}
+                                            onCancel={handleCancelEdit}
+                                            progress={progress}
+                                        />
+                                    ) : (
+                                        <EpicViewRow
+                                            epic={epic}
+                                            onEdit={() => handleEditClick(epic)}
+                                            onDelete={() => handleDeleteEpic(epic.epicId)}
+                                            progress={progress}
+                                        />
+                                    )}
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </main>
             <ManagementBottomNav />
         </>
-    )
+    );
 }
