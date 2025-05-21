@@ -83,7 +83,13 @@ const WorkSchedulePage: React.FC = () => {
       locale: "zh-tw",
       tooltip: { followMouse: true },
       margin: { item: 10, axis: 5 },
-      groupOrder: "content"
+      groupOrder: "content",
+      zoomMin: 1000 * 60 * 60 * 24,         // 最小縮放：一天
+      zoomMax: 1000 * 60 * 60 * 24 * 365,   // 最大縮放：一年
+      timeAxis: {
+        scale: "day",
+        step: 1
+      }
     };
 
     const tl = new Timeline(timelineRef.current, itemsDataSet, groupsDataSet, options);
