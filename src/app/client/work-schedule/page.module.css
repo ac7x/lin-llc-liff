@@ -1,1 +1,42 @@
- 
+.timeline-container {
+  position: relative;
+  height: 400px;
+  min-height: 300px;
+}
+
+.vis-timeline .vis-item .vis-item-content {
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #f0f8ff;
+  border: 1px solid #b3cde0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.vis-timeline .vis-item {
+  position: relative;
+}
+
+.vis-timeline .vis-item::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 10px;
+  background-color: #999;
+}
+
+.vis-timeline .vis-time-axis .vis-text {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.vis-timeline .vis-time-axis .vis-grid.vis-major {
+  border-top: 1px solid #ddd;
+}
+
+.vis-timeline .vis-group .vis-label {
+  font-weight: 600;
+}
