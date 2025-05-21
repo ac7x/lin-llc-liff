@@ -7,7 +7,7 @@ import Image from "next/image";
 import { useContext, useEffect, useRef, useState } from "react";
 
 export default function UserProfilePage() {
-  const { isLiffInitialized, firebaseLogin, firebaseUser, lineProfile, logout, isLoggedIn, isLiffLoggedIn } = useContext(LiffContext);
+  const { isLiffInitialized, firebaseLogin, firebaseUser, lineProfile, logout, login, isLoggedIn, isLiffLoggedIn } = useContext(LiffContext);
   const [actionMessage, setActionMessage] = useState("");
   const [userAssets, setUserAssets] = useState<{ coin: number; diamond: number } | null>(null);
   const autoLoginTriggered = useRef(false);
@@ -94,8 +94,10 @@ export default function UserProfilePage() {
 
           {/* 操作訊息與登出按鈕 */}
           {actionMessage && <div className="text-center text-sm text-amber-400">{actionMessage}</div>}
-          {isLoggedIn && (
+          {isLoggedIn ? (
             <button onClick={handleLogout} className="w-full mt-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-white font-semibold">登出</button>
+          ) : (
+            <button onClick={login} className="w-full mt-4 py-2 rounded bg-blue-700 hover:bg-blue-600 text-white font-semibold">登入</button>
           )}
         </div>
       </main>
