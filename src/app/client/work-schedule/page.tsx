@@ -6,6 +6,7 @@ import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBo
 import React, { useEffect, useReducer, useRef, useState } from "react";
 import { DataGroup, DataItem, DataSet, Timeline, TimelineOptions } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.min.css";
+import styles from "./page.module.css"; // ✅ 加入 CSS 模組
 
 type State = {
     epics: WorkEpicEntity[];
@@ -148,7 +149,7 @@ const WorkSchedulePage: React.FC = () => {
                     <button onClick={handleRemoveGroup} className="px-2 py-1 bg-red-500 text-white rounded">刪除標的</button>
                     <button onClick={handleRenameGroup} className="px-2 py-1 bg-yellow-500 text-black rounded">改名標的</button>
                 </div>
-                <div ref={timelineRef} style={{ height: 400, minHeight: 300 }} />
+                <div ref={timelineRef} className={styles["timeline-container"]} />
             </div>
             <ClientBottomNav />
         </>
