@@ -2,61 +2,32 @@
 
 import { getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
-import { getWorkSchedules } from "@/app/actions/workschedule.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
-import React, { useEffect, useReducer, useRef, useState } from "react";
+import React, { useEffect, useReducer, useRef } from "react";
 // 新增 vis-timeline 相關 import
 import { DataGroup, DataItem, DataSet, Timeline, TimelineOptions } from "vis-timeline/standalone";
 import "vis-timeline/styles/vis-timeline-graph2d.min.css";
 
-type WorkAssignment = {
-    location: string;
-    groupName: string;
-    members: string[];
-};
-
-type DailyWorkSchedule = {
-    date: string;
-    assignments: WorkAssignment[];
-};
-
-type Axis = "date" | "location";
-
 type State = {
-    offset: number;
-    range: number;
-    schedules: DailyWorkSchedule[];
     workLoads: WorkLoadEntity[];
-    horizontalAxis: Axis;
+    epics: WorkEpicEntity[];
 };
 
 type Action =
-    | { type: "SET_OFFSET"; payload: number }
-    | { type: "SET_RANGE"; payload: number }
-    | { type: "SET_SCHEDULES"; payload: DailyWorkSchedule[] }
     | { type: "SET_WORKLOADS"; payload: WorkLoadEntity[] }
-    | { type: "SET_HORIZONTAL_AXIS"; payload: Axis };
+    | { type: "SET_EPICS"; payload: WorkEpicEntity[] };
 
 const initialState: State = {
-    offset: 0,
-    range: 7,
-    schedules: [],
     workLoads: [],
-    horizontalAxis: "date",
+    epics: [],
 };
 
 const reducer = (state: State, action: Action): State => {
     switch (action.type) {
-        case "SET_OFFSET":
-            return { ...state, offset: action.payload };
-        case "SET_RANGE":
-            return { ...state, range: action.payload };
-        case "SET_SCHEDULES":
-            return { ...state, schedules: action.payload };
         case "SET_WORKLOADS":
             return { ...state, workLoads: action.payload };
-        case "SET_HORIZONTAL_AXIS":
-            return { ...state, horizontalAxis: action.payload };
+        case "SET_EPICS":
+            return { ...state, epics: action.payload };
         default:
             return state;
     }
@@ -66,32 +37,10 @@ const WorkSchedulePage: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const timelineRef = useRef<HTMLDivElement>(null);
     const [state, dispatch] = useReducer(reducer, initialState);
-    const [epics, setEpics] = useState<WorkEpicEntity[]>([]);
-    const hasAutoSetRange = useRef(false);
 
     useEffect(() => {
-        getAllWorkEpics(false).then((data) => setEpics(data as WorkEpicEntity[]));
+        getAllWorkEpics(false).then((data) => dispatch({ type: "SET_EPICS", payload: data as WorkEpicEntity[] }));
     }, []);
-
-    useEffect(() => {
-        if (hasAutoSetRange.current) return;
-        const updateRange = () => {
-            const width = containerRef.current?.offsetWidth ?? 0;
-            const maxCols = Math.max(1, Math.floor((width - 100) / 120));
-            dispatch({ type: "SET_RANGE", payload: maxCols });
-            hasAutoSetRange.current = true;
-        };
-        const observer = new ResizeObserver(updateRange);
-        if (containerRef.current) observer.observe(containerRef.current);
-        updateRange();
-        return () => observer.disconnect();
-    }, []);
-
-    useEffect(() => {
-        getWorkSchedules(state.offset, state.range, state.horizontalAxis).then((data) => {
-            dispatch({ type: "SET_SCHEDULES", payload: data });
-        });
-    }, [state.offset, state.range, state.horizontalAxis]);
 
     useEffect(() => {
         getAllWorkLoads(true).then((loads) => {
@@ -101,8 +50,8 @@ const WorkSchedulePage: React.FC = () => {
 
     // vis-timeline groups/items 轉換
     const getTimelineGroupsAndItems = (): { groups: DataGroup[]; items: DataItem[] } => {
-        if (!epics.length || !state.workLoads.length) return { groups: [], items: [] };
-        const groups: DataGroup[] = epics.map(e => ({
+        if (!state.epics.length || !state.workLoads.length) return { groups: [], items: [] };
+        const groups: DataGroup[] = state.epics.map(e => ({
             id: e.title,
             content: e.title
         }));
@@ -144,7 +93,6 @@ const WorkSchedulePage: React.FC = () => {
                 locale: "zh-tw",
                 tooltip: { followMouse: true },
                 margin: { item: 10, axis: 5 },
-                // 可根據需求調整 options
             } as TimelineOptions
         );
 
@@ -152,7 +100,7 @@ const WorkSchedulePage: React.FC = () => {
             timeline.destroy();
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [epics, state.workLoads]);
+    }, [state.epics, state.workLoads]);
 
     return (
         <>
@@ -161,36 +109,6 @@ const WorkSchedulePage: React.FC = () => {
                 className="border border-gray-300 dark:border-neutral-700 rounded-lg p-4 m-4"
             >
                 <h1 className="text-2xl font-bold mb-4">工作排班表</h1>
-                <div className="mb-4 flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                        <span>顯示天數：</span>
-                        <input
-                            type="number"
-                            min={1}
-                            max={31}
-                            value={state.range}
-                            onChange={e =>
-                                dispatch({ type: "SET_RANGE", payload: Number(e.target.value) })
-                            }
-                            className="border border-gray-300 dark:border-neutral-700 rounded bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-2 py-1 w-20"
-                        />
-                    </div>
-                    <div>
-                        <select
-                            value={state.horizontalAxis}
-                            onChange={e =>
-                                dispatch({
-                                    type: "SET_HORIZONTAL_AXIS",
-                                    payload: e.target.value as Axis,
-                                })
-                            }
-                            className="border border-gray-300 dark:border-neutral-700 rounded bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 px-2 py-1"
-                        >
-                            <option value="date">橫向：日期</option>
-                            <option value="location">橫向：標的</option>
-                        </select>
-                    </div>
-                </div>
                 {/* vis-timeline 容器 */}
                 <div ref={timelineRef} style={{ height: 400, minHeight: 300 }} />
             </div>
