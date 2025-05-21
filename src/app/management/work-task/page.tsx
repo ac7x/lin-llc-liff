@@ -156,22 +156,30 @@ export default function WorkTaskPage() {
             </tr>
           </thead>
           <tbody>
-            {tasks.map(task => {
-              // 取得對應流程
-              const flow = workFlows.find(f => f.flowId === task.flowId);
-              // 取得第一個步驟名稱
-              const stepName = flow?.steps?.[0]?.stepName || task.flowId;
-              return (
-                <tr key={task.taskId}>
-                  <td className="border px-2 py-1">{task.title}</td>
-                  <td className="border px-2 py-1">{stepName}</td>
-                  <td className="border px-2 py-1">{task.targetQuantity}</td>
-                  <td className="border px-2 py-1">{task.unit}</td>
-                  <td className="border px-2 py-1">{task.completedQuantity}</td>
-                  <td className="border px-2 py-1">{task.status}</td>
-                </tr>
-              );
-            })}
+            {[...tasks]
+              .sort((a, b) => {
+                const flowA = workFlows.find(f => f.flowId === a.flowId)
+                const flowB = workFlows.find(f => f.flowId === b.flowId)
+                const orderA = flowA?.steps?.[0]?.order ?? 0
+                const orderB = flowB?.steps?.[0]?.order ?? 0
+                return orderA - orderB
+              })
+              .map(task => {
+                // 取得對應流程
+                const flow = workFlows.find(f => f.flowId === task.flowId);
+                // 取得第一個步驟名稱
+                const stepName = flow?.steps?.[0]?.stepName || task.flowId;
+                return (
+                  <tr key={task.taskId}>
+                    <td className="border px-2 py-1">{task.title}</td>
+                    <td className="border px-2 py-1">{stepName}</td>
+                    <td className="border px-2 py-1">{task.targetQuantity}</td>
+                    <td className="border px-2 py-1">{task.unit}</td>
+                    <td className="border px-2 py-1">{task.completedQuantity}</td>
+                    <td className="border px-2 py-1">{task.status}</td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
 

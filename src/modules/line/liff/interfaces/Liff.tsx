@@ -6,7 +6,7 @@ import { login as liffLogin } from "@liff/login";
 import { logout as liffLogout } from "@liff/logout";
 import { ready as liffReady } from "@liff/ready";
 import liff from "@line/liff";
-import { getAuth, onAuthStateChanged, signInWithCustomToken, type User } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signInWithCustomToken, signOut, type User } from "firebase/auth";
 import { createContext, useEffect, useState } from "react";
 import { loginWithLine } from "../infrastructure/line-login.action";
 
@@ -28,12 +28,12 @@ export const LiffContext = createContext<{
   liffError: null,
   isLiffInitialized: false,
   isReady: false,
-  firebaseLogin: async () => {},
+  firebaseLogin: async () => { },
   firebaseUser: null,
   lineProfile: null,
-  fetchLineProfile: async () => {},
-  login: async () => {},
-  logout: async () => {},
+  fetchLineProfile: async () => { },
+  login: async () => { },
+  logout: async () => { },
   isLoggedIn: false,
   isLiffLoggedIn: false,
 });
@@ -127,11 +127,13 @@ export function LiffProvider({ children }: { children: React.ReactNode }) {
   // LIFF logout
   const logout = async () => {
     try {
-      await liffLogout();
+      const auth = getAuth(firebaseApp);
+      await signOut(auth);           // ✅ 登出 Firebase
+      await liffLogout();            // ✅ 登出 LIFF
       setFirebaseUser(null);
       setLineProfile(null);
       setIsLiffLoggedIn(false);
-      window.location.reload(); // 刷新頁面以清除 LIFF 狀態
+      window.location.reload();      // 可選：刷新狀態
     } catch (err) {
       setLiffError("LIFF 登出失敗: " + (err as Error).message);
     }
