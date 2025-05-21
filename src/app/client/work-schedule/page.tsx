@@ -114,7 +114,7 @@ const WorkSchedulePage: React.FC = () => {
         <>
             <div
                 ref={containerRef}
-                className="border border-gray-300 dark:border-neutral-700 rounded-lg p-4 m-4 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                className="border border-gray-300 dark:border-neutral-700 rounded-lg p-4 m-4"
             >
                 <h1 className="text-2xl font-bold mb-4">工作排班表</h1>
 
@@ -149,16 +149,16 @@ const WorkSchedulePage: React.FC = () => {
                     </div>
                 </div>
 
-                <table className="table-auto w-full mb-6 border-collapse bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
+                <table className="table-auto w-full mb-6 border-collapse">
                     <thead>
                         <tr>
-                            <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100">
+                            <th className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800">
                                 {state.horizontalAxis === "date" ? "標的" : "日期"}
                             </th>
                             {horizontalLabels.map((label) => (
                                 <th
                                     key={label}
-                                    className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                                    className="border px-2 py-1 bg-gray-100 dark:bg-neutral-800"
                                 >
                                     {label}
                                 </th>

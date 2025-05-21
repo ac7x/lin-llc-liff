@@ -52,7 +52,7 @@ export default function UserProfilePage() {
 
   return (
     <>
-      <main className="py-8 px-4 min-h-screen bg-gray-900 text-white">
+      <main className="py-8 px-4 min-h-screen">
         <div className="space-y-6 max-w-md mx-auto">
           {/* 用戶基本資料 */}
           {lineProfile && (

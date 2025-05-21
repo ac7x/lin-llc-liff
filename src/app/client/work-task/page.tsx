@@ -41,7 +41,7 @@ export default function WorkTaskPage() {
         </div>
         <table className="table-auto w-full border-collapse border border-gray-300 mb-8">
           <thead>
-            <tr className="bg-neutral-100 dark:bg-neutral-800">
+            <tr>
               <th className="border px-2 py-1">任務名稱</th>
               <th className="border px-2 py-1">流程步驟</th>
               <th className="border px-2 py-1">目標數量</th>
