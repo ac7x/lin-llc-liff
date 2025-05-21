@@ -70,12 +70,3 @@ export async function updateWorkLoad(loadId: string, updates: Partial<WorkLoadEn
 export async function deleteWorkLoad(loadId: string): Promise<void> {
     await firestoreAdmin.collection("workLoad").doc(loadId).delete();
 }
-
-/**
- * 取得所有 WorkLoad 的原始資料清單
- * @returns WorkLoadEntity 陣列
- */
-export async function listWorkLoad(): Promise<WorkLoadEntity[]> {
-    const snapshot = await firestoreAdmin.collection("workLoad").get();
-    return snapshot.docs.map(doc => doc.data() as WorkLoadEntity);
-}

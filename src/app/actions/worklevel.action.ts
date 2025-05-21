@@ -47,12 +47,3 @@ export async function updateWorkLevel(levelID: string, updates: Partial<WorkLeve
 export async function deleteWorkLevel(levelID: string): Promise<void> {
     await firestoreAdmin.collection("workLevel").doc(levelID).delete();
 }
-
-/**
- * 取得所有 WorkLevel 的原始資料清單
- * @returns WorkLevel 陣列
- */
-export async function listWorkLevel(): Promise<WorkLevel[]> {
-    const snapshot = await firestoreAdmin.collection("workLevel").get();
-    return snapshot.docs.map(doc => doc.data() as WorkLevel);
-}

@@ -56,12 +56,3 @@ export async function updateWorkAsset(assetID: string, updates: Partial<WorkAsse
 export async function deleteWorkAsset(assetID: string): Promise<void> {
     await firestoreAdmin.collection("workAsset").doc(assetID).delete();
 }
-
-/**
- * 取得所有 WorkAsset 的原始資料清單
- * @returns WorkAsset 陣列
- */
-export async function listWorkAsset(): Promise<WorkAsset[]> {
-    const snapshot = await firestoreAdmin.collection("workAsset").get();
-    return snapshot.docs.map(doc => doc.data() as WorkAsset);
-}

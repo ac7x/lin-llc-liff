@@ -69,12 +69,3 @@ export async function updateWorkTask(taskId: string, updates: Partial<WorkTaskTe
 export async function deleteWorkTask(taskId: string): Promise<void> {
     await firestoreAdmin.collection("workTask").doc(taskId).delete();
 }
-
-/**
- * 取得所有 WorkTask 的原始資料清單
- * @returns WorkTaskEntity 陣列
- */
-export async function listWorkTask(): Promise<WorkTaskEntity[]> {
-    const snapshot = await firestoreAdmin.collection("workTask").get();
-    return snapshot.docs.map(doc => doc.data() as WorkTaskEntity);
-}

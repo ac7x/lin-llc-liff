@@ -66,12 +66,3 @@ export async function updateWorkItem(itemId: string, updates: Partial<WorkItemEn
 export async function deleteWorkItem(itemId: string): Promise<void> {
     await firestoreAdmin.collection("workItem").doc(itemId).delete();
 }
-
-/**
- * 取得所有 WorkItem 的原始資料清單
- * @returns WorkItemEntity 陣列
- */
-export async function listWorkItem(): Promise<WorkItemEntity[]> {
-    const snapshot = await firestoreAdmin.collection("workItem").get();
-    return snapshot.docs.map(doc => doc.data() as WorkItemEntity);
-}

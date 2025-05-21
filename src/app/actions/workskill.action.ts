@@ -47,12 +47,3 @@ export async function updateWorkSkill(skillID: string, updates: Partial<WorkSkil
 export async function deleteWorkSkill(skillID: string): Promise<void> {
     await firestoreAdmin.collection("workSkill").doc(skillID).delete();
 }
-
-/**
- * 取得所有 WorkSkill 的原始資料清單
- * @returns WorkSkill 陣列
- */
-export async function listWorkSkill(): Promise<WorkSkill[]> {
-    const snapshot = await firestoreAdmin.collection("workSkill").get();
-    return snapshot.docs.map(doc => doc.data() as WorkSkill);
-}

@@ -64,12 +64,3 @@ export async function updateWorkFlow(flowId: string, updates: Partial<WorkFlow>)
 export async function deleteWorkFlow(flowId: string): Promise<void> {
     await firestoreAdmin.collection("workFlow").doc(flowId).delete();
 }
-
-/**
- * 取得所有 WorkFlow 的原始資料清單
- * @returns WorkFlowEntity 陣列
- */
-export async function listWorkFlow(): Promise<WorkFlowEntity[]> {
-    const snapshot = await firestoreAdmin.collection("workFlow").get();
-    return snapshot.docs.map(doc => doc.data() as WorkFlowEntity);
-}
