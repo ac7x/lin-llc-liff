@@ -96,7 +96,7 @@ const WorkSchedulePage: React.FC = () => {
       margin: { item: 10, axis: 5 },
       groupOrder: "content",
       zoomMin: 1000 * 60 * 60 * 24,         // 最小縮放：一天
-      zoomMax: 1000 * 60 * 60 * 24 * 365,   // 最大縮放：一年
+      zoomMax: 1000 * 60 * 60 * 24 * 30,   // 最大縮放：一年
       timeAxis: {
         scale: "day",
         step: 1
