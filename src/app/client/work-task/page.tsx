@@ -15,7 +15,7 @@ export default function WorkTaskPage() {
   const [selectedEpicId, setSelectedEpicId] = useState<string>("");
 
   useEffect(() => {
-    getAllWorkTasks(false).then(data => setTasks(data as WorkTaskEntity[]));
+    getAllWorkTasks().then(data => setTasks(data as WorkTaskEntity[]));
     getAllWorkFlows(true).then(data => setWorkFlows(data as WorkFlowEntity[]));
     getAllWorkEpics(false).then(data => {
       const epicArr = data as WorkEpicEntity[];

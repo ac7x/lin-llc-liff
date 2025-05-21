@@ -1,9 +1,9 @@
 "use client";
 
-import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from '@/app/actions/workepic.action';
+import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity, WorkEpicTemplate } from '@/app/actions/workepic.action';
 import { getAllWorkFlows, WorkFlowEntity } from '@/app/actions/workflow.action';
 import { WorkLoadEntity } from '@/app/actions/workload.action';
-import { getAllWorkTasks, updateWorkTask, WorkTaskEntity } from '@/app/actions/worktask.action';
+import { WorkTaskEntity } from '@/app/actions/worktask.action';
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/client';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import { collection, getDocs } from 'firebase/firestore';
@@ -32,13 +32,14 @@ export default function WorkTaskPage() {
   const [workloadPage, setWorkloadPage] = useState(1);
 
   useEffect(() => {
-    getAllWorkTasks(false).then((data) => setTasks(data as WorkTaskEntity[]));
     getAllWorkFlows(true).then((flows) => setWorkFlows(flows as WorkFlowEntity[]));
-    getAllWorkEpics(false).then(data => {
-      const epicArr = data as WorkEpicEntity[];
+    getAllWorkEpics(false).then((data) => {
+      // 僅處理 WorkEpicEntity 型別
+      const epicArr = (data as (WorkEpicEntity | WorkEpicTemplate)[]).filter((e): e is WorkEpicEntity => 'owner' in e && 'status' in e && 'priority' in e && 'region' in e && 'address' in e && 'createdAt' in e);
       setEpics(epicArr);
-      // 將所有 epic 的 workLoads 合併為一個陣列
+      const allTasks = epicArr.flatMap(e => Array.isArray(e.workTasks) ? e.workTasks : []);
       const allLoads = epicArr.flatMap(e => Array.isArray(e.workLoads) ? e.workLoads : []);
+      setTasks(allTasks);
       setWorkloads(allLoads);
     });
     getDocs(collection(firestore, 'workMember')).then(snapshot => {
@@ -46,8 +47,16 @@ export default function WorkTaskPage() {
     });
   }, []);
 
+  const handleWorkTaskChange = async (taskId: string, changes: Partial<WorkTaskEntity>) => {
+    const epic = epics.find(e => Array.isArray(e.workTasks) && e.workTasks.some(t => t.taskId === taskId));
+    if (!epic) return;
+    const updatedTasks = (epic.workTasks || []).map(task => task.taskId === taskId ? { ...task, ...changes } : task);
+    await updateWorkEpic(epic.epicId, { workTasks: updatedTasks });
+    setEpics(prev => prev.map(e => e.epicId === epic.epicId ? { ...e, workTasks: updatedTasks } : e));
+    setTasks(prev => prev.map(task => task.taskId === taskId ? { ...task, ...changes } : task));
+  };
+
   const handleWorkLoadChange = async (loadId: string, changes: Partial<WorkLoadEntity>) => {
-    // 找到對應 epic
     const epic = epics.find(e => Array.isArray(e.workLoads) && e.workLoads.some(l => l.loadId === loadId));
     if (!epic) return;
     const updatedLoads = (epic.workLoads || []).map(load => load.loadId === loadId ? { ...load, ...changes } : load);
@@ -58,14 +67,13 @@ export default function WorkTaskPage() {
 
   const handleActualQuantityChange = async (loadId: string, actualQuantity: number) => {
     await handleWorkLoadChange(loadId, { actualQuantity });
-    // 用 prev 狀態計算，不要用 workloads，避免異步問題
     setWorkloads(prev => {
       const updated = prev.map(load => load.loadId === loadId ? { ...load, actualQuantity } : load);
       const updatedLoad = updated.find(load => load.loadId === loadId);
       if (!updatedLoad) return prev;
       const relatedLoads = updated.filter(load => load.taskId === updatedLoad.taskId);
       const totalActual = relatedLoads.reduce((sum, load) => sum + (load.actualQuantity || 0), 0);
-      updateWorkTask(updatedLoad.taskId, { completedQuantity: totalActual });
+      handleWorkTaskChange(updatedLoad.taskId, { completedQuantity: totalActual });
       setTasks(prevTask =>
         prevTask.map(task =>
           task.taskId === updatedLoad.taskId ? { ...task, completedQuantity: totalActual } : task

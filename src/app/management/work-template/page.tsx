@@ -2,7 +2,7 @@
 import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from '@/app/actions/workepic.action';
 import { addWorkFlow, getAllWorkFlows, WorkFlowEntity } from '@/app/actions/workflow.action';
 import { WorkLoadEntity } from '@/app/actions/workload.action';
-import { addWorkTask, WorkTaskEntity } from '@/app/actions/worktask.action';
+import { WorkTaskEntity } from '@/app/actions/worktask.action';
 import { addWorkType, getAllWorkTypes, WorkTypeEntity } from '@/app/actions/worktype.action';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -225,9 +225,6 @@ const WorkTemplatePage: React.FC = () => {
                 });
             }
         });
-        await Promise.all([
-            ...newTasks.map(task => addWorkTask(task))
-        ]);
         const updates: Partial<WorkEpicEntity> = {
             workTypes: [...(existingEpic.workTypes || []), selectedType],
             workFlows: [...(existingEpic.workFlows || []), ...selectedFlows],

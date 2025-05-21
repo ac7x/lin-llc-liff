@@ -11,7 +11,7 @@ export default function WorkEpicPage() {
     useEffect(() => {
         const fetchWorkEpics = async () => {
             const epics = await getAllWorkEpics(false) as WorkEpicEntity[];
-            const allTasks = await getAllWorkTasks(false) as WorkTaskEntity[];
+            const allTasks = await getAllWorkTasks() as WorkTaskEntity[];
             const epicsWithTasks = epics.map(epic => ({
                 ...epic,
                 workTasks: allTasks.filter(task => task.flowId && epic.workTasks && epic.workTasks.some(t => t.taskId === task.taskId) ? true : false)
