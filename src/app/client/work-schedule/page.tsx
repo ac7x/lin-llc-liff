@@ -4,6 +4,7 @@ import { getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
 import { getAllWorkLoads, WorkLoadEntity } from "@/app/actions/workload.action";
 import { getWorkSchedules } from "@/app/actions/workschedule.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
+import { format, isSameDay, parseISO } from 'date-fns';
 import React, { useEffect, useReducer, useRef, useState } from "react";
 
 type WorkAssignment = {
@@ -155,12 +156,11 @@ const WorkSchedulePage: React.FC = () => {
                             <th className="border px-2 py-1 bg-white dark:bg-neutral-900">
                                 {state.horizontalAxis === "date" ? "標的" : "日期"}
                             </th>
-                            {horizontalLabels.map((label) => (
-                                <th
-                                    key={label}
-                                    className="border px-2 py-1 bg-white dark:bg-neutral-900"
-                                >
-                                    {label}
+                            {horizontalLabels.map(label => (
+                                <th key={label} className="border px-2 py-1 bg-white dark:bg-neutral-900">
+                                    {state.horizontalAxis === 'date'
+                                        ? format(parseISO(label), 'MM/dd')
+                                        : label}
                                 </th>
                             ))}
                         </tr>
@@ -175,11 +175,13 @@ const WorkSchedulePage: React.FC = () => {
                                     const date =
                                         state.horizontalAxis === "date" ? hLabel : vLabel;
 
-                                    const loads = state.workLoads.filter(
-                                        (load) =>
-                                            load.title?.startsWith(epicTitle) &&
-                                            load.plannedStartTime?.slice(0, 10) === date
-                                    );
+                                    const loads = state.workLoads.filter(load => {
+                                        const loadDate = load.plannedStartTime ? parseISO(load.plannedStartTime) : null;
+                                        const cellDate = parseISO(date);
+                                        return load.title?.startsWith(epicTitle)
+                                            && loadDate
+                                            && isSameDay(loadDate, cellDate);
+                                    });
 
                                     return (
                                         <td
