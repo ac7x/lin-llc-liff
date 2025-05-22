@@ -1,7 +1,6 @@
 "use client";
 
 import { getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
-import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
 import { useEffect, useState } from "react";
 
@@ -11,12 +10,7 @@ export default function WorkEpicPage() {
     useEffect(() => {
         const fetchWorkEpics = async () => {
             const epics = await getAllWorkEpics(false) as WorkEpicEntity[];
-            const allTasks = await getAllWorkTasks() as WorkTaskEntity[];
-            const epicsWithTasks = epics.map(epic => ({
-                ...epic,
-                workTasks: allTasks.filter(task => task.flowId && epic.workTasks && epic.workTasks.some(t => t.taskId === task.taskId) ? true : false)
-            }));
-            setWorkEpics(epicsWithTasks);
+            setWorkEpics(epics);
         };
         fetchWorkEpics();
     }, []);
@@ -82,7 +76,8 @@ export default function WorkEpicPage() {
                                     <td className="border border-gray-300 px-4 py-2">{epic.status}</td>
                                     <td className="border border-gray-300 px-4 py-2">{epic.priority}</td>
                                     <td className="border border-gray-300 px-4 py-2">{epic.region}</td>
-                                    <td className="border border-gray-300 px-4 py-2">{epic.address}
+                                    <td className="border border-gray-300 px-4 py-2">
+                                        {epic.address}
                                         {epic.address && (
                                             <a
                                                 href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(epic.address)}`}

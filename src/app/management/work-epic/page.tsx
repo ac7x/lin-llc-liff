@@ -60,7 +60,6 @@ export default function WorkEpicPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editFields, setEditFields] = useState<Partial<WorkEpicEntity>>({});
     const [allWorkZones, setAllWorkZones] = useState<WorkZoneEntity[]>([]);
-    const [newWorkZoneIds, setNewWorkZoneIds] = useState<string[]>([]);
     const [editWorkZoneIds, setEditWorkZoneIds] = useState<string[]>([]);
 
     // 新增欄位
@@ -123,7 +122,6 @@ export default function WorkEpicPage() {
         setNewSiteSupervisors([]);
         setNewSafetyOfficers([]);
         setNewAddress('');
-        setNewWorkZoneIds([]);
     };
 
     // 編輯
