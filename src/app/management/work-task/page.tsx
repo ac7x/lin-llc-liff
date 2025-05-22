@@ -1,7 +1,6 @@
-"use client";
+'use client';
 
 import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity, WorkEpicTemplate } from '@/app/actions/workepic.action';
-import { getAllWorkFlows, WorkFlowEntity } from '@/app/actions/workflow.action';
 import { WorkLoadEntity } from '@/app/actions/workload.action';
 import { WorkTaskEntity } from '@/app/actions/worktask.action';
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/client';
@@ -27,15 +26,15 @@ export default function WorkTaskPage() {
   const [tasks, setTasks] = useState<WorkTaskEntity[]>([]);
   const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
   const [members, setMembers] = useState<WorkMember[]>([]);
-  const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]);
   const [epics, setEpics] = useState<WorkEpicEntity[]>([]);
   const [workloadPage, setWorkloadPage] = useState(1);
+  const [expandedTaskIds, setExpandedTaskIds] = useState<string[]>([]);
 
   useEffect(() => {
-    getAllWorkFlows(true).then((flows) => setWorkFlows(flows as WorkFlowEntity[]));
-    getAllWorkEpics(false).then((data) => {
-      // 僅處理 WorkEpicEntity 型別
-      const epicArr = (data as (WorkEpicEntity | WorkEpicTemplate)[]).filter((e): e is WorkEpicEntity => 'owner' in e && 'status' in e && 'priority' in e && 'region' in e && 'address' in e && 'createdAt' in e);
+    getAllWorkEpics(false).then(data => {
+      const epicArr = (data as (WorkEpicEntity | WorkEpicTemplate)[]).filter((e): e is WorkEpicEntity =>
+        'owner' in e && 'status' in e && 'priority' in e && 'region' in e && 'address' in e && 'createdAt' in e
+      );
       setEpics(epicArr);
       const allTasks = epicArr.flatMap(e => Array.isArray(e.workTasks) ? e.workTasks : []);
       const allLoads = epicArr.flatMap(e => Array.isArray(e.workLoads) ? e.workLoads : []);
@@ -83,154 +82,145 @@ export default function WorkTaskPage() {
     });
   };
 
-  const handleEpicIdsChange = async (loadId: string, epicIds: string[]) => {
-    await handleWorkLoadChange(loadId, { epicIds });
-  };
-
-  const pagedWorkloads = workloads.slice((workloadPage - 1) * workloadsPerPage, workloadPage * workloadsPerPage);
-  const totalPages = Math.ceil(workloads.length / workloadsPerPage);
-
   const getExecutorArray = (executor: string[] | string | undefined) =>
     Array.isArray(executor) ? executor : (typeof executor === 'string' && executor ? [executor] : []);
+
+  const pagedTasks = tasks.slice((workloadPage - 1) * workloadsPerPage, workloadPage * workloadsPerPage);
+  const totalPages = Math.ceil(tasks.length / workloadsPerPage);
+
+  const toggleExpand = (taskId: string) => {
+    setExpandedTaskIds(ids =>
+      ids.includes(taskId) ? ids.filter(id => id !== taskId) : [...ids, taskId]
+    );
+  };
 
   return (
     <>
       <main className="p-4">
-        <h1 className="text-2xl font-bold mb-4">工作任務列表</h1>
+        <h1 className="text-2xl font-bold mb-4">工作任務/工作量合併表</h1>
         <table className="table-auto w-full border-collapse border border-gray-300 mb-8">
           <thead>
             <tr>
+              <th className="border px-2 py-1">#</th>
               <th className="border px-2 py-1">任務名稱</th>
-              <th className="border px-2 py-1">流程步驟</th>
               <th className="border px-2 py-1">目標數量</th>
               <th className="border px-2 py-1">單位</th>
-              <th className="border px-2 py-1">已完成數量</th>
+              <th className="border px-2 py-1">已完成</th>
               <th className="border px-2 py-1">狀態</th>
+              <th className="border px-2 py-1">展開</th>
             </tr>
           </thead>
           <tbody>
-            {[...tasks]
-              .sort((a, b) => {
-                const orderA = workFlows.find(f => f.flowId === a.flowId)?.steps?.[0]?.order ?? 0;
-                const orderB = workFlows.find(f => f.flowId === b.flowId)?.steps?.[0]?.order ?? 0;
-                return orderA - orderB;
-              })
-              .map(task => {
-                const flow = workFlows.find(f => f.flowId === task.flowId);
-                const stepName = flow?.steps?.[0]?.stepName || task.flowId;
-                return (
-                  <tr key={task.taskId}>
+            {pagedTasks.map((task, idx) => {
+              const taskWorkloads = workloads.filter(w => w.taskId === task.taskId);
+              const isExpanded = expandedTaskIds.includes(task.taskId);
+              return (
+                <>
+                  <tr className="bg-white hover:bg-gray-50" key={task.taskId}>
+                    <td className="border px-2 py-1">{(workloadPage - 1) * workloadsPerPage + idx + 1}</td>
                     <td className="border px-2 py-1">{task.title}</td>
-                    <td className="border px-2 py-1">{stepName}</td>
                     <td className="border px-2 py-1">{task.targetQuantity}</td>
                     <td className="border px-2 py-1">{task.unit}</td>
                     <td className="border px-2 py-1">{task.completedQuantity}</td>
                     <td className="border px-2 py-1">{task.status}</td>
+                    <td className="border px-2 py-1 text-center">
+                      <button
+                        type="button"
+                        className="text-blue-600 underline"
+                        onClick={() => toggleExpand(task.taskId)}
+                      >
+                        {isExpanded ? '收合' : '展開'}
+                      </button>
+                    </td>
                   </tr>
-                );
-              })}
-          </tbody>
-        </table>
-
-        <h2 className="text-xl font-bold mb-4">任務分割（工作負載）</h2>
-        <table className="table-auto w-full border-collapse border border-gray-300">
-          <thead>
-            <tr>
-              <th className="border px-2 py-1">工作量名稱</th>
-              <th className="border px-2 py-1">任務名稱</th>
-              <th className="border px-2 py-1">計畫數量</th>
-              <th className="border px-2 py-1">單位</th>
-              <th className="border px-2 py-1">計畫開始日期</th>
-              <th className="border px-2 py-1">計畫結束日期</th>
-              <th className="border px-2 py-1">實際完成數量</th>
-              <th className="border px-2 py-1">執行者</th>
-              <th className="border px-2 py-1">備註</th>
-              <th className="border px-2 py-1">標的</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pagedWorkloads.map(load => {
-              const task = tasks.find(t => t.taskId === load.taskId);
-              return (
-                <tr key={load.loadId}>
-                  <td className="border px-2 py-1">{load.title || load.loadId}</td>
-                  <td className="border px-2 py-1">{task ? task.title : load.taskId}</td>
-                  <td className="border px-2 py-1">
-                    <input
-                      type="number"
-                      className="border p-1 w-20"
-                      value={load.plannedQuantity}
-                      onChange={e => handleWorkLoadChange(load.loadId, { plannedQuantity: Number(e.target.value) })}
-                      min={0}
-                    />
-                  </td>
-                  <td className="border px-2 py-1">{load.unit}</td>
-                  <td className="border px-2 py-1">
-                    <input
-                      type="date"
-                      className="border p-1 w-44"
-                      value={load.plannedStartTime?.slice(0, 10) || ''}
-                      onChange={e => handleWorkLoadChange(load.loadId, { plannedStartTime: e.target.value })}
-                    />
-                  </td>
-                  <td className="border px-2 py-1">
-                    <input
-                      type="date"
-                      className="border p-1 w-44"
-                      value={load.plannedEndTime?.slice(0, 10) || ''}
-                      onChange={e => handleWorkLoadChange(load.loadId, { plannedEndTime: e.target.value })}
-                    />
-                  </td>
-                  <td className="border px-2 py-1">
-                    <input
-                      type="number"
-                      className="border p-1 w-20"
-                      value={load.actualQuantity}
-                      onChange={e => handleActualQuantityChange(load.loadId, Number(e.target.value))}
-                      min={0}
-                    />
-                  </td>
-                  <td className="border px-2 py-1">
-                    <select
-                      multiple
-                      value={getExecutorArray(load.executor)}
-                      onChange={async e => {
-                        const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                        await handleWorkLoadChange(load.loadId, { executor: selected });
-                      }}
-                      className="border rounded px-1 py-0.5 w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-                    >
-                      {members.map(member => (
-                        <option key={member.memberId} value={member.name}>{member.name}</option>
-                      ))}
-                    </select>
-                    <div className="text-xs mt-1 text-blue-700 dark:text-blue-300">
-                      {getExecutorArray(load.executor).join('、')}
-                    </div>
-                  </td>
-                  <td className="border px-2 py-1">{load.notes || ''}</td>
-                  <td className="border px-2 py-1">
-                    <select
-                      multiple
-                      value={Array.isArray(load.epicIds) ? load.epicIds : []}
-                      onChange={e => {
-                        const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                        handleEpicIdsChange(load.loadId, selected);
-                      }}
-                      className="border rounded px-1 py-0.5 w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-                    >
-                      {epics.map(epic => (
-                        <option key={epic.epicId} value={epic.epicId}>{epic.title}</option>
-                      ))}
-                    </select>
-                    <div className="text-xs mt-1 text-green-700 dark:text-green-300">
-                      {Array.isArray(load.epicIds) && load.epicIds.length > 0
-                        ? load.epicIds.map(id => epics.find(e => e.epicId === id)?.title || id).join('、')
-                        : <span className="text-gray-400">尚未選擇</span>
-                      }
-                    </div>
-                  </td>
-                </tr>
+                  {isExpanded && taskWorkloads.length > 0 && (
+                    <tr key={task.taskId + '_workloads'}>
+                      <td colSpan={7} className="p-0">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-gray-100">
+                              <th className="border px-2 py-1">工作量名稱</th>
+                              <th className="border px-2 py-1">計畫數量</th>
+                              <th className="border px-2 py-1">單位</th>
+                              <th className="border px-2 py-1">計畫開始</th>
+                              <th className="border px-2 py-1">計畫結束</th>
+                              <th className="border px-2 py-1">實際完成</th>
+                              <th className="border px-2 py-1">執行者</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {taskWorkloads.map(load => (
+                              <tr key={load.loadId} className="bg-gray-50">
+                                <td className="border px-2 py-1">{load.title || load.loadId}</td>
+                                <td className="border px-2 py-1">
+                                  <input
+                                    type="number"
+                                    className="border p-1 w-20"
+                                    value={load.plannedQuantity}
+                                    onChange={e =>
+                                      handleWorkLoadChange(load.loadId, { plannedQuantity: Number(e.target.value) })
+                                    }
+                                    min={0}
+                                  />
+                                </td>
+                                <td className="border px-2 py-1">{load.unit}</td>
+                                <td className="border px-2 py-1">
+                                  <input
+                                    type="date"
+                                    className="border p-1 w-32"
+                                    value={load.plannedStartTime?.slice(0, 10) || ''}
+                                    onChange={e =>
+                                      handleWorkLoadChange(load.loadId, { plannedStartTime: e.target.value })
+                                    }
+                                  />
+                                </td>
+                                <td className="border px-2 py-1">
+                                  <input
+                                    type="date"
+                                    className="border p-1 w-32"
+                                    value={load.plannedEndTime?.slice(0, 10) || ''}
+                                    onChange={e =>
+                                      handleWorkLoadChange(load.loadId, { plannedEndTime: e.target.value })
+                                    }
+                                  />
+                                </td>
+                                <td className="border px-2 py-1">
+                                  <input
+                                    type="number"
+                                    className="border p-1 w-20"
+                                    value={load.actualQuantity}
+                                    onChange={e =>
+                                      handleActualQuantityChange(load.loadId, Number(e.target.value))
+                                    }
+                                    min={0}
+                                  />
+                                </td>
+                                <td className="border px-2 py-1">
+                                  <select
+                                    multiple
+                                    value={getExecutorArray(load.executor)}
+                                    onChange={async e => {
+                                      const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                                      await handleWorkLoadChange(load.loadId, { executor: selected });
+                                    }}
+                                    className="border rounded px-1 py-0.5 w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                                  >
+                                    {members.map(member => (
+                                      <option key={member.memberId} value={member.name}>{member.name}</option>
+                                    ))}
+                                  </select>
+                                  <div className="text-xs mt-1 text-blue-700 dark:text-blue-300">
+                                    {getExecutorArray(load.executor).join('、')}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </td>
+                    </tr>
+                  )}
+                </>
               );
             })}
           </tbody>
