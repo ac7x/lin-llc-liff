@@ -130,7 +130,8 @@ export default function WorkTaskPage() {
                     <td className="border px-2 py-1 text-center">
                       <button
                         type="button"
-                        className="text-blue-600 underline"
+                        className={`underline px-2 py-1 rounded transition-colors ${isExpanded ? 'bg-muted text-muted-foreground' : 'bg-background text-foreground'}`}
+                        style={{ minWidth: 56 }}
                         onClick={() => toggleExpand(task.taskId)}
                       >
                         {isExpanded ? '收合' : '展開'}
@@ -138,11 +139,11 @@ export default function WorkTaskPage() {
                     </td>
                   </tr>
                   {isExpanded && taskWorkloads.length > 0 && (
-                    <tr key={task.taskId + '_workloads'} className="bg-muted/50">
+                    <tr key={task.taskId + '_workloads'} className="bg-muted text-muted-foreground">
                       <td colSpan={7} className="p-0">
                         <table className="w-full border-collapse">
                           <thead>
-                            <tr className="bg-gray-100">
+                            <tr className="bg-muted">
                               <th className="border px-2 py-1">工作量名稱</th>
                               <th className="border px-2 py-1">計畫數量</th>
                               <th className="border px-2 py-1">單位</th>
@@ -154,7 +155,7 @@ export default function WorkTaskPage() {
                           </thead>
                           <tbody>
                             {taskWorkloads.map(load => (
-                              <tr key={load.loadId} className="bg-gray-50">
+                              <tr key={load.loadId} className="bg-background text-foreground">
                                 <td className="border px-2 py-1">{load.title || load.loadId}</td>
                                 <td className="border px-2 py-1">
                                   <input
