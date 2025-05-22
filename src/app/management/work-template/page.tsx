@@ -1,6 +1,6 @@
 "use client";
 import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from '@/app/actions/workepic.action';
-import { WorkFlowEntity } from '@/app/actions/workflow.action';
+import type { WorkFlowEntity } from "@/app/actions/workflow.action";
 import { WorkLoadEntity } from '@/app/actions/workload.action';
 import { WorkTaskEntity } from '@/app/actions/worktask.action';
 import { addWorkType, getAllWorkTypes, updateWorkType, WorkTypeEntity } from "@/app/actions/worktype.action";

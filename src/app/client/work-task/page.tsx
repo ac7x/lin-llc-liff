@@ -1,22 +1,23 @@
 "use client";
 
 import { getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
-import { getAllWorkFlows, WorkFlowEntity } from "@/app/actions/workflow.action";
+import type { WorkFlowEntity } from "@/app/actions/workflow.action";
 import { WorkLoadEntity } from "@/app/actions/workload.action";
 import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
+import { getAllWorkTypes, WorkTypeEntity } from "@/app/actions/worktype.action";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
 import { useEffect, useState } from "react";
 
 export default function WorkTaskPage() {
   const [tasks, setTasks] = useState<WorkTaskEntity[]>([]);
   const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
-  const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]);
+  const [workTypes, setWorkTypes] = useState<WorkTypeEntity[]>([]);
   const [epics, setEpics] = useState<WorkEpicEntity[]>([]);
   const [selectedEpicId, setSelectedEpicId] = useState<string>("");
 
   useEffect(() => {
     getAllWorkTasks().then(data => setTasks(data as WorkTaskEntity[]));
-    getAllWorkFlows(true).then(data => setWorkFlows(data as WorkFlowEntity[]));
+    getAllWorkTypes(true).then(data => setWorkTypes(data as WorkTypeEntity[]));
     getAllWorkEpics(false).then(data => {
       const epicArr = data as WorkEpicEntity[];
       setEpics(epicArr);
@@ -24,6 +25,9 @@ export default function WorkTaskPage() {
       setWorkloads(allLoads);
     });
   }, []);
+
+  // 將所有 workType 的 flows 合併成一個陣列
+  const allFlows: WorkFlowEntity[] = workTypes.flatMap(t => t.flows || []);
 
   const selectedEpic = epics.find(e => e.epicId === selectedEpicId);
   const epicTitle = selectedEpic?.title;
@@ -57,15 +61,15 @@ export default function WorkTaskPage() {
           <tbody>
             {[...filteredTasks]
               .sort((a, b) => {
-                const flowA = workFlows.find(f => f.flowId === a.flowId)
-                const flowB = workFlows.find(f => f.flowId === b.flowId)
+                const flowA = allFlows.find(f => f.flowId === a.flowId)
+                const flowB = allFlows.find(f => f.flowId === b.flowId)
                 const orderA = flowA?.steps?.[0]?.order ?? 0
                 const orderB = flowB?.steps?.[0]?.order ?? 0
                 return orderA - orderB
               })
               .map(task => {
-                const flow = workFlows.find(f => f.flowId === task.flowId);
-                const orderedSteps = flow?.steps?.slice().sort((a, b) => a.order - b.order) || [];
+                const flow = allFlows.find(f => f.flowId === task.flowId);
+                const orderedSteps = flow?.steps?.slice().sort((a: any, b: any) => a.order - b.order) || [];
                 const stepName = orderedSteps[0]?.stepName || task.flowId;
                 const relatedLoads = workloads.filter(load => load.taskId === task.taskId);
 
