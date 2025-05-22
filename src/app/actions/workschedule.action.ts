@@ -1,4 +1,5 @@
 // src/app/actions/workschedule.action.ts
+"use server";
 
 import { redisCache } from "@/modules/shared/infrastructure/cache/redis/client";
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/adminApp";
