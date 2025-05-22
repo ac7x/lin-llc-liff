@@ -13,14 +13,11 @@ export default function WorkSchedulePage() {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplannedWorkLoads, setUnplannedWorkLoads] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
-  const [groupsDS, setGroupsDS] = useState<DataSet<DataGroup> | null>(null)
-  const [itemsDS, setItemsDS] = useState<DataSet<DataItem> | null>(null)
 
   // 取得所有專案與工作負載
   useEffect(() => {
     getAllWorkSchedules().then(epics => {
       setEpics(epics)
-      // 抓出所有未排班工作（沒有 start/end）
       const unplanned: LooseWorkLoad[] = []
       epics.forEach(e => {
         (e.workLoads || []).forEach(l => {
@@ -37,7 +34,6 @@ export default function WorkSchedulePage() {
   useEffect(() => {
     if (!epics.length) return
     const groups = epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
-    // 只加有 start 的 workload
     const items = epics.flatMap(e => (e.workLoads || []).filter(l => l.plannedStartTime).map(l => ({
       id: l.loadId,
       group: e.epicId,
@@ -47,12 +43,9 @@ export default function WorkSchedulePage() {
     })))
     const gds = new DataSet<DataGroup>(groups)
     const ids = new DataSet<DataItem>(items)
-    setGroupsDS(gds)
-    setItemsDS(ids)
 
     if (!timelineRef.current) return
 
-    // 建立 timeline
     const tl = new Timeline(timelineRef.current, ids, gds, {
       stack: false,
       orientation: 'top',
@@ -61,7 +54,6 @@ export default function WorkSchedulePage() {
       tooltip: { followMouse: true }
     })
 
-    // 拖曳現有 item 移動
     tl.on('move', async ({ item, start, end, group }) => {
       const d = ids.get(item as string)
       if (!d) return
@@ -69,23 +61,19 @@ export default function WorkSchedulePage() {
     })
 
     // 支援外部拖放
-    tl.on('itemover', function (props) {
+    tl.on('itemover', function () {
       // highlight...
     })
 
-    // 支援外部拖曳
     tl.on('drop', async function (props) {
       const data = props.event.dataTransfer?.getData('workload-id')
       if (!data) return
       const wl = unplannedWorkLoads.find(w => w.loadId === data)
       if (!wl) return
-      // props.item: null, props.time: Date, props.group: epicId
       const group = props.group
       const start = props.time
-      // 預設排 1 小時
       const end = new Date(start.getTime() + 60 * 60 * 1000)
       await updateWorkLoadTime(group, wl.loadId, start.toISOString(), end.toISOString(), { toCache: true, toFirestore: false })
-      // 新增到 timeline
       ids.add({
         id: wl.loadId,
         group,
@@ -93,15 +81,12 @@ export default function WorkSchedulePage() {
         start: start.toISOString(),
         end: end.toISOString()
       })
-      // 移除已拖曳
       setUnplannedWorkLoads(prev => prev.filter(x => x.loadId !== wl.loadId))
     })
 
-    // 註冊 DOM drop 事件（for vis-timeline 8.x+）
     if (timelineRef.current) {
       timelineRef.current.ondrop = function (e) {
         e.preventDefault()
-        // 已於 tl.on('drop') 處理
       }
       timelineRef.current.ondragover = function (e) {
         e.preventDefault()
@@ -109,11 +94,10 @@ export default function WorkSchedulePage() {
     }
 
     return () => tl.destroy()
-    // eslint-disable-next-line
   }, [epics, unplannedWorkLoads])
 
   // 拖曳事件
-  function onDragStart(e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad) {
+  const onDragStart = (e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad) => {
     e.dataTransfer.setData('workload-id', wl.loadId)
     e.dataTransfer.effectAllowed = 'move'
   }
