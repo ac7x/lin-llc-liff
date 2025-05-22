@@ -98,7 +98,7 @@ export default function WorkTaskPage() {
     <>
       <main className="p-4 bg-background text-foreground min-h-screen">
         <h1 className="text-2xl font-bold mb-4">工作任務/工作量合併表</h1>
-        <table className="table-auto w-full border-collapse border border-gray-300 mb-8">
+        <table className="table-auto w-full border-collapse border border-border mb-8">
           <thead>
             <tr>
               <th className="border px-2 py-1">#</th>
@@ -116,7 +116,7 @@ export default function WorkTaskPage() {
               const isExpanded = expandedTaskIds.includes(task.taskId);
               return (
                 <>
-                  <tr className="bg-white hover:bg-gray-50" key={task.taskId}>
+                  <tr className="bg-card hover:bg-muted transition-colors" key={task.taskId}>
                     <td className="border px-2 py-1">{(workloadPage - 1) * workloadsPerPage + idx + 1}</td>
                     <td className="border px-2 py-1">{task.title}</td>
                     <td className="border px-2 py-1">{task.targetQuantity}</td>
@@ -134,7 +134,7 @@ export default function WorkTaskPage() {
                     </td>
                   </tr>
                   {isExpanded && taskWorkloads.length > 0 && (
-                    <tr key={task.taskId + '_workloads'}>
+                    <tr key={task.taskId + '_workloads'} className="bg-muted/50">
                       <td colSpan={7} className="p-0">
                         <table className="w-full border-collapse">
                           <thead>
