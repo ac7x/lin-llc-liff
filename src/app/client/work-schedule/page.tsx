@@ -1,33 +1,58 @@
 'use client'
 
-import { getAllWorkSchedules, updateWorkLoadTime, WorkEpicEntity } from '@/app/actions/workschedule.action'
+import { getAllWorkSchedules, updateWorkLoadTime, WorkEpicEntity, WorkLoadEntity } from '@/app/actions/workschedule.action'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
+import classNames from 'classnames'
 import { useEffect, useRef, useState } from 'react'
 import { DataGroup, DataItem, DataSet, Timeline } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 
+type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
+
 export default function WorkSchedulePage() {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
+  const [unplannedWorkLoads, setUnplannedWorkLoads] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
   const [groupsDS, setGroupsDS] = useState<DataSet<DataGroup> | null>(null)
   const [itemsDS, setItemsDS] = useState<DataSet<DataItem> | null>(null)
 
-  useEffect(() => { getAllWorkSchedules().then(setEpics) }, [])
+  // 取得所有專案與工作負載
+  useEffect(() => {
+    getAllWorkSchedules().then(epics => {
+      setEpics(epics)
+      // 抓出所有未排班工作（沒有 start/end）
+      const unplanned: LooseWorkLoad[] = []
+      epics.forEach(e => {
+        (e.workLoads || []).forEach(l => {
+          if (!l.plannedStartTime) {
+            unplanned.push({ ...l, epicId: e.epicId, epicTitle: e.title })
+          }
+        })
+      })
+      setUnplannedWorkLoads(unplanned)
+    })
+  }, [])
 
+  // 初始化 timeline
   useEffect(() => {
     if (!epics.length) return
     const groups = epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
-    const items = epics.flatMap(e => (e.workLoads || []).map(l => ({
+    // 只加有 start 的 workload
+    const items = epics.flatMap(e => (e.workLoads || []).filter(l => l.plannedStartTime).map(l => ({
       id: l.loadId,
       group: e.epicId,
       content: `<div><div>${l.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(l.executor) ? l.executor.join(', ') : l.executor || '(無執行者)'}</div></div>`,
-      start: l.plannedStartTime, end: l.plannedEndTime || undefined
+      start: l.plannedStartTime,
+      end: l.plannedEndTime || undefined
     })))
     const gds = new DataSet<DataGroup>(groups)
     const ids = new DataSet<DataItem>(items)
     setGroupsDS(gds)
     setItemsDS(ids)
+
     if (!timelineRef.current) return
+
+    // 建立 timeline
     const tl = new Timeline(timelineRef.current, ids, gds, {
       stack: false,
       orientation: 'top',
@@ -35,51 +60,92 @@ export default function WorkSchedulePage() {
       locale: 'zh-tw',
       tooltip: { followMouse: true }
     })
+
+    // 拖曳現有 item 移動
     tl.on('move', async ({ item, start, end, group }) => {
       const d = ids.get(item as string)
       if (!d) return
       await updateWorkLoadTime(group || d.group, d.id as string, start.toISOString(), end ? end.toISOString() : null, { toCache: true, toFirestore: false })
     })
+
+    // 支援外部拖放
+    tl.on('itemover', function (props) {
+      // highlight...
+    })
+
+    // 支援外部拖曳
+    tl.on('drop', async function (props) {
+      const data = props.event.dataTransfer?.getData('workload-id')
+      if (!data) return
+      const wl = unplannedWorkLoads.find(w => w.loadId === data)
+      if (!wl) return
+      // props.item: null, props.time: Date, props.group: epicId
+      const group = props.group
+      const start = props.time
+      // 預設排 1 小時
+      const end = new Date(start.getTime() + 60 * 60 * 1000)
+      await updateWorkLoadTime(group, wl.loadId, start.toISOString(), end.toISOString(), { toCache: true, toFirestore: false })
+      // 新增到 timeline
+      ids.add({
+        id: wl.loadId,
+        group,
+        content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
+        start: start.toISOString(),
+        end: end.toISOString()
+      })
+      // 移除已拖曳
+      setUnplannedWorkLoads(prev => prev.filter(x => x.loadId !== wl.loadId))
+    })
+
+    // 註冊 DOM drop 事件（for vis-timeline 8.x+）
+    if (timelineRef.current) {
+      timelineRef.current.ondrop = function (e) {
+        e.preventDefault()
+        // 已於 tl.on('drop') 處理
+      }
+      timelineRef.current.ondragover = function (e) {
+        e.preventDefault()
+      }
+    }
+
     return () => tl.destroy()
-  }, [epics])
+    // eslint-disable-next-line
+  }, [epics, unplannedWorkLoads])
+
+  // 拖曳事件
+  function onDragStart(e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad) {
+    e.dataTransfer.setData('workload-id', wl.loadId)
+    e.dataTransfer.effectAllowed = 'move'
+  }
 
   return (
-    <>
-      <div className="border rounded-lg p-4 m-4">
-        <h1 className="text-2xl font-bold mb-4">工作排班表</h1>
-        <div className="flex gap-2 mb-2">
-          <button onClick={() => {
-            if (!groupsDS) return
-            const name = window.prompt('請輸入新專案標的名稱：')
-            if (!name) return
-            groupsDS.add({ id: 'epic-' + Date.now(), content: `<b>${name}</b>` })
-          }} className="px-2 py-1 bg-blue-500 text-white rounded">新增標的</button>
-          <button onClick={() => {
-            if (!groupsDS) return
-            const id = window.prompt('請輸入要刪除的 epicId：')
-            if (!id) return
-            groupsDS.remove(id)
-            if (itemsDS) {
-              itemsDS.forEach(i => {
-                if (i.group === id) itemsDS.remove(i.id as string)
-              })
-            }
-          }} className="px-2 py-1 bg-red-500 text-white rounded">刪除標的</button>
-          <button onClick={() => {
-            if (!groupsDS) return
-            const id = window.prompt('請輸入要改名的 epicId：')
-            if (!id) return
-            const g = groupsDS.get(id)
-            if (!g) return
-            const str = typeof g.content === 'string' ? g.content.replace(/<[^>]*>/g, '') : ''
-            const name = window.prompt('新名稱：', str)
-            if (!name) return
-            groupsDS.update({ id, content: `<b>${name}</b>` })
-          }} className="px-2 py-1 bg-yellow-500 text-black rounded">改名標的</button>
+    <div className="flex">
+      {/* 未排班清單 */}
+      <div className="w-64 border-r p-2">
+        <div className="font-bold mb-2">未排班工作</div>
+        <div className="flex flex-col gap-2">
+          {unplannedWorkLoads.length === 0 && <div className="text-gray-400">（無）</div>}
+          {unplannedWorkLoads.map(wl =>
+            <div
+              key={wl.loadId}
+              className={classNames("cursor-move bg-yellow-50 border rounded px-2 py-1 text-sm hover:bg-yellow-100")}
+              draggable
+              onDragStart={e => onDragStart(e, wl)}
+              title={`來自 ${wl.epicTitle}`}
+            >
+              <div>{wl.title || '(無標題)'}</div>
+              <div className="text-xs text-gray-400">{wl.executor?.join(', ') || '(無執行者)'}</div>
+            </div>
+          )}
         </div>
-        <div ref={timelineRef} className="h-[400px] w-full" />
       </div>
-      <ClientBottomNav />
-    </>
+      <div className="flex-1">
+        <div className="border rounded-lg p-4 m-4">
+          <h1 className="text-2xl font-bold mb-4">工作排班表</h1>
+          <div ref={timelineRef} className="h-[400px] w-full" />
+        </div>
+        <ClientBottomNav />
+      </div>
+    </div>
   )
 }
