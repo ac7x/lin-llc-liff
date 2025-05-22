@@ -5,6 +5,7 @@ import { WorkFlowEntity } from "./workflow.action";
 import { WorkLoadEntity } from "./workload.action";
 import { WorkTaskEntity } from "./worktask.action";
 import { WorkTypeEntity } from "./worktype.action";
+import { WorkZoneEntity } from "./workzone.action";
 
 export interface WorkEpicTemplate {
     epicId: string; // 唯一識別碼
@@ -24,6 +25,7 @@ export interface WorkEpicEntity extends WorkEpicTemplate {
     region: "北部" | "中部" | "南部" | "東部" | "離島"; // 區域
     address: string; // 詳細地址
     createdAt: string; // 建立時間
+    workZones?: WorkZoneEntity[]; // 多個工作區域
     workTypes?: WorkTypeEntity[]; // 新增屬性
     workFlows?: WorkFlowEntity[]; // 新增屬性
     workTasks?: WorkTaskEntity[]; // 新增屬性
@@ -62,6 +64,9 @@ export async function addWorkEpic(epic: WorkEpicTemplate | WorkEpicEntity): Prom
         safetyOfficers: "safetyOfficers" in epic ? epic.safetyOfficers : []
     };
 
+    if ("workZones" in epic) {
+        data.workZones = epic.workZones || [];
+    }
     if ("workTypes" in epic) {
         data.workTypes = epic.workTypes || [];
     }
