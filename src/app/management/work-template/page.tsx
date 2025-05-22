@@ -5,121 +5,27 @@ import { WorkLoadEntity } from '@/app/actions/workload.action';
 import { WorkTaskEntity } from '@/app/actions/worktask.action';
 import { addWorkType, getAllWorkTypes, WorkTypeEntity } from '@/app/actions/worktype.action';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-
-const Select = ({
-    value,
-    onChange,
-    options,
-    placeholder,
-    ...rest
-}: {
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-    options: { value: string; label: string }[];
-    placeholder: string;
-} & React.SelectHTMLAttributes<HTMLSelectElement>) => (
-    <select value={value} onChange={onChange} className="border p-2 mb-4 block" {...rest}>
-        <option value="">{placeholder}</option>
-        {options.map(opt => (
-            <option key={opt.value} value={opt.value}>
-                {opt.label}
-            </option>
-        ))}
-    </select>
-);
-
-const NumberInput = ({
-    value,
-    onChange,
-    placeholder = '',
-    min = 0,
-    className = ''
-}: {
-    value: number | string;
-    onChange: (val: number) => void;
-    placeholder?: string;
-    min?: number;
-    className?: string;
-}) => (
-    <input
-        type="number"
-        value={value}
-        min={min}
-        onChange={e => onChange(Math.max(min, parseInt(e.target.value) || min))}
-        placeholder={placeholder}
-        className={className}
-    />
-);
-
-const WorkTypesTable = ({ types }: { types: WorkTypeEntity[] }) => (
-    <table className="table-auto w-full border-collapse border border-gray-300">
-        <thead>
-            <tr>
-                <th className="border border-gray-300 px-4 py-2">標題</th>
-                <th className="border border-gray-300 px-4 py-2">所需技能</th>
-            </tr>
-        </thead>
-        <tbody>
-            {types.map(type => (
-                <tr key={type.typeId}>
-                    <td className="border border-gray-300 px-4 py-2">{type.title}</td>
-                    <td className="border border-gray-300 px-4 py-2">{type.requiredSkills.join(', ')}</td>
-                </tr>
-            ))}
-        </tbody>
-    </table>
-);
-
-const StepsTable = ({ flows, types }: { flows: WorkFlowEntity[]; types: WorkTypeEntity[] }) => (
-    <table className="table-auto w-full border-collapse border border-gray-300">
-        <thead>
-            <tr>
-                <th className="border border-gray-300 px-4 py-2">工作種類</th>
-                <th className="border border-gray-300 px-4 py-2">步驟名稱</th>
-                <th className="border border-gray-300 px-4 py-2">順序</th>
-                <th className="border border-gray-300 px-4 py-2">所需技能</th>
-            </tr>
-        </thead>
-        <tbody>
-            {flows
-                .flatMap(flow =>
-                    flow.steps.map(step => ({
-                        ...step,
-                        workTypeTitle: types.find(type => type.typeId === flow.workTypeId)?.title || '未知'
-                    }))
-                )
-                .sort((a, b) => a.order - b.order)
-                .map((step, idx) => (
-                    <tr key={idx}>
-                        <td className="border border-gray-300 px-4 py-2">{step.workTypeTitle}</td>
-                        <td className="border border-gray-300 px-4 py-2">{step.stepName}</td>
-                        <td className="border border-gray-300 px-4 py-2">{step.order}</td>
-                        <td className="border border-gray-300 px-4 py-2">
-                            {Array.isArray(step.requiredSkills) ? step.requiredSkills.join(', ') : step.requiredSkills}
-                        </td>
-                    </tr>
-                ))}
-        </tbody>
-    </table>
-);
+import React, { useEffect, useState } from "react";
 
 const WorkTemplatePage: React.FC = () => {
+    // 工作種類
     const [workTypes, setWorkTypes] = useState<WorkTypeEntity[]>([]);
-    const [newWorkTypeTitle, setNewWorkTypeTitle] = useState('');
+    const [newWorkTypeTitle, setNewWorkTypeTitle] = useState("");
+    // 工作流程
     const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]);
-    const [selectedWorkTypeId, setSelectedWorkTypeId] = useState('');
-    const [newStepName, setNewStepName] = useState('');
+    const [selectedWorkTypeId, setSelectedWorkTypeId] = useState("");
+    const [newStepName, setNewStepName] = useState("");
     const [newStepOrder, setNewStepOrder] = useState(1);
-    const [newStepSkills, setNewStepSkills] = useState('');
+    const [newStepSkills, setNewStepSkills] = useState("");
+    // Epic 操作
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
-    const [selectedWorkEpicId, setSelectedWorkEpicId] = useState('');
+    const [selectedWorkEpicId, setSelectedWorkEpicId] = useState("");
     const [selectedWorkFlowIds, setSelectedWorkFlowIds] = useState<string[]>([]);
+    const [flowQuantities, setFlowQuantities] = useState<{ [k: string]: number }>({});
+    const [workloadCounts, setWorkloadCounts] = useState<{ [k: string]: number }>({});
     const [showValidationError, setShowValidationError] = useState(false);
-    const [flowQuantities, setFlowQuantities] = useState<{ [flowId: string]: number }>({});
-    const [workloadCounts, setWorkloadCounts] = useState<{ [taskId: string]: number }>({});
-    const selectAllRef = useRef<HTMLInputElement>(null);
 
+    // 載入所有基礎資料
     useEffect(() => {
         (async () => {
             const [types, flows, epics] = await Promise.all([
@@ -133,181 +39,160 @@ const WorkTemplatePage: React.FC = () => {
         })();
     }, []);
 
-    const filteredFlows = useMemo(
-        () => (selectedWorkTypeId !== '' ? workFlows.filter(flow => flow.workTypeId === selectedWorkTypeId) : []),
-        [workFlows, selectedWorkTypeId]
-    );
-
-    const allSteps = useMemo(() => filteredFlows.flatMap(flow => flow.steps), [filteredFlows]);
-    const maxOrder = useMemo(() => (allSteps.length > 0 ? Math.max(...allSteps.map(s => s.order)) : 0), [allSteps]);
-
-    useEffect(() => {
-        if (selectedWorkTypeId) setNewStepOrder(maxOrder + 1);
-    }, [selectedWorkTypeId, maxOrder]);
-
-    const handleAddWorkType = async () => {
+    // 新增工作種類
+    async function handleAddWorkType() {
         const title = newWorkTypeTitle.trim();
-        if (!title) return alert('請輸入工作種類標題！');
+        if (!title) return alert("請輸入標題！");
         const newWorkType: WorkTypeEntity = { typeId: `type-${Date.now()}`, title, requiredSkills: [] };
         await addWorkType(newWorkType);
         setWorkTypes(prev => [...prev, newWorkType]);
-        setNewWorkTypeTitle('');
-    };
+        setNewWorkTypeTitle("");
+    }
 
-    const handleAddStep = async () => {
-        if (!selectedWorkTypeId || !newStepName.trim()) return alert('請輸入工作種類標題！');
-        const existingOrders = allSteps.map(s => s.order);
-        for (let i = 1; i < newStepOrder; i++) {
-            if (!existingOrders.includes(i)) return alert(`請先建立第 ${i} 步`);
-        }
-        if (existingOrders.includes(newStepOrder)) return alert(`第 ${newStepOrder} 步已存在！`);
-        const newFlowId = `flow-${Date.now()}`;
+    // 新增步驟
+    async function handleAddStep() {
+        if (!selectedWorkTypeId || !newStepName.trim()) return alert("請選擇種類與步驟名稱！");
+        // 找出已存在的 order
+        const steps = workFlows.filter(f => f.workTypeId === selectedWorkTypeId).flatMap(f => f.steps);
+        const existingOrders = steps.map(s => s.order);
+        if (existingOrders.includes(newStepOrder)) return alert(`第${newStepOrder}步已存在`);
         const newFlow: WorkFlowEntity = {
-            flowId: newFlowId,
+            flowId: `flow-${Date.now()}`,
             workTypeId: selectedWorkTypeId,
-            steps: [
-                {
-                    stepName: newStepName,
-                    order: newStepOrder,
-                    requiredSkills: newStepSkills.split(',').map(s => s.trim()).filter(Boolean)
-                }
-            ]
+            steps: [{
+                stepName: newStepName,
+                order: newStepOrder,
+                requiredSkills: newStepSkills.split(",").map(s => s.trim()).filter(Boolean)
+            }]
         };
         await addWorkFlow(newFlow);
         setWorkFlows(prev => [...prev, newFlow]);
-        setNewStepName('');
-        setNewStepSkills('');
+        setNewStepName("");
+        setNewStepSkills("");
         setNewStepOrder(newStepOrder + 1);
-    };
+    }
 
-    const handleAddToWorkEpic = async () => {
+    // Epic 加入工作流程
+    async function handleAddToWorkEpic() {
         if (!selectedWorkEpicId || !selectedWorkTypeId || selectedWorkFlowIds.length === 0) {
             setShowValidationError(true);
             return;
         }
-        const selectedType = workTypes.find(type => type.typeId === selectedWorkTypeId);
-        const selectedFlows = workFlows.filter(flow => selectedWorkFlowIds.includes(flow.flowId));
-        const existingEpic = workEpics.find(epic => epic.epicId === selectedWorkEpicId);
-        if (!selectedType || !selectedFlows.length || !existingEpic) {
-            setShowValidationError(true);
-            return;
-        }
-        const newTasks: WorkTaskEntity[] = [];
-        const newLoads: WorkLoadEntity[] = [];
+        const epic = workEpics.find(e => e.epicId === selectedWorkEpicId);
+        const type = workTypes.find(t => t.typeId === selectedWorkTypeId);
+        const flows = workFlows.filter(f => selectedWorkFlowIds.includes(f.flowId));
+        if (!epic || !type || flows.length === 0) return setShowValidationError(true);
         const now = Date.now();
-        selectedFlows.forEach((flow, flowIdx) => {
-            const quantity = flowQuantities[flow.flowId] || 1;
+        const tasks: WorkTaskEntity[] = [];
+        const loads: WorkLoadEntity[] = [];
+        flows.forEach((flow, idx) => {
+            const qty = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
-            const stepName = flow.steps[0]?.stepName || '';
-            const taskTitle = `${existingEpic.title}-${selectedType.title}-${stepName}`;
-            const taskId = `task-${existingEpic.epicId}-${flowIdx}-${now}`;
-            newTasks.push({
-                taskId,
-                flowId: flow.flowId,
-                targetQuantity: quantity,
-                unit: '單位',
-                completedQuantity: 0,
-                status: '待分配',
-                title: taskTitle
+            const stepName = flow.steps[0]?.stepName || "";
+            const taskId = `task-${epic.epicId}-${idx}-${now}`;
+            tasks.push({
+                taskId, flowId: flow.flowId, targetQuantity: qty, unit: '單位',
+                completedQuantity: 0, status: '待分配', title: `${epic.title}-${type.title}-${stepName}`
             });
             for (let j = 0; j < split; j++) {
-                newLoads.push({
-                    loadId: `load-${existingEpic.epicId}-${flowIdx}-${j}-${now}`,
-                    taskId,
-                    plannedQuantity: Math.floor(quantity / split),
-                    unit: '單位',
-                    plannedStartTime: '',
-                    plannedEndTime: '',
-                    actualQuantity: 0,
-                    executor: [],
-                    title: `${existingEpic.title}-${selectedType.title}-${stepName}-${j + 1}`,
-                    epicIds: [existingEpic.epicId]
+                loads.push({
+                    loadId: `load-${epic.epicId}-${idx}-${j}-${now}`,
+                    taskId, plannedQuantity: Math.floor(qty / split), unit: "單位",
+                    plannedStartTime: "", plannedEndTime: "", actualQuantity: 0, executor: [],
+                    title: `${epic.title}-${type.title}-${stepName}-${j + 1}`, epicIds: [epic.epicId]
                 });
             }
         });
-        const updates: Partial<WorkEpicEntity> = {
-            workTypes: [...(existingEpic.workTypes || []), selectedType],
-            workFlows: [...(existingEpic.workFlows || []), ...selectedFlows],
-            workTasks: [...(existingEpic.workTasks || []), ...newTasks],
-            workLoads: [...(existingEpic.workLoads || []), ...newLoads]
-        };
-        await updateWorkEpic(selectedWorkEpicId, updates);
-    };
+        await updateWorkEpic(selectedWorkEpicId, {
+            workTypes: [...(epic.workTypes || []), type],
+            workFlows: [...(epic.workFlows || []), ...flows],
+            workTasks: [...(epic.workTasks || []), ...tasks],
+            workLoads: [...(epic.workLoads || []), ...loads]
+        });
+        setShowValidationError(false);
+    }
 
-    const epicOptions = useMemo(() => workEpics.map(e => ({ value: e.epicId, label: e.title })), [workEpics]);
-    const typeOptions = useMemo(() => workTypes.map(t => ({ value: t.typeId, label: t.title })), [workTypes]);
-
-    useEffect(() => {
-        const ref = selectAllRef.current;
-        if (ref && filteredFlows.length > 0) {
-            ref.indeterminate = selectedWorkFlowIds.length > 0 && selectedWorkFlowIds.length < filteredFlows.length;
-        }
-    }, [filteredFlows, selectedWorkFlowIds]);
+    // 對應 options
+    const epicOptions = workEpics.map(e => <option value={e.epicId} key={e.epicId}>{e.title}</option>);
+    const typeOptions = workTypes.map(t => <option value={t.typeId} key={t.typeId}>{t.title}</option>);
+    const filteredFlows = workFlows.filter(f => f.workTypeId === selectedWorkTypeId);
 
     return (
         <>
             <main className="p-4">
-                <h1 className="text-2xl font-bold mb-4">工作種類模板</h1>
-                <div className="mb-4">
-                    <input
-                        type="text"
-                        value={newWorkTypeTitle}
-                        onChange={e => setNewWorkTypeTitle(e.target.value)}
-                        placeholder="輸入新工作種類標題"
-                        className="border p-2 mr-2"
-                    />
-                    <button onClick={handleAddWorkType} className="bg-blue-500 text-white px-4 py-2">
-                        建立工作種類
-                    </button>
+                <h1 className="text-xl font-bold mb-2">工作種類模板</h1>
+                {/* 新增種類 */}
+                <div>
+                    <input value={newWorkTypeTitle} onChange={e => setNewWorkTypeTitle(e.target.value)} placeholder="新種類標題" className="border p-1 mr-2" />
+                    <button onClick={handleAddWorkType} className="bg-blue-500 text-white px-2 py-1">新增</button>
                 </div>
-                <WorkTypesTable types={workTypes} />
-                <div className="mt-8">
-                    <h2 className="text-xl font-bold mb-4">工作流程管理</h2>
-                    <Select value={selectedWorkTypeId} onChange={e => setSelectedWorkTypeId(e.target.value)} options={typeOptions} placeholder="選擇工作種類" />
-                    <div className="mb-4 flex items-center gap-2 flex-wrap">
-                        <input type="text" value={newStepName} onChange={e => setNewStepName(e.target.value)} placeholder="步驟名稱" className="border p-2" />
-                        <NumberInput value={newStepOrder} onChange={setNewStepOrder} min={1} placeholder="順序" className="border p-2 w-24" />
-                        <input type="text" value={newStepSkills} onChange={e => setNewStepSkills(e.target.value)} placeholder="所需技能 (以逗號分隔)" className="border p-2" />
-                        <button onClick={handleAddStep} className="bg-blue-500 text-white px-4 py-2">新增步驟</button>
-                    </div>
-                    {filteredFlows.length > 0 ? <StepsTable flows={filteredFlows} types={workTypes} /> : <div className="text-gray-500">此種類尚無流程</div>}
+                <ul>
+                    {workTypes.map(t => <li key={t.typeId}>{t.title}</li>)}
+                </ul>
+
+                {/* 新增步驟 */}
+                <h2 className="font-bold mt-6 mb-2">流程管理</h2>
+                <select value={selectedWorkTypeId} onChange={e => setSelectedWorkTypeId(e.target.value)} className="border p-1 mb-2">
+                    <option value="">選擇種類</option>{typeOptions}
+                </select>
+                <div>
+                    <input value={newStepName} onChange={e => setNewStepName(e.target.value)} placeholder="步驟名稱" className="border p-1 mr-1" />
+                    <input type="number" value={newStepOrder} min={1} onChange={e => setNewStepOrder(Number(e.target.value))} className="border w-16 p-1 mr-1" />
+                    <input value={newStepSkills} onChange={e => setNewStepSkills(e.target.value)} placeholder="技能(逗號)" className="border p-1 mr-1" />
+                    <button onClick={handleAddStep} className="bg-blue-500 text-white px-2 py-1">新增步驟</button>
                 </div>
-                <div className="mt-8">
-                    <h2 className="text-xl font-bold mb-4">將工作項目加入現有的工作標的</h2>
-                    <Select value={selectedWorkEpicId} onChange={e => setSelectedWorkEpicId(e.target.value)} options={epicOptions} placeholder="選擇工作標的" />
-                    <Select value={selectedWorkTypeId} onChange={e => { setSelectedWorkTypeId(e.target.value); setFlowQuantities({}); setSelectedWorkFlowIds([]); }} options={typeOptions} placeholder="選擇工作種類" />
-                    {selectedWorkTypeId && (
-                        <div className="mb-4">
-                            <h4 className="font-bold mb-2">對應流程、數量與分割筆數</h4>
-                            {filteredFlows.length > 0 && (
-                                <div className="flex items-center mb-2">
-                                    <input
-                                        type="checkbox"
-                                        ref={selectAllRef}
-                                        checked={filteredFlows.length > 0 && filteredFlows.every(flow => selectedWorkFlowIds.includes(flow.flowId))}
-                                        onChange={e => {
-                                            if (e.target.checked) setSelectedWorkFlowIds(filteredFlows.map(flow => flow.flowId));
-                                            else setSelectedWorkFlowIds([]);
-                                        }}
-                                    />
-                                    <span className="ml-2">全選</span>
-                                </div>
-                            )}
-                            {filteredFlows.length === 0 && <div className="text-gray-500">此種類尚無流程</div>}
-                            {filteredFlows.map(flow => (
-                                <div key={flow.flowId} className="flex items-center mb-2 gap-2">
-                                    <input type="checkbox" checked={selectedWorkFlowIds.includes(flow.flowId)} onChange={e => setSelectedWorkFlowIds(ids => e.target.checked ? [...ids, flow.flowId] : ids.filter(id => id !== flow.flowId))} />
-                                    <span className="flex-1">{flow.steps[0].stepName}</span>
-                                    <NumberInput value={flowQuantities[flow.flowId] || ''} onChange={val => setFlowQuantities(q => ({ ...q, [flow.flowId]: val }))} min={0} placeholder="數量" className="border p-1 w-24" />
-                                    <label className="ml-2">分割：</label>
-                                    <NumberInput value={workloadCounts[flow.flowId] || 1} onChange={val => setWorkloadCounts(counts => ({ ...counts, [flow.flowId]: val || 1 }))} min={1} className="border px-2 py-1 w-20" />
-                                </div>
+                <ul>
+                    {filteredFlows.map(f =>
+                        <li key={f.flowId}>
+                            {f.steps.map(s => (
+                                <div key={s.stepName}>{s.order}. {s.stepName} [{s.requiredSkills.join(",")}]</div>
                             ))}
-                        </div>
+                        </li>
                     )}
-                    {showValidationError && <div className="text-red-500 mb-2">請確保所有項目都已選擇！</div>}
-                    <button onClick={handleAddToWorkEpic} className="bg-green-500 text-white px-4 py-2">加入工作標的</button>
+                </ul>
+
+                {/* Epic 加入流程 */}
+                <h2 className="font-bold mt-6 mb-2">加入工作標的</h2>
+                <select value={selectedWorkEpicId} onChange={e => setSelectedWorkEpicId(e.target.value)} className="border p-1 mb-2">
+                    <option value="">選擇標的</option>{epicOptions}
+                </select>
+                <select value={selectedWorkTypeId} onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }} className="border p-1 mb-2">
+                    <option value="">選擇種類</option>{typeOptions}
+                </select>
+                <div>
+                    {filteredFlows.map(f => (
+                        <div key={f.flowId}>
+                            <input
+                                type="checkbox"
+                                checked={selectedWorkFlowIds.includes(f.flowId)}
+                                onChange={e => {
+                                    setSelectedWorkFlowIds(ids =>
+                                        e.target.checked ? [...ids, f.flowId] : ids.filter(id => id !== f.flowId)
+                                    );
+                                }}
+                            />
+                            <span>{f.steps[0]?.stepName || ""}</span>
+                            <input
+                                type="number"
+                                value={flowQuantities[f.flowId] || ""}
+                                min={1}
+                                onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))}
+                                placeholder="數量"
+                                className="border w-16 mx-1"
+                            />
+                            <input
+                                type="number"
+                                value={workloadCounts[f.flowId] || 1}
+                                min={1}
+                                onChange={e => setWorkloadCounts(c => ({ ...c, [f.flowId]: Number(e.target.value) || 1 }))}
+                                placeholder="分割"
+                                className="border w-12"
+                            />
+                        </div>
+                    ))}
                 </div>
+                {showValidationError && <div className="text-red-500">請確保所有項目都已選擇！</div>}
+                <button onClick={handleAddToWorkEpic} className="bg-green-500 text-white px-3 py-1 mt-2">加入標的</button>
             </main>
             <ManagementBottomNav />
         </>
