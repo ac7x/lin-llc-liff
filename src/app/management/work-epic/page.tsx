@@ -80,7 +80,7 @@ export default function WorkEpicPage() {
                 workTasks: tasks.filter(t => epic.workTasks?.some(wt => wt.taskId === t.taskId)),
             })));
             setMembers(await getAllWorkMembers());
-            setAllWorkZones(await getAllWorkZones(false) as WorkZoneEntity[]);
+            setAllWorkZones(await getAllWorkZones() as WorkZoneEntity[]);
         })();
     }, []);
 
@@ -100,7 +100,6 @@ export default function WorkEpicPage() {
             alert('請完整填寫標題、負責人、地址');
             return;
         }
-        const selectedZones = allWorkZones.filter(z => newWorkZoneIds.includes(z.zoneId));
         const newEpic: WorkEpicEntity = {
             epicId: `epic-${Date.now()}`,
             title: newTitle,
@@ -115,7 +114,7 @@ export default function WorkEpicPage() {
             region: '北部',
             address: newAddress,
             createdAt: new Date().toISOString(),
-            workZones: selectedZones
+            workZones: []
         };
         await addWorkEpic(newEpic);
         setWorkEpics(prev => [...prev, newEpic]);
@@ -167,7 +166,8 @@ export default function WorkEpicPage() {
             createdAt: new Date().toISOString(),
             status: '啟用' as const
         };
-        await addWorkZone(newZone);
+        // 修正：addWorkZone 需要 epicId 與 zone 兩個參數
+        await addWorkZone(epic.epicId, newZone);
         const updatedZones = [...(epic.workZones || []), newZone];
         await updateWorkEpic(epic.epicId, { workZones: updatedZones });
         setWorkEpics(prev => prev.map(e => e.epicId === epic.epicId ? { ...e, workZones: updatedZones } : e));
@@ -192,12 +192,6 @@ export default function WorkEpicPage() {
                         setNewSafetyOfficers(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })));
                     }} options={members} placeholder="安全員" />
                     <input value={newAddress} onChange={e => setNewAddress(e.target.value)} placeholder="地址" className="border p-1" />
-                    <select multiple value={newWorkZoneIds} onChange={e => setNewWorkZoneIds(Array.from(e.target.selectedOptions).map(opt => opt.value))} className="border p-1 min-w-[120px] h-[80px]">
-                        <option disabled value="">選擇工作區</option>
-                        {allWorkZones.map(z => (
-                            <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
-                        ))}
-                    </select>
                     <button onClick={handleAdd} className="bg-blue-500 text-white px-3 py-1 rounded">建立</button>
                 </div>
                 <table className="table-auto w-full border-collapse border border-gray-300">
