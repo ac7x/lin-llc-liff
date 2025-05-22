@@ -35,7 +35,8 @@ const WorkTemplatePage: React.FC = () => {
             setWorkTypes(types);
             const epics = await getAllWorkEpics(false) as WorkEpicEntity[];
             setWorkEpics(epics);
-            const zones = await getAllWorkZones(false) as WorkZoneEntity[];
+            // 修正：getAllWorkZones 不接受參數，直接呼叫即可
+            const zones = await getAllWorkZones() as WorkZoneEntity[];
             setAllWorkZones(zones);
         })();
     }, []);
