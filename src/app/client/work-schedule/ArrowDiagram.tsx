@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import type { Timeline } from 'vis-timeline/standalone'
 
 /**
  * ArrowSpec 型別
@@ -15,7 +16,7 @@ type ArrowSpec = {
  * @param timeline vis-timeline 實例
  * @param arrows 依賴關係陣列
  */
-const ArrowDiagram = ({ timeline, arrows }: { timeline: any, arrows: ArrowSpec[] }) => {
+const ArrowDiagram = ({ timeline, arrows }: { timeline: Timeline | null, arrows: ArrowSpec[] }) => {
     useEffect(() => {
         if (!timeline || !arrows?.length) {
             return
