@@ -5,6 +5,7 @@ import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBo
 import { useEffect, useRef, useState } from 'react'
 import { DataGroup, DataItem, DataSet, Timeline } from 'vis-timeline/standalone'
 import "vis-timeline/styles/vis-timeline-graph2d.min.css"
+import ArrowDiagram from './ArrowDiagram'
 
 /**
  * @param epics 所有專案標的與其工作負載
@@ -167,6 +168,9 @@ export default function WorkSchedulePage() {
           <button onClick={handleRenameGroup} className="px-2 py-1 bg-yellow-500 text-black rounded">改名標的</button>
         </div>
         <div ref={timelineRef} className="timeline-container h-[400px] w-full" />
+        {groupsDS && itemsDS && (
+          <ArrowDiagram timeline={timelineRef.current} arrows={[]} />
+        )}
       </div>
       <ClientBottomNav />
     </>
