@@ -68,7 +68,7 @@ export default function WorkSchedulePage() {
       const tl = new Timeline(timelineRef.current, ids, gds, {
         stack: false,
         orientation: "top",
-        editable: true, // 允許拖曳
+        editable: { updateTime: true, updateGroup: true, remove: false, add: false }, // 明確設定可移動
         locale: "zh-tw",
         tooltip: { followMouse: true },
         margin: { item: 10, axis: 5 },
@@ -78,17 +78,16 @@ export default function WorkSchedulePage() {
         timeAxis: { scale: "day", step: 1 }
       })
 
-      // 拖曳結束事件
-      tl.on('change', async () => {
-        // 這裡可根據 vis-timeline 版本調整事件名稱與參數
-        // 但通常是 'move' 或 'update'
-      })
+      // 移除 change 事件監聽
+      // tl.on('change', async () => {
+      //   // ...existing code...
+      // })
 
-      tl.on('move', async ({ item, start, end }) => {
+      tl.on('move', async ({ item, start, end, group }) => {
         // DataSet.get 回傳 DataItem | null
         const dataItem = ids.get(item as string)
         if (!dataItem) return
-        const epicId = dataItem.group
+        const epicId = group || dataItem.group
         const loadId = dataItem.id
         await updateWorkLoadTime(
           epicId,
