@@ -1,6 +1,6 @@
 'use client'
 
-import { getAllWorkSchedules, updateWorkLoadTime, WorkEpicEntity, WorkLoadEntity } from '@/app/actions/workschedule.action'
+import { getAllWorkSchedulesWithCache, updateWorkLoadTime, WorkEpicEntity, WorkLoadEntity } from '@/app/actions/workschedule.action'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import classNames from 'classnames'
 import { useEffect, useRef, useState } from 'react'
@@ -9,19 +9,14 @@ import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
 
-// 工具函式：Date 轉 YYYY-MM-DD
-function toYMD(date: Date) {
-  return date.toISOString().slice(0, 10)
-}
-
 export default function WorkSchedulePage() {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplannedWorkLoads, setUnplannedWorkLoads] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
 
-  // 取得所有專案與工作負載
+  // 取得所有專案與工作負載，這裡改用 getAllWorkSchedulesWithCache
   useEffect(() => {
-    getAllWorkSchedules().then(epics => {
+    getAllWorkSchedulesWithCache().then(epics => {
       setEpics(epics)
       const unplanned: LooseWorkLoad[] = []
       epics.forEach(e => {
@@ -39,17 +34,13 @@ export default function WorkSchedulePage() {
   useEffect(() => {
     if (!epics.length) return
     const groups = epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
-    const items = epics.flatMap(e =>
-      (e.workLoads || [])
-        .filter(l => l.plannedStartTime)
-        .map(l => ({
-          id: l.loadId,
-          group: e.epicId,
-          content: `<div><div>${l.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(l.executor) ? l.executor.join(', ') : l.executor || '(無執行者)'}</div></div>`,
-          start: l.plannedStartTime,
-          end: l.plannedEndTime || undefined
-        }))
-    )
+    const items = epics.flatMap(e => (e.workLoads || []).filter(l => l.plannedStartTime).map(l => ({
+      id: l.loadId,
+      group: e.epicId,
+      content: `<div><div>${l.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(l.executor) ? l.executor.join(', ') : l.executor || '(無執行者)'}</div></div>`,
+      start: l.plannedStartTime,
+      end: l.plannedEndTime || undefined
+    })))
     const gds = new DataSet<DataGroup>(groups)
     const ids = new DataSet<DataItem>(items)
 
@@ -66,14 +57,7 @@ export default function WorkSchedulePage() {
     tl.on('move', async ({ item, start, end, group }) => {
       const d = ids.get(item as string)
       if (!d) return
-      // 轉成 YYYY-MM-DD 存
-      await updateWorkLoadTime(
-        group || d.group,
-        d.id as string,
-        toYMD(start),
-        end ? toYMD(end) : null,
-        { toCache: true, toFirestore: false }
-      )
+      await updateWorkLoadTime(group || d.group, d.id as string, start.toISOString(), end ? end.toISOString() : null, { toCache: true, toFirestore: false })
     })
 
     // 支援外部拖放
@@ -89,20 +73,13 @@ export default function WorkSchedulePage() {
       const group = props.group
       const start = props.time
       const end = new Date(start.getTime() + 60 * 60 * 1000)
-      // 存成 YYYY-MM-DD 格式
-      await updateWorkLoadTime(
-        group,
-        wl.loadId,
-        toYMD(start),
-        toYMD(end),
-        { toCache: true, toFirestore: false }
-      )
+      await updateWorkLoadTime(group, wl.loadId, start.toISOString(), end.toISOString(), { toCache: true, toFirestore: false })
       ids.add({
         id: wl.loadId,
         group,
         content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
-        start: toYMD(start),
-        end: toYMD(end)
+        start: start.toISOString(),
+        end: end.toISOString()
       })
       setUnplannedWorkLoads(prev => prev.filter(x => x.loadId !== wl.loadId))
     })
@@ -126,38 +103,33 @@ export default function WorkSchedulePage() {
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden">
-      {/* Timeline區，最大化 */}
-      <div className="flex-1 relative bg-white">
-        <div
-          ref={timelineRef}
-          className="absolute inset-0"
-          style={{ minHeight: 0 }}
-        />
+    <div className="flex h-screen">
+      {/* 未排班清單 */}
+      <div className="w-64 border-r p-2 h-full bg-white">
+        <div className="font-bold mb-2">未排班工作</div>
+        <div className="flex flex-col gap-2">
+          {unplannedWorkLoads.length === 0 && <div className="text-gray-400">（無）</div>}
+          {unplannedWorkLoads.map(wl =>
+            <div
+              key={wl.loadId}
+              className={classNames("cursor-move bg-yellow-50 border rounded px-2 py-1 text-sm hover:bg-yellow-100")}
+              draggable
+              onDragStart={e => onDragStart(e, wl)}
+              title={`來自 ${wl.epicTitle}`}
+            >
+              <div>{wl.title || '(無標題)'}</div>
+              <div className="text-xs text-gray-400">{wl.executor?.join(', ') || '(無執行者)'}</div>
+            </div>
+          )}
+        </div>
       </div>
-      {/* 未排班卡片區，橫向捲動 */}
-      <div className="w-full bg-gray-50 border-t h-24 flex items-center overflow-x-auto px-2 space-x-2">
-        {unplannedWorkLoads.length === 0 && (
-          <div className="text-gray-400 text-sm ml-2">（無未排班工作）</div>
-        )}
-        {unplannedWorkLoads.map(wl =>
-          <div
-            key={wl.loadId}
-            className={classNames(
-              "cursor-move bg-yellow-50 border rounded px-2 py-1 text-xs hover:bg-yellow-100 leading-tight shadow-sm flex-shrink-0"
-            )}
-            style={{ minWidth: 100, maxWidth: 160 }}
-            draggable
-            onDragStart={e => onDragStart(e, wl)}
-            title={`來自 ${wl.epicTitle}`}
-          >
-            <div className="truncate">{wl.title || '(無標題)'}</div>
-            <div className="text-[10px] text-gray-400 truncate">{wl.executor?.join(', ') || '(無執行者)'}</div>
-          </div>
-        )}
+      <div className="flex-1 h-full flex flex-col">
+        <div className="border rounded-lg p-4 m-4 flex-1 flex flex-col">
+          <h1 className="text-2xl font-bold mb-4">工作排班表</h1>
+          <div ref={timelineRef} className="h-[400px] w-full flex-1" />
+        </div>
+        <ClientBottomNav />
       </div>
-      {/* 底部導覽條 */}
-      <ClientBottomNav />
     </div>
   )
 }

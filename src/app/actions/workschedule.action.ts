@@ -46,7 +46,36 @@ export interface WorkEpicEntity {
 }
 
 /**
- * 取得所有 WorkEpic 及其 WorkLoad
+ * 取得所有 WorkEpic 及其 WorkLoad（含 Redis 快取異動合併）
+ */
+export const getAllWorkSchedulesWithCache = async (): Promise<WorkEpicEntity[]> => {
+    // 先撈 Firestore
+    const snapshot = await firestoreAdmin.collection('workEpic').get()
+    const epicList: WorkEpicEntity[] = snapshot.docs.map(doc => doc.data() as WorkEpicEntity)
+
+    // 合併 Redis 快取異動
+    for (const epic of epicList) {
+        if (!epic.epicId || !Array.isArray(epic.workLoads) || !epic.workLoads.length) continue
+
+        // 針對每個 workLoad 試著抓 Redis 快取
+        for (let i = 0; i < epic.workLoads.length; i++) {
+            const wl = epic.workLoads[i]
+            const redisKey = `workschedule:${epic.epicId}:${wl.loadId}`
+            const cacheData = await redisCache.hgetall(redisKey)
+            if (cacheData && Object.keys(cacheData).length > 0) {
+                epic.workLoads[i] = {
+                    ...wl,
+                    plannedStartTime: cacheData.plannedStartTime || wl.plannedStartTime,
+                    plannedEndTime: cacheData.plannedEndTime || wl.plannedEndTime,
+                }
+            }
+        }
+    }
+    return epicList
+}
+
+/**
+ * 取得所有 WorkEpic 及其 WorkLoad（僅 Firestore，無合併快取）
  */
 export const getAllWorkSchedules = async (): Promise<WorkEpicEntity[]> => {
     const snapshot = await firestoreAdmin.collection('workEpic').get()
