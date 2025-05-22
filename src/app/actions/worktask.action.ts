@@ -26,7 +26,7 @@ export interface WorkTaskEntity {
  */
 export async function getAllWorkTasks(): Promise<WorkTaskEntity[]> {
     // 取得所有 Epic，彙整所有 workTasks
-    const { firestoreAdmin } = await import('@/modules/shared/infrastructure/persistence/firebase-admin/client');
+    const { firestoreAdmin } = await import('@/modules/shared/infrastructure/persistence/firebase-admin/adminApp');
     const snapshot = await firestoreAdmin.collection('workEpic').get();
     const allTasks: WorkTaskEntity[] = [];
     snapshot.docs.forEach(doc => {

@@ -1,7 +1,9 @@
-// src/modules/shared/application/workschedule.action.ts
-import { redisCache } from "@/modules/shared/infrastructure/cache/redis/client";
-import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
+// src/app/actions/workschedule.action.ts
 
+import { redisCache } from "@/modules/shared/infrastructure/cache/redis/client";
+import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/adminApp";
+
+// WorkLoadEntity 定義
 export interface WorkLoadEntity {
     loadId: string;
     taskId: string;
@@ -14,6 +16,37 @@ export interface WorkLoadEntity {
     title: string;
     notes?: string;
     epicIds: string[];
+}
+
+// WorkEpicEntity 定義（複製自 workepic.action.ts，確保 self-contained）
+export interface WorkEpicEntity {
+    epicId: string;
+    title: string;
+    startDate: string;
+    endDate: string;
+    insuranceStatus?: "無" | "有";
+    insuranceDate?: string;
+    owner: { memberId: string; name: string };
+    siteSupervisors?: { memberId: string; name: string }[];
+    safetyOfficers?: { memberId: string; name: string }[];
+    status: "待開始" | "進行中" | "已完成" | "已取消";
+    priority: number;
+    region: "北部" | "中部" | "南部" | "東部" | "離島";
+    address: string;
+    createdAt: string;
+    workZones?: any[];
+    workTypes?: any[];
+    workFlows?: any[];
+    workTasks?: any[];
+    workLoads?: WorkLoadEntity[];
+}
+
+/**
+ * 取得所有 WorkEpic 及其 WorkLoad（整合查詢）
+ */
+export async function getAllWorkSchedules(): Promise<WorkEpicEntity[]> {
+    const snapshot = await firestoreAdmin.collection("workEpic").get();
+    return snapshot.docs.map(doc => doc.data() as WorkEpicEntity);
 }
 
 /**

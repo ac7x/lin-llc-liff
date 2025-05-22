@@ -1,6 +1,6 @@
 "use server";
 
-import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
+import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/adminApp";
 import { WorkFlowEntity } from "./workflow.action";
 import { WorkLoadEntity } from "./workload.action";
 import { WorkTaskEntity } from "./worktask.action";

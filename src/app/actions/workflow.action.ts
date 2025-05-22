@@ -3,7 +3,7 @@
 
 "use server";
 
-import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
+import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/adminApp";
 
 export interface WorkFlow {
     flowId: string; // 唯一識別碼

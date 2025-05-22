@@ -1,6 +1,6 @@
 "use client";
 import { LiffContext } from "@/modules/line/liff/interfaces/Liff";
-import { firebaseApp } from "@/modules/shared/infrastructure/persistence/firebase/client";
+import { firebaseApp } from "@/modules/shared/infrastructure/persistence/firebase/clientApp";
 import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
 import { doc, getDoc, getFirestore } from "firebase/firestore";
 import Image from "next/image";

@@ -1,6 +1,6 @@
 "use server";
-import "@/modules/shared/infrastructure/persistence/firebase-admin/client";
-import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
+import "@/modules/shared/infrastructure/persistence/firebase-admin/adminApp";
+import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/adminApp";
 import { Auth, getAuth, UserRecord } from "firebase-admin/auth";
 
 // 定義錯誤類別
