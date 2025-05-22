@@ -96,7 +96,7 @@ export default function WorkTaskPage() {
 
   return (
     <>
-      <main className="p-4">
+      <main className="p-4 bg-background text-foreground min-h-screen">
         <h1 className="text-2xl font-bold mb-4">工作任務/工作量合併表</h1>
         <table className="table-auto w-full border-collapse border border-gray-300 mb-8">
           <thead>
