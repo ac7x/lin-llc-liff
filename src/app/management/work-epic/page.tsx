@@ -5,6 +5,7 @@ import {
 } from '@/app/actions/workepic.action';
 import { getAllWorkMembers, WorkMember } from '@/app/actions/workmember.action';
 import { getAllWorkTasks, WorkTaskEntity } from '@/app/actions/worktask.action';
+import { addWorkZone } from '@/app/actions/workzone.action';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import { useEffect, useState } from 'react';
 
@@ -146,6 +147,24 @@ export default function WorkEpicPage() {
         }
     };
 
+    const handleAddWorkZone = async (epic: WorkEpicEntity) => {
+        const name = window.prompt('請輸入新工作區名稱：');
+        if (!name) return;
+        const newZone = {
+            zoneId: `zone-${Date.now()}`,
+            title: name,
+            region: epic.region,
+            address: '',
+            createdAt: new Date().toISOString(),
+            status: '啟用' as const
+        };
+        await addWorkZone(newZone);
+        const updatedZones = [...(epic.workZones || []), newZone];
+        await updateWorkEpic(epic.epicId, { workZones: updatedZones });
+        setWorkEpics(prev => prev.map(e => e.epicId === epic.epicId ? { ...e, workZones: updatedZones } : e));
+        alert('已建立新工作區！');
+    };
+
     return (
         <>
             <main className="p-4">
@@ -259,6 +278,7 @@ export default function WorkEpicPage() {
                                             <td className="border px-2 py-1 flex gap-2">
                                                 <button onClick={() => handleEdit(epic)} className="bg-yellow-400 text-white px-2 py-1 rounded">編輯</button>
                                                 <button onClick={() => handleDelete(epic.epicId)} className="bg-red-500 text-white px-2 py-1 rounded">刪除</button>
+                                                <button onClick={() => handleAddWorkZone(epic)} className="bg-blue-500 text-white px-2 py-1 rounded">新增工作區</button>
                                             </td>
                                         </>
                                     )}

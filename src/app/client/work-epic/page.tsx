@@ -53,6 +53,7 @@ export default function WorkEpicPage() {
                             <th className="border border-gray-300 px-4 py-2">優先級</th>
                             <th className="border border-gray-300 px-4 py-2">地點</th>
                             <th className="border border-gray-300 px-4 py-2">地址</th>
+                            <th className="border border-gray-300 px-4 py-2">工作區</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -92,6 +93,11 @@ export default function WorkEpicPage() {
                                                 導航
                                             </a>
                                         )}
+                                    </td>
+                                    <td className="border border-gray-300 px-4 py-2">
+                                        {Array.isArray(epic.workZones) && epic.workZones.length > 0
+                                            ? epic.workZones.map(z => z.title).join(', ')
+                                            : '-'}
                                     </td>
                                 </tr>
                             );

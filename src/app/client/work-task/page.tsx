@@ -56,6 +56,7 @@ export default function WorkTaskPage() {
               <th className="border px-2 py-1">單位</th>
               <th className="border px-2 py-1">已完成數量</th>
               <th className="border px-2 py-1">狀態</th>
+              <th className="border px-2 py-1">工作區</th>
             </tr>
           </thead>
           <tbody>
@@ -114,6 +115,15 @@ export default function WorkTaskPage() {
                     <td className="border px-2 py-1 align-top">{task.unit}</td>
                     <td className="border px-2 py-1 align-top">{task.completedQuantity}</td>
                     <td className="border px-2 py-1 align-top">{task.status}</td>
+                    <td className="border px-2 py-1">
+                      {(() => {
+                        const epic = epics.find(e => e.workTasks && e.workTasks.some(t => t.taskId === task.taskId));
+                        if (epic && Array.isArray(epic.workZones) && epic.workZones.length > 0) {
+                          return epic.workZones.map(z => z.title).join(', ');
+                        }
+                        return '-';
+                      })()}
+                    </td>
                   </tr>
                 );
               })}

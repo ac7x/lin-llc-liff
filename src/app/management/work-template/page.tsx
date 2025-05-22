@@ -19,6 +19,7 @@ const WorkTemplatePage: React.FC = () => {
     // Epic 操作
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
     const [selectedWorkEpicId, setSelectedWorkEpicId] = useState("");
+    const [selectedWorkZoneId, setSelectedWorkZoneId] = useState("");
     const [selectedWorkFlowIds, setSelectedWorkFlowIds] = useState<string[]>([]);
     const [flowQuantities, setFlowQuantities] = useState<{ [k: string]: number }>({});
     const [workloadCounts, setWorkloadCounts] = useState<{ [k: string]: number }>({});
@@ -116,6 +117,8 @@ const WorkTemplatePage: React.FC = () => {
     const typeOptions = workTypes.map(t => <option value={t.typeId} key={t.typeId}>{t.title}</option>);
     const selectedType = workTypes.find(t => t.typeId === selectedWorkTypeId);
     const filteredFlows = selectedType?.flows || [];
+    const selectedEpic = workEpics.find(e => e.epicId === selectedWorkEpicId);
+    const workZones = selectedEpic?.workZones || [];
 
     return (
         <>
@@ -153,9 +156,20 @@ const WorkTemplatePage: React.FC = () => {
 
                 {/* Epic 加入流程 */}
                 <h2 className="font-bold mt-6 mb-2">加入工作標的</h2>
-                <select value={selectedWorkEpicId} onChange={e => setSelectedWorkEpicId(e.target.value)} className="border p-1 mb-2">
+                <select value={selectedWorkEpicId} onChange={e => {
+                    setSelectedWorkEpicId(e.target.value);
+                    setSelectedWorkZoneId("");
+                }} className="border p-1 mb-2">
                     <option value="">選擇標的</option>{epicOptions}
                 </select>
+                {workZones.length > 0 && (
+                    <select value={selectedWorkZoneId} onChange={e => setSelectedWorkZoneId(e.target.value)} className="border p-1 mb-2">
+                        <option value="">請選擇工作區</option>
+                        {workZones.map(z => (
+                            <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
+                        ))}
+                    </select>
+                )}
                 <select value={selectedWorkTypeId} onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }} className="border p-1 mb-2">
                     <option value="">選擇種類</option>{typeOptions}
                 </select>
