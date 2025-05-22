@@ -31,7 +31,6 @@ export default function WorkSchedulePage() {
 
   // 取得資料（client fetch，若你要SSR請用 server component 包這層）
   useEffect(() => {
-    // 如果你確定 getAllWorkSchedules 不會變，可以移到 server 層
     getAllWorkSchedules().then(setEpics)
   }, [])
 
@@ -79,12 +78,12 @@ export default function WorkSchedulePage() {
       })
 
       // 拖曳結束事件
-      tl.on('change', async (props) => {
+      tl.on('change', async () => {
         // 這裡可根據 vis-timeline 版本調整事件名稱與參數
         // 但通常是 'move' 或 'update'
       })
 
-      tl.on('move', async ({ item, start, end, event }) => {
+      tl.on('move', async ({ item, start, end }) => {
         // DataSet.get 回傳 DataItem | null
         const dataItem = ids.get(item as string)
         if (!dataItem) return
