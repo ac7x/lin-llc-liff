@@ -1,9 +1,9 @@
 "use client";
 import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from '@/app/actions/workepic.action';
-import { addWorkFlow, getAllWorkFlows, WorkFlowEntity } from '@/app/actions/workflow.action';
+import { WorkFlowEntity } from '@/app/actions/workflow.action';
 import { WorkLoadEntity } from '@/app/actions/workload.action';
 import { WorkTaskEntity } from '@/app/actions/worktask.action';
-import { addWorkType, getAllWorkTypes, WorkTypeEntity } from '@/app/actions/worktype.action';
+import { addWorkType, getAllWorkTypes, updateWorkType, WorkTypeEntity } from "@/app/actions/worktype.action";
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import React, { useEffect, useState } from "react";
 
@@ -11,8 +11,7 @@ const WorkTemplatePage: React.FC = () => {
     // 工作種類
     const [workTypes, setWorkTypes] = useState<WorkTypeEntity[]>([]);
     const [newWorkTypeTitle, setNewWorkTypeTitle] = useState("");
-    // 工作流程
-    const [workFlows, setWorkFlows] = useState<WorkFlowEntity[]>([]);
+    // 工作流程（移除 workFlows state，直接用 workTypes）
     const [selectedWorkTypeId, setSelectedWorkTypeId] = useState("");
     const [newStepName, setNewStepName] = useState("");
     const [newStepOrder, setNewStepOrder] = useState(1);
@@ -28,14 +27,10 @@ const WorkTemplatePage: React.FC = () => {
     // 載入所有基礎資料
     useEffect(() => {
         (async () => {
-            const [types, flows, epics] = await Promise.all([
-                getAllWorkTypes(true),
-                getAllWorkFlows(true),
-                getAllWorkEpics(false)
-            ]);
-            setWorkTypes(types as WorkTypeEntity[]);
-            setWorkFlows(flows as WorkFlowEntity[]);
-            setWorkEpics(epics as WorkEpicEntity[]);
+            const types = await getAllWorkTypes(true) as WorkTypeEntity[];
+            setWorkTypes(types);
+            const epics = await getAllWorkEpics(false) as WorkEpicEntity[];
+            setWorkEpics(epics);
         })();
     }, []);
 
@@ -43,19 +38,21 @@ const WorkTemplatePage: React.FC = () => {
     async function handleAddWorkType() {
         const title = newWorkTypeTitle.trim();
         if (!title) return alert("請輸入標題！");
-        const newWorkType: WorkTypeEntity = { typeId: `type-${Date.now()}`, title, requiredSkills: [] };
+        const newWorkType: WorkTypeEntity = { typeId: `type-${Date.now()}`, title, requiredSkills: [], flows: [] };
         await addWorkType(newWorkType);
         setWorkTypes(prev => [...prev, newWorkType]);
         setNewWorkTypeTitle("");
     }
 
-    // 新增步驟
+    // 新增步驟（流程）
     async function handleAddStep() {
-        if (!selectedWorkTypeId || !newStepName.trim()) return alert("請選擇種類與步驟名稱！");
-        // 找出已存在的 order
-        const steps = workFlows.filter(f => f.workTypeId === selectedWorkTypeId).flatMap(f => f.steps);
+        if (!selectedWorkTypeId || !newStepName.trim()) return;
+        const idx = workTypes.findIndex(t => t.typeId === selectedWorkTypeId);
+        if (idx === -1) return;
+        const workType = workTypes[idx];
+        const steps = (workType.flows || []).flatMap(f => f.steps);
         const existingOrders = steps.map(s => s.order);
-        if (existingOrders.includes(newStepOrder)) return alert(`第${newStepOrder}步已存在`);
+        if (existingOrders.includes(newStepOrder)) return alert("順序重複");
         const newFlow: WorkFlowEntity = {
             flowId: `flow-${Date.now()}`,
             workTypeId: selectedWorkTypeId,
@@ -65,8 +62,9 @@ const WorkTemplatePage: React.FC = () => {
                 requiredSkills: newStepSkills.split(",").map(s => s.trim()).filter(Boolean)
             }]
         };
-        await addWorkFlow(newFlow);
-        setWorkFlows(prev => [...prev, newFlow]);
+        const updatedFlows = [...(workType.flows || []), newFlow];
+        await updateWorkType(selectedWorkTypeId, { flows: updatedFlows });
+        setWorkTypes(prev => prev.map((t, i) => i === idx ? { ...t, flows: updatedFlows } : t));
         setNewStepName("");
         setNewStepSkills("");
         setNewStepOrder(newStepOrder + 1);
@@ -80,8 +78,9 @@ const WorkTemplatePage: React.FC = () => {
         }
         const epic = workEpics.find(e => e.epicId === selectedWorkEpicId);
         const type = workTypes.find(t => t.typeId === selectedWorkTypeId);
-        const flows = workFlows.filter(f => selectedWorkFlowIds.includes(f.flowId));
-        if (!epic || !type || flows.length === 0) return setShowValidationError(true);
+        if (!epic || !type || !type.flows) return;
+        const flows = type.flows.filter(f => selectedWorkFlowIds.includes(f.flowId));
+        if (flows.length === 0) return;
         const now = Date.now();
         const tasks: WorkTaskEntity[] = [];
         const loads: WorkLoadEntity[] = [];
@@ -115,7 +114,8 @@ const WorkTemplatePage: React.FC = () => {
     // 對應 options
     const epicOptions = workEpics.map(e => <option value={e.epicId} key={e.epicId}>{e.title}</option>);
     const typeOptions = workTypes.map(t => <option value={t.typeId} key={t.typeId}>{t.title}</option>);
-    const filteredFlows = workFlows.filter(f => f.workTypeId === selectedWorkTypeId);
+    const selectedType = workTypes.find(t => t.typeId === selectedWorkTypeId);
+    const filteredFlows = selectedType?.flows || [];
 
     return (
         <>

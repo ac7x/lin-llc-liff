@@ -1,3 +1,6 @@
+// 此檔案已棄用，請改用 workTypeEntity.flows 作為流程模板來源。
+// Deprecated: 請勿再直接操作 workFlow 集合，請將流程寫入 workType.flows 陣列。
+
 "use server";
 
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";

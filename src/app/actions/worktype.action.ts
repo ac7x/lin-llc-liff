@@ -1,6 +1,7 @@
 "use server";
 
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
+import type { WorkFlowEntity } from "./workflow.action";
 
 /**
  * WorkTypeTemplate 介面，代表一個工作類型的基本資料結構。
@@ -17,9 +18,14 @@ export interface WorkTypeTemplate {
 /**
  * WorkTypeEntity 介面，擴充 WorkTypeTemplate，包含預設關聯的工作流程。
  * @property {string} [defaultWorkflow] - 預設關聯的 WorkFlow
+ * @property {WorkFlowEntity[]} [flows] - 工作流程模板陣列
  */
 export interface WorkTypeEntity extends WorkTypeTemplate {
     defaultWorkflow?: string; // 預設關聯的 WorkFlow
+    /**
+     * flows: 工作流程模板陣列，直接寫在工作類型下
+     */
+    flows?: WorkFlowEntity[];
 }
 
 /**
