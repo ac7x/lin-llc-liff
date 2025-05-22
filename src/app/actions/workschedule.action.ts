@@ -1,55 +1,115 @@
-"use server";
+// src/modules/shared/application/workschedule.action.ts
+import { redisCache } from "@/modules/shared/infrastructure/cache/redis/client";
+import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/client";
 
-type WorkAssignment = {
-    location: string;
-    groupName: string;
-    members: string[];
-};
-
-type DailyWorkSchedule = {
-    date: string;
-    assignments: WorkAssignment[];
-};
+export interface WorkLoadEntity {
+    loadId: string;
+    taskId: string;
+    plannedQuantity: number;
+    unit: string;
+    plannedStartTime: string;
+    plannedEndTime: string;
+    actualQuantity: number;
+    executor: string[];
+    title: string;
+    notes?: string;
+    epicIds: string[];
+}
 
 /**
- * 取得所有 WorkSchedule
- * 擴充為支援不同橫軸維度的資料結構（雖然目前仍回傳相同格式，但邏輯具備擴展性）
- * @param offset 起始天數偏移量
- * @param range 取得天數範圍
- * @param horizontalAxis 橫軸維度（date 或 location）
- * @returns DailyWorkSchedule 陣列
+ * 拖曳/調整任務排程：可選擇先寫 Redis，再同步 Firestore
  */
-export async function getWorkSchedules(
-    offset: number,
-    range: number,
-    horizontalAxis: "date" | "location" = "date"
-): Promise<DailyWorkSchedule[]> {
-    const today = new Date();
-    const locations = Array.from({ length: 15 }, (_, i) => `地點${i + 1}`);
+export async function updateWorkLoadTime(
+    epicId: string,
+    loadId: string,
+    plannedStartTime: string,
+    plannedEndTime: string | null,
+    options: { toCache?: boolean; toFirestore?: boolean } = { toCache: true, toFirestore: true }
+): Promise<void> {
+    // 1. 先寫入 Redis（快取，低延遲）
+    if (options.toCache) {
+        const data: Record<string, string> = {
+            plannedStartTime,
+            plannedEndTime: plannedEndTime ?? "",
+        };
+        await redisCache.hset(`workschedule:${epicId}:${loadId}`, data);
+        await redisCache.set(
+            `workschedule:touch:${epicId}`,
+            Date.now().toString(),
+            3600
+        ); // 標記有異動
+    }
 
-    return Array.from({ length: range }, (_, i) => {
-        const date = new Date(today);
-        date.setDate(today.getDate() + offset + i);
-        const isoDate = date.toISOString().split("T")[0];
+    // 2. 寫入 Firestore（資料最終一致）
+    if (options.toFirestore) {
+        const epicRef = firestoreAdmin.collection("workEpic").doc(epicId);
+        const epicSnap = await epicRef.get();
+        if (!epicSnap.exists) throw new Error("Epic not found");
+        const epicData = epicSnap.data();
+        if (!epicData || !Array.isArray(epicData.workLoads)) throw new Error("Epic data or workLoads undefined");
 
-        const assignments = horizontalAxis === "date"
-            ? locations.map((location, index) => ({
-                location,
-                groupName: `第${(index + i) % 5 + 1}組`,
-                members: [
-                    `員${(index + i * 3) % 70 + 1}`,
-                    `員${(index + i * 3 + 1) % 70 + 1}`,
-                ],
-            }))
-            : [{
-                location: locations[i % locations.length],
-                groupName: `第${i % 5 + 1}組`,
-                members: [
-                    `員${(i * 3) % 70 + 1}`,
-                    `員${(i * 3 + 1) % 70 + 1}`,
-                ],
-            }];
+        const newWorkLoads = epicData.workLoads.map((wl: WorkLoadEntity) =>
+            wl.loadId === loadId
+                ? { ...wl, plannedStartTime, plannedEndTime: plannedEndTime ?? "" }
+                : wl
+        );
+        await epicRef.update({ workLoads: newWorkLoads });
+    }
+}
 
-        return { date: isoDate, assignments };
-    });
+/**
+ * 把 Redis 快取的所有 workload 異動批次同步回 Firestore
+ * 通常排程任務或管理介面調用
+ */
+export async function syncWorkScheduleCacheToFirestore(epicId: string): Promise<void> {
+    // 動態取得 Redis client keys
+    const { createClient } = await import('redis');
+    const client = createClient({ url: process.env.REDIS_URL });
+    await client.connect();
+
+    const keys = await client.keys(`workschedule:${epicId}:*`);
+    if (!keys.length) {
+        await client.quit();
+        return;
+    }
+
+    // 2. 彙整所有 workload
+    const cacheData: Record<string, Partial<Pick<WorkLoadEntity, "plannedStartTime" | "plannedEndTime">>> = {};
+    for (const key of keys) {
+        const segments = key.split(":");
+        const loadId = segments[2];
+        const data = await redisCache.hgetall(key);
+        cacheData[loadId] = {
+            plannedStartTime: data.plannedStartTime,
+            plannedEndTime: data.plannedEndTime,
+        };
+    }
+
+    // 3. 取 Firestore 現有 workLoads
+    const epicRef = firestoreAdmin.collection("workEpic").doc(epicId);
+    const epicSnap = await epicRef.get();
+    if (!epicSnap.exists) {
+        await client.quit();
+        throw new Error("Epic not found");
+    }
+    const epicData = epicSnap.data();
+    if (!epicData || !Array.isArray(epicData.workLoads)) {
+        await client.quit();
+        throw new Error("Epic data or workLoads undefined");
+    }
+    const workLoads = epicData.workLoads.map((wl: WorkLoadEntity) =>
+        cacheData[wl.loadId]
+            ? { ...wl, ...cacheData[wl.loadId] }
+            : wl
+    );
+
+    // 4. 寫回 Firestore
+    await epicRef.update({ workLoads });
+
+    // 5. 清 Redis
+    for (const key of keys) {
+        await redisCache.del(key);
+    }
+
+    await client.quit();
 }
