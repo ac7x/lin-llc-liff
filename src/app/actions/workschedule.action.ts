@@ -3,7 +3,9 @@
 import { redisCache } from "@/modules/shared/infrastructure/cache/redis/client";
 import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/adminApp";
 
-// WorkLoadEntity 定義
+/**
+ * WorkLoadEntity 定義
+ */
 export interface WorkLoadEntity {
     loadId: string;
     taskId: string;
@@ -18,7 +20,9 @@ export interface WorkLoadEntity {
     epicIds: string[];
 }
 
-// WorkEpicEntity 定義（複製自 workepic.action.ts，確保 self-contained）
+/**
+ * WorkEpicEntity 定義（複製自 workepic.action.ts，確保 self-contained）
+ */
 export interface WorkEpicEntity {
     epicId: string;
     title: string;
@@ -34,10 +38,10 @@ export interface WorkEpicEntity {
     region: "北部" | "中部" | "南部" | "東部" | "離島";
     address: string;
     createdAt: string;
-    workZones?: any[];
-    workTypes?: any[];
-    workFlows?: any[];
-    workTasks?: any[];
+    workZones?: unknown[];
+    workTypes?: unknown[];
+    workFlows?: unknown[];
+    workTasks?: unknown[];
     workLoads?: WorkLoadEntity[];
 }
 

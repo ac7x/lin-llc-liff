@@ -1,5 +1,6 @@
 "use client"
 
+import { updateWorkLoadTime } from "@/app/actions/workschedule.action"
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import React, { useEffect, useRef, useState } from 'react'
 import { DataGroup, DataItem, DataSet, Timeline } from 'vis-timeline/standalone'
@@ -62,7 +63,7 @@ const WorkScheduleClient: React.FC<Props> = ({ epics }) => {
             const tl = new Timeline(timelineRef.current, ids, gds, {
                 stack: false,
                 orientation: "top",
-                editable: false,
+                editable: true, // 允許拖曳
                 locale: "zh-tw",
                 tooltip: { followMouse: true },
                 margin: { item: 10, axis: 5 },
@@ -71,6 +72,29 @@ const WorkScheduleClient: React.FC<Props> = ({ epics }) => {
                 zoomMax: 1000 * 60 * 60 * 24 * 30,
                 timeAxis: { scale: "day", step: 1 }
             })
+
+            // 拖曳結束事件
+            tl.on('change', async (props) => {
+                // 這裡可根據 vis-timeline 版本調整事件名稱與參數
+                // 但通常是 'move' 或 'update'
+            })
+
+            tl.on('move', async ({ item, start, end, event }) => {
+                const dataItem = ids.get(item)
+                if (!dataItem) {
+                    return
+                }
+                const epicId = dataItem.group as string
+                const loadId = dataItem.id as string
+                await updateWorkLoadTime(
+                    epicId,
+                    loadId,
+                    start.toISOString(),
+                    end ? end.toISOString() : null,
+                    { toCache: true, toFirestore: false } // 只寫 Redis
+                )
+            })
+
             return () => tl.destroy()
         }
     }, [epics])
