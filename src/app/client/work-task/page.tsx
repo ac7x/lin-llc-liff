@@ -69,7 +69,8 @@ export default function WorkTaskPage() {
               })
               .map(task => {
                 const flow = allFlows.find(f => f.flowId === task.flowId);
-                const orderedSteps = flow?.steps?.slice().sort((a: any, b: any) => a.order - b.order) || [];
+                // 明確指定 steps 型別
+                const orderedSteps = flow?.steps?.slice().sort((a: WorkFlowEntity['steps'][number], b: WorkFlowEntity['steps'][number]) => a.order - b.order) || [];
                 const stepName = orderedSteps[0]?.stepName || task.flowId;
                 const relatedLoads = workloads.filter(load => load.taskId === task.taskId);
 
