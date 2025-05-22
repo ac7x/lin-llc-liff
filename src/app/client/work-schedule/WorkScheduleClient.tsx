@@ -81,11 +81,8 @@ const WorkScheduleClient: React.FC<Props> = ({ epics }) => {
 
             tl.on('move', async ({ item, start, end, event }) => {
                 const dataItem = ids.get(item)
-                if (!dataItem) {
-                    return
-                }
-                const epicId = dataItem.group as string
-                const loadId = dataItem.id as string
+                const epicId = dataItem.group
+                const loadId = dataItem.id
                 await updateWorkLoadTime(
                     epicId,
                     loadId,
