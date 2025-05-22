@@ -5,7 +5,7 @@ import {
 } from '@/app/actions/workepic.action';
 import { getAllWorkMembers, WorkMember } from '@/app/actions/workmember.action';
 import { getAllWorkTasks, WorkTaskEntity } from '@/app/actions/worktask.action';
-import { addWorkZone } from '@/app/actions/workzone.action';
+import { addWorkZone, getAllWorkZones, WorkZoneEntity } from '@/app/actions/workzone.action';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import { useEffect, useState } from 'react';
 
@@ -59,6 +59,9 @@ export default function WorkEpicPage() {
     const [members, setMembers] = useState<WorkMember[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editFields, setEditFields] = useState<Partial<WorkEpicEntity>>({});
+    const [allWorkZones, setAllWorkZones] = useState<WorkZoneEntity[]>([]);
+    const [newWorkZoneIds, setNewWorkZoneIds] = useState<string[]>([]);
+    const [editWorkZoneIds, setEditWorkZoneIds] = useState<string[]>([]);
 
     // 新增欄位
     const [newTitle, setNewTitle] = useState('');
@@ -77,6 +80,7 @@ export default function WorkEpicPage() {
                 workTasks: tasks.filter(t => epic.workTasks?.some(wt => wt.taskId === t.taskId)),
             })));
             setMembers(await getAllWorkMembers());
+            setAllWorkZones(await getAllWorkZones(false) as WorkZoneEntity[]);
         })();
     }, []);
 
@@ -96,6 +100,7 @@ export default function WorkEpicPage() {
             alert('請完整填寫標題、負責人、地址');
             return;
         }
+        const selectedZones = allWorkZones.filter(z => newWorkZoneIds.includes(z.zoneId));
         const newEpic: WorkEpicEntity = {
             epicId: `epic-${Date.now()}`,
             title: newTitle,
@@ -110,6 +115,7 @@ export default function WorkEpicPage() {
             region: '北部',
             address: newAddress,
             createdAt: new Date().toISOString(),
+            workZones: selectedZones
         };
         await addWorkEpic(newEpic);
         setWorkEpics(prev => [...prev, newEpic]);
@@ -118,20 +124,23 @@ export default function WorkEpicPage() {
         setNewSiteSupervisors([]);
         setNewSafetyOfficers([]);
         setNewAddress('');
+        setNewWorkZoneIds([]);
     };
 
     // 編輯
     const handleEdit = (epic: WorkEpicEntity) => {
         setEditingId(epic.epicId);
         setEditFields({ ...epic });
+        setEditWorkZoneIds(Array.isArray(epic.workZones) ? epic.workZones.map(z => z.zoneId) : []);
     };
     // 將 value 型別從 any 改為 unknown
     const handleEditField = (field: keyof WorkEpicEntity, value: unknown) => {
         setEditFields(prev => ({ ...prev, [field]: value }));
     };
     const handleSave = async (epicId: string) => {
-        await updateWorkEpic(epicId, editFields);
-        setWorkEpics(prev => prev.map(e => e.epicId === epicId ? { ...e, ...editFields } : e));
+        const selectedZones = allWorkZones.filter(z => editWorkZoneIds.includes(z.zoneId));
+        await updateWorkEpic(epicId, { ...editFields, workZones: selectedZones });
+        setWorkEpics(prev => prev.map(e => e.epicId === epicId ? { ...e, ...editFields, workZones: selectedZones } : e));
         setEditingId(null);
     };
     const handleCancel = () => {
@@ -183,6 +192,12 @@ export default function WorkEpicPage() {
                         setNewSafetyOfficers(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })));
                     }} options={members} placeholder="安全員" />
                     <input value={newAddress} onChange={e => setNewAddress(e.target.value)} placeholder="地址" className="border p-1" />
+                    <select multiple value={newWorkZoneIds} onChange={e => setNewWorkZoneIds(Array.from(e.target.selectedOptions).map(opt => opt.value))} className="border p-1 min-w-[120px] h-[80px]">
+                        <option disabled value="">選擇工作區</option>
+                        {allWorkZones.map(z => (
+                            <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
+                        ))}
+                    </select>
                     <button onClick={handleAdd} className="bg-blue-500 text-white px-3 py-1 rounded">建立</button>
                 </div>
                 <table className="table-auto w-full border-collapse border border-gray-300">
@@ -200,6 +215,7 @@ export default function WorkEpicPage() {
                             <th className="border px-2 py-1">優先</th>
                             <th className="border px-2 py-1">地區</th>
                             <th className="border px-2 py-1">地址</th>
+                            <th className="border px-2 py-1">工作區</th>
                             <th className="border px-2 py-1">操作</th>
                         </tr>
                     </thead>
@@ -256,6 +272,14 @@ export default function WorkEpicPage() {
                                                 </select>
                                             </td>
                                             <td className="border px-2 py-1"><input value={editFields.address || ''} onChange={e => handleEditField('address', e.target.value)} className="border p-1 w-full" /></td>
+                                            <td className="border px-2 py-1">
+                                                <select multiple value={editWorkZoneIds} onChange={e => setEditWorkZoneIds(Array.from(e.target.selectedOptions).map(opt => opt.value))} className="border p-1 min-w-[120px] h-[80px]">
+                                                    <option disabled value="">選擇工作區</option>
+                                                    {allWorkZones.map(z => (
+                                                        <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
+                                                    ))}
+                                                </select>
+                                            </td>
                                             <td className="border px-2 py-1 flex gap-2">
                                                 <button onClick={() => handleSave(epic.epicId)} className="bg-green-500 text-white px-2 py-1 rounded">儲存</button>
                                                 <button onClick={handleCancel} className="bg-gray-300 px-2 py-1 rounded">取消</button>
@@ -275,6 +299,7 @@ export default function WorkEpicPage() {
                                             <td className="border px-2 py-1">{epic.priority}</td>
                                             <td className="border px-2 py-1">{epic.region}</td>
                                             <td className="border px-2 py-1">{epic.address}</td>
+                                            <td className="border px-2 py-1">{Array.isArray(epic.workZones) && epic.workZones.length > 0 ? epic.workZones.map(z => z.title).join('、') : '-'}</td>
                                             <td className="border px-2 py-1 flex gap-2">
                                                 <button onClick={() => handleEdit(epic)} className="bg-yellow-400 text-white px-2 py-1 rounded">編輯</button>
                                                 <button onClick={() => handleDelete(epic.epicId)} className="bg-red-500 text-white px-2 py-1 rounded">刪除</button>
@@ -282,6 +307,10 @@ export default function WorkEpicPage() {
                                             </td>
                                         </>
                                     )}
+                                    {/* 顯示工作區 */}
+                                    <div>
+                                        工作區：{Array.isArray(epic.workZones) && epic.workZones.length > 0 ? epic.workZones.map(z => z.title).join(', ') : '無'}
+                                    </div>
                                 </tr>
                             );
                         })}

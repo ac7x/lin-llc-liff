@@ -107,6 +107,7 @@ export default function WorkTaskPage() {
               <th className="border px-2 py-1">單位</th>
               <th className="border px-2 py-1">已完成</th>
               <th className="border px-2 py-1">狀態</th>
+              <th className="border px-2 py-1">工作區</th>
               <th className="border px-2 py-1">展開</th>
             </tr>
           </thead>
@@ -114,6 +115,8 @@ export default function WorkTaskPage() {
             {pagedTasks.map((task, idx) => {
               const taskWorkloads = workloads.filter(w => w.taskId === task.taskId);
               const isExpanded = expandedTaskIds.includes(task.taskId);
+              const epic = epics.find(e => Array.isArray(e.workTasks) && e.workTasks.some(t => t.taskId === task.taskId));
+              const workZoneStr = epic && Array.isArray(epic.workZones) && epic.workZones.length > 0 ? epic.workZones.map(z => z.title).join('、') : '-';
               return (
                 <>
                   <tr className="bg-card hover:bg-muted transition-colors" key={task.taskId}>
@@ -123,6 +126,7 @@ export default function WorkTaskPage() {
                     <td className="border px-2 py-1">{task.unit}</td>
                     <td className="border px-2 py-1">{task.completedQuantity}</td>
                     <td className="border px-2 py-1">{task.status}</td>
+                    <td className="border px-2 py-1">{workZoneStr}</td>
                     <td className="border px-2 py-1 text-center">
                       <button
                         type="button"

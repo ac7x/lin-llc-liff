@@ -4,6 +4,8 @@ import type { WorkFlowEntity } from "@/app/actions/workflow.action";
 import { WorkLoadEntity } from '@/app/actions/workload.action';
 import { WorkTaskEntity } from '@/app/actions/worktask.action';
 import { addWorkType, getAllWorkTypes, updateWorkType, WorkTypeEntity } from "@/app/actions/worktype.action";
+import type { WorkZoneEntity } from '@/app/actions/workzone.action';
+import { getAllWorkZones } from '@/app/actions/workzone.action';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import React, { useEffect, useState } from "react";
 
@@ -24,6 +26,7 @@ const WorkTemplatePage: React.FC = () => {
     const [flowQuantities, setFlowQuantities] = useState<{ [k: string]: number }>({});
     const [workloadCounts, setWorkloadCounts] = useState<{ [k: string]: number }>({});
     const [showValidationError, setShowValidationError] = useState(false);
+    const [allWorkZones, setAllWorkZones] = useState<WorkZoneEntity[]>([]);
 
     // 載入所有基礎資料
     useEffect(() => {
@@ -32,6 +35,8 @@ const WorkTemplatePage: React.FC = () => {
             setWorkTypes(types);
             const epics = await getAllWorkEpics(false) as WorkEpicEntity[];
             setWorkEpics(epics);
+            const zones = await getAllWorkZones(false) as WorkZoneEntity[];
+            setAllWorkZones(zones);
         })();
     }, []);
 
@@ -118,7 +123,9 @@ const WorkTemplatePage: React.FC = () => {
     const selectedType = workTypes.find(t => t.typeId === selectedWorkTypeId);
     const filteredFlows = selectedType?.flows || [];
     const selectedEpic = workEpics.find(e => e.epicId === selectedWorkEpicId);
-    const workZones = selectedEpic?.workZones || [];
+    const workZones = selectedEpic && selectedEpic.workZones && selectedEpic.workZones.length > 0
+        ? selectedEpic.workZones
+        : allWorkZones;
 
     return (
         <>
@@ -207,6 +214,19 @@ const WorkTemplatePage: React.FC = () => {
                 </div>
                 {showValidationError && <div className="text-red-500">請確保所有項目都已選擇！</div>}
                 <button onClick={handleAddToWorkEpic} className="bg-green-500 text-white px-3 py-1 mt-2">加入標的</button>
+                <div className="mb-4">
+                    <label className="block mb-2 font-medium">選擇工作區：</label>
+                    <select
+                        className="border p-2 rounded w-full"
+                        value={selectedWorkZoneId}
+                        onChange={e => setSelectedWorkZoneId(e.target.value)}
+                    >
+                        <option value="">請選擇工作區</option>
+                        {allWorkZones.map(zone => (
+                            <option key={zone.zoneId} value={zone.zoneId}>{zone.title}</option>
+                        ))}
+                    </select>
+                </div>
             </main>
             <ManagementBottomNav />
         </>
