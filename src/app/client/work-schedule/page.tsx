@@ -103,13 +103,44 @@ const WorkSchedulePage = () => {
       const newStart = startOfDay(start)
       const duration = end ? Math.max(1, differenceInCalendarDays(end, start)) : 1
       const newEnd = addDays(newStart, duration)
-      await updateWorkLoadTime(
-        group || d.group,
-        d.id as string,
-        newStart.toISOString(),
-        newEnd.toISOString()
-      )
-      items.update({ id: d.id, start: newStart, end: newEnd })
+
+      try {
+        // 1. 更新後端資料
+        await updateWorkLoadTime(
+          group || d.group,
+          d.id as string,
+          newStart.toISOString(),
+          newEnd.toISOString()
+        )
+
+        // 2. 更新 Timeline 視覺元件
+        items.update({ id: d.id, start: newStart, end: newEnd })
+
+        // 3. 關鍵修復：更新本地 epics 狀態
+        setEpics(prevEpics => {
+          return prevEpics.map(epic => {
+            // 找到對應的 epic
+            if (epic.epicId !== (group || d.group)) return epic
+
+            // 更新該 epic 中的 workLoad
+            return {
+              ...epic,
+              workLoads: (epic.workLoads || []).map(load => {
+                if (load.loadId !== d.id) return load
+
+                // 更新拖曳後的時間
+                return {
+                  ...load,
+                  plannedStartTime: newStart.toISOString(),
+                  plannedEndTime: newEnd.toISOString()
+                }
+              })
+            }
+          })
+        })
+      } catch (err) {
+        console.error('更新工作負載時間失敗:', err)
+      }
     })
 
     const handleResize = () => timelineInstance.current?.redraw()
