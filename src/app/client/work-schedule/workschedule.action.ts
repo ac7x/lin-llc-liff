@@ -18,7 +18,7 @@ export interface WorkLoadEntity {
     plannedQuantity: number
     unit: string
     plannedStartTime: string
-    plannedEndTime: string
+    plannedEndTime: string | null  // 修改這裡允許 null
     actualQuantity: number
     executor: string[]
     title: string
@@ -95,7 +95,11 @@ export const updateWorkLoadTime = async (
             throw new Error('找不到指定的工作負載')
         }
 
-        workLoads[idx] = { ...workLoads[idx], plannedStartTime, plannedEndTime }
+        workLoads[idx] = {
+            ...workLoads[idx],
+            plannedStartTime,
+            plannedEndTime: plannedEndTime || null  // 確保空值時設為 null
+        }
         updatedWorkLoad = workLoads[idx]
         transaction.update(epicRef, { workLoads })
     })
