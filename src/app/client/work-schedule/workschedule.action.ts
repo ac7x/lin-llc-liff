@@ -1,6 +1,7 @@
 'use server'
 
 import { firestoreAdmin } from './firebase-admin/adminApp'
+import { redisCache } from './redis/client'
 
 export interface WorkLoadEntity {
     loadId: string
@@ -38,9 +39,26 @@ export interface WorkEpicEntity {
     workLoads?: WorkLoadEntity[]
 }
 
+/**
+ * 取得所有工作排程（支援 Redis 快取）
+ */
 export const getAllWorkSchedules = async (): Promise<WorkEpicEntity[]> => {
+    const cacheKey = 'workEpic:all'
+    // 先查 Redis
+    const cached = await redisCache.get(cacheKey)
+    if (cached) {
+        try {
+            return JSON.parse(cached) as WorkEpicEntity[]
+        } catch (err) {
+            // cache 壞掉 fallback
+        }
+    }
+    // 沒 cache 查 Firestore
     const snapshot = await firestoreAdmin.collection('workEpic').get()
-    return snapshot.docs.map(doc => doc.data() as WorkEpicEntity)
+    const data = snapshot.docs.map(doc => doc.data() as WorkEpicEntity)
+    // 寫入 Redis，快取 5 分鐘
+    await redisCache.set(cacheKey, JSON.stringify(data), 300)
+    return data
 }
 
 export const updateWorkLoadTime = async (
@@ -66,5 +84,8 @@ export const updateWorkLoadTime = async (
             transaction.update(epicRef, { workLoads })
         }
     })
+
+    // 更新完畢後，主動清掉相關 Redis 快取
+    await redisCache.set('workEpic:all', '', 1)
     return updatedWorkLoad
 }
