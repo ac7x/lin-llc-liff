@@ -69,7 +69,7 @@ export default function WorkSchedulePage() {
     })
     timelineInstance.current = tl
 
-    tl.on('move', async ({ item, start, end, group }: any) => {
+    tl.on('move', async ({ item, start, end, group }: { item: string | number, start: Date, end: Date, group: string | number }) => {
       const d = ids.get(item)
       const dataItem = Array.isArray(d) ? d[0] : d
       if (!dataItem) return
