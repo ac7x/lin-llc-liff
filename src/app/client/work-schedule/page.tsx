@@ -97,7 +97,7 @@ const WorkSchedulePage = () => {
             type: 'range'
           }
           cb(obj)
-          const updatedWorkLoad = await updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString(), new Date().toISOString())
+          const updatedWorkLoad = await updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
           if (updatedWorkLoad) {
             setEpics(prevEpics => {
               return prevEpics.map(epic => {
@@ -133,8 +133,7 @@ const WorkSchedulePage = () => {
           group || d.group,
           d.id as string,
           newStart.toISOString(),
-          newEnd.toISOString(),
-          new Date().toISOString()
+          newEnd.toISOString()
         )
 
         if (updatedWorkLoad) {
@@ -182,7 +181,7 @@ const WorkSchedulePage = () => {
         const groupId = payload.group || epics[0].epicId
         const startTime = startOfDay(point.time)
         const endTime = addDays(startTime, 1)
-        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString(), new Date().toISOString()).then((updatedWorkLoad) => {
+        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString()).then((updatedWorkLoad) => {
           if (updatedWorkLoad) {
             itemsDataSet.current?.add({
               id: wl.loadId,
