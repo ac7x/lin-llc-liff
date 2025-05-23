@@ -97,7 +97,6 @@ const WorkSchedulePage = () => {
             type: 'range'
           }
           cb(obj)
-          // 修正這裡，只傳四個參數
           const updatedWorkLoad = await updateWorkLoadTime(
             String(obj.group),
             String(wl.loadId),
@@ -135,7 +134,6 @@ const WorkSchedulePage = () => {
       const newEnd = addDays(newStart, duration)
 
       try {
-        // 修正這裡，只傳四個參數
         const updatedWorkLoad = await updateWorkLoadTime(
           group || d.group,
           d.id as string,
@@ -188,7 +186,6 @@ const WorkSchedulePage = () => {
         const groupId = payload.group || epics[0].epicId
         const startTime = startOfDay(point.time)
         const endTime = addDays(startTime, 1)
-        // 修正這裡，只傳四個參數
         updateWorkLoadTime(
           groupId,
           wl.loadId,
