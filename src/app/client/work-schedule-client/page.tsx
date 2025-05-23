@@ -6,7 +6,7 @@ import { addDays, startOfDay } from 'date-fns'
 import { collection, doc, runTransaction } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
-import { DataGroup, DataItem, DataSet, Timeline, TimelineOptions } from 'vis-timeline/standalone'
+import { DataGroup, DataItem, DataSet, Timeline } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 
 interface WorkLoadEntity {
@@ -114,6 +114,7 @@ const ClientWorkSchedulePage = () => {
   // 初始化 timeline，只處理渲染與拖曳互動
   useEffect(() => {
     if (!timelineRef.current || !epics.length) return
+
     const groups = new DataSet<DataGroup>(
       epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
     )
@@ -124,7 +125,7 @@ const ClientWorkSchedulePage = () => {
           .map(l => ({
             id: l.loadId,
             group: e.epicId,
-            type: 'range',
+            type: 'range' as const,
             content: renderContent(l.title, l.executor),
             start: new Date(l.plannedStartTime),
             end: l.plannedEndTime ? new Date(l.plannedEndTime) : undefined
@@ -133,7 +134,7 @@ const ClientWorkSchedulePage = () => {
     )
     itemsDataSet.current = items
 
-    // 用 as any 加入 onDropObjectOnTimeline，避開 TS 錯誤
+    type DropProps = { data: string; group?: string; time: Date }
     const options = {
       stack: true,
       orientation: 'top',
@@ -142,27 +143,41 @@ const ClientWorkSchedulePage = () => {
       tooltip: { followMouse: true },
       zoomMin: 86400000,
       zoomMax: 90 * 86400000,
-      onDropObjectOnTimeline: async (props: any) => {
-        try {
-          const payload: DraggableItem = JSON.parse(props.data)
-          const wl = unplanned.find(w => w.loadId === payload.id)
-          if (!wl) return
-          const groupId = props.group || epics[0].epicId
-          const startTime = startOfDay(props.time)
-          const endTime = addDays(startTime, 1)
-          await updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString())
-        } catch (e) { /* ignore */ }
+      onDropObjectOnTimeline: async (props: unknown) => {
+        // 型別守衛
+        if (typeof props === 'object' && props !== null && 'data' in props && 'time' in props) {
+          const dropProps = props as DropProps
+          try {
+            const payload: DraggableItem = JSON.parse(dropProps.data)
+            const wl = unplanned.find(w => w.loadId === payload.id)
+            if (!wl) return
+            const groupId = dropProps.group || epics[0].epicId
+            const startTime = startOfDay(dropProps.time)
+            const endTime = addDays(startTime, 1)
+            await updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString())
+          } catch {
+            // ignore
+          }
+        }
       }
-    } as any
+    }
 
     const tl = new Timeline(timelineRef.current, items, groups, options)
     timelineInstance.current = tl
 
-    // 用 as any 避開型別檢查
-    ;(tl as any).on('itemMoved', (item: any, callback: (item: any) => void) => {
-      updateWorkLoadTime(item.group, item.id, item.start.toISOString(), item.end.toISOString())
-      callback(item)
-    })
+    type ItemMovedProps = {
+      group: string
+      id: string
+      start: Date
+      end: Date
+    }
+
+    // vis-timeline 型別聲明不完全，這裡用 unknown 斷言後賦型
+    (tl as unknown as { on: (event: string, handler: (item: ItemMovedProps, callback: (item: ItemMovedProps) => void) => void) => void })
+      .on('itemMoved', (item, callback) => {
+        updateWorkLoadTime(item.group, item.id, item.start.toISOString(), item.end.toISOString())
+        callback(item)
+      })
 
     const handleResize = () => timelineInstance.current?.redraw()
     window.addEventListener('resize', handleResize)
@@ -174,7 +189,7 @@ const ClientWorkSchedulePage = () => {
 
   // 不需要再加外層 drop 監聽（已由 onDropObjectOnTimeline 處理）
 
-  const onDragStart = (e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad) => {
+  const onDragStart = (event: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad) => {
     const dragItem: DraggableItem = {
       id: wl.loadId,
       type: 'range',
@@ -183,8 +198,8 @@ const ClientWorkSchedulePage = () => {
       start: new Date(),
       end: addDays(new Date(), 1)
     }
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text', JSON.stringify(dragItem))
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text', JSON.stringify(dragItem))
   }
 
   return (
@@ -218,7 +233,7 @@ const ClientWorkSchedulePage = () => {
                 key={wl.loadId}
                 className="cursor-move bg-yellow-50 border rounded px-3 py-2 text-sm hover:bg-yellow-100 flex items-center"
                 draggable
-                onDragStart={e => onDragStart(e, wl)}
+                onDragStart={ev => onDragStart(ev, wl)}
                 title={`來自 ${wl.epicTitle}`}
               >
                 <span className="mr-2 select-none">≣</span>
