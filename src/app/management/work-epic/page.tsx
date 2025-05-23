@@ -9,18 +9,24 @@ import { addWorkZone, getAllWorkZones, WorkZoneEntity } from '@/app/actions/work
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import { useEffect, useState } from 'react';
 
-// ★ ISO工具
-function toISO(date: string | undefined | null): string {
-    if (!date) return "";
-    if (date.includes("T")) {
-        const d = new Date(date);
-        return isNaN(d.getTime()) ? "" : d.toISOString();
-    }
-    const d = new Date(date + "T00:00:00.000Z");
-    return isNaN(d.getTime()) ? "" : d.toISOString();
+/**
+ * 產生短唯一ID，與 work-template 相同邏輯
+ */
+function shortId(prefix = ''): string {
+    return `${prefix}${Math.random().toString(36).slice(2, 8)}`;
 }
 
-// 進度條
+// ISO日期工具
+function toISO(date: string | undefined | null): string {
+    if (!date) return '';
+    if (date.includes('T')) {
+        const d = new Date(date);
+        return isNaN(d.getTime()) ? '' : d.toISOString();
+    }
+    const d = new Date(date + 'T00:00:00.000Z');
+    return isNaN(d.getTime()) ? '' : d.toISOString();
+}
+
 const ProgressBar = ({ completed, total }: { completed: number, total: number }) => {
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
     return (
@@ -110,11 +116,13 @@ export default function WorkEpicPage() {
             alert('請完整填寫標題、負責人、地址');
             return;
         }
+        // 統一用 shortId
+        const epicId = shortId('epic-');
         const newEpic: WorkEpicEntity = {
-            epicId: `epic-${Date.now()}`,
+            epicId,
             title: newTitle,
-            startDate: "", // 可再加日期輸入
-            endDate: "",
+            startDate: '', // 可再加日期輸入
+            endDate: '',
             insuranceStatus: '無',
             owner: newOwner,
             siteSupervisors: newSiteSupervisors,
@@ -124,18 +132,26 @@ export default function WorkEpicPage() {
             region: '北部',
             address: newAddress,
             createdAt: new Date().toISOString(),
-            workZones: []
+            workZones: [],
+            workTypes: [],
+            workFlows: [],
+            workTasks: [],
+            workLoads: [],
         };
-        // ★ 保證時間欄位為 ISO
         newEpic.startDate = toISO(newEpic.startDate);
         newEpic.endDate = toISO(newEpic.endDate);
-        await addWorkEpic(newEpic);
-        setWorkEpics(prev => [...prev, newEpic]);
-        setNewTitle('');
-        setNewOwner(null);
-        setNewSiteSupervisors([]);
-        setNewSafetyOfficers([]);
-        setNewAddress('');
+        try {
+            await addWorkEpic(newEpic);
+            setWorkEpics(prev => [...prev, newEpic]);
+            setNewTitle('');
+            setNewOwner(null);
+            setNewSiteSupervisors([]);
+            setNewSafetyOfficers([]);
+            setNewAddress('');
+        } catch (err) {
+            alert('建立失敗，請稍後再試');
+            // 可日後加上更詳細的錯誤訊息顯示
+        }
     };
 
     // 編輯
@@ -149,8 +165,7 @@ export default function WorkEpicPage() {
     };
     const handleSave = async (epicId: string) => {
         const selectedZones = allWorkZones.filter(z => editWorkZoneIds.includes(z.zoneId));
-        // ★ 保證時間欄位為 ISO
-        const updates = {
+        const updates: Partial<WorkEpicEntity> = {
             ...editFields,
             startDate: toISO(editFields.startDate as string),
             endDate: toISO(editFields.endDate as string),
@@ -176,13 +191,13 @@ export default function WorkEpicPage() {
     const handleAddWorkZone = async (epic: WorkEpicEntity) => {
         const name = window.prompt('請輸入新工作區名稱：');
         if (!name) return;
-        const newZone = {
-            zoneId: `zone-${Date.now()}`,
+        const newZone: WorkZoneEntity = {
+            zoneId: shortId('zone-'),
             title: name,
             region: epic.region,
             address: '',
             createdAt: new Date().toISOString(),
-            status: '啟用' as const
+            status: '啟用'
         };
         await addWorkZone(epic.epicId, newZone);
         const updatedZones = [...(epic.workZones || []), newZone];
@@ -284,7 +299,7 @@ export default function WorkEpicPage() {
                                             </td>
                                             <td className="border px-2 py-1"><input value={editFields.address || ''} onChange={e => handleEditField('address', e.target.value)} className="border p-1 w-full" /></td>
                                             <td className="border px-2 py-1">
-                                                <select multiple value={editWorkZoneIds} onChange={e => setEditWorkZoneIds(Array.from(e.target.selectedOptions).map(opt => opt.value))} className="border p-1 w-full">
+                                                <select multiple value={editWorkZoneIds} onChange={e => setEditWorkZoneIds(Array.from(e.target.selectedOptions).map(opt => opt.value))} className="border p-1 min-w-[100px] h-[60px]">
                                                     <option disabled value="">選擇工作區</option>
                                                     {allWorkZones.map(z => (
                                                         <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
