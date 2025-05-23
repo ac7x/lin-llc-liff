@@ -11,7 +11,6 @@ import { firestore } from './database/firebase.client'
 import { TimelineAddEventProps, TimelineMoveEventProps, WorkEpicEntity, WorkLoadEntity } from './types'
 import { useTimelineListeners } from './use-timeline-listeners'
 import { updateWorkLoadTime } from './workschedule.action'
-import { redisCache } from './database/redis.client'
 
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
