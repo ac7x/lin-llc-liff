@@ -1,5 +1,4 @@
 'use client';
-
 import {
     addWorkEpic, deleteWorkEpic, getAllWorkEpics, updateWorkEpic, WorkEpicEntity,
 } from '@/app/actions/workepic.action';
@@ -12,7 +11,6 @@ import { useEffect, useState } from 'react';
 function shortId(prefix = ''): string {
     return `${prefix}${Math.random().toString(36).slice(2, 8)}`;
 }
-
 function toISO(date: string | undefined | null): string {
     if (!date) return '';
     if (date.includes('T')) {
@@ -74,15 +72,11 @@ export default function WorkEpicPage() {
     const [editFields, setEditFields] = useState<Partial<WorkEpicEntity>>({});
     const [allWorkZones, setAllWorkZones] = useState<WorkZoneEntity[]>([]);
     const [editWorkZoneIds, setEditWorkZoneIds] = useState<string[]>([]);
-
-    // 新增欄位
     const [newTitle, setNewTitle] = useState('');
     const [newOwner, setNewOwner] = useState<MemberSimple | null>(null);
     const [newSiteSupervisors, setNewSiteSupervisors] = useState<MemberSimple[]>([]);
     const [newSafetyOfficers, setNewSafetyOfficers] = useState<MemberSimple[]>([]);
     const [newAddress, setNewAddress] = useState('');
-    // 假設若有保險日期輸入，可加一行
-    // const [newInsuranceDate, setNewInsuranceDate] = useState('');
 
     useEffect(() => {
         (async () => {
@@ -114,7 +108,7 @@ export default function WorkEpicPage() {
         const newEpic: WorkEpicEntity = {
             epicId: shortId('epic-'),
             title: newTitle,
-            startDate: '', // 可再加日期輸入
+            startDate: '',
             endDate: '',
             insuranceStatus: '無',
             owner: newOwner,
@@ -130,8 +124,6 @@ export default function WorkEpicPage() {
             workFlows: [],
             workTasks: [],
             workLoads: [],
-            // 若有保險日期輸入則帶入
-            // insuranceDate: newInsuranceDate ? toISO(newInsuranceDate) : undefined,
         };
         newEpic.startDate = toISO(newEpic.startDate);
         newEpic.endDate = toISO(newEpic.endDate);
@@ -143,7 +135,6 @@ export default function WorkEpicPage() {
             setNewSiteSupervisors([]);
             setNewSafetyOfficers([]);
             setNewAddress('');
-            // setNewInsuranceDate('');
         } catch {
             alert('建立失敗，請稍後再試');
         }
@@ -173,14 +164,12 @@ export default function WorkEpicPage() {
         setEditingId(null);
         setEditFields({});
     };
-
     const handleDelete = async (epicId: string) => {
         if (window.confirm('確定要刪除這個標的嗎？')) {
             await deleteWorkEpic(epicId);
             setWorkEpics(prev => prev.filter(e => e.epicId !== epicId));
         }
     };
-
     const handleAddWorkZone = async (epic: WorkEpicEntity) => {
         const name = window.prompt('請輸入新工作區名稱：');
         if (!name) return;
@@ -203,7 +192,6 @@ export default function WorkEpicPage() {
         <>
             <main className="p-4">
                 <h1 className="text-2xl font-bold mb-4">工作標的列表</h1>
-                {/* 新增 */}
                 <div className="mb-4 flex flex-wrap gap-2 items-center">
                     <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="標的標題" className="border p-1" />
                     <SingleSelect value={newOwner?.memberId || ''} onChange={val => {
@@ -217,9 +205,6 @@ export default function WorkEpicPage() {
                         setNewSafetyOfficers(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })));
                     }} options={members} placeholder="安全員" />
                     <input value={newAddress} onChange={e => setNewAddress(e.target.value)} placeholder="地址" className="border p-1" />
-                    {/* 若有保險日期輸入，可加這一行：
-                    <input type="date" value={newInsuranceDate} onChange={e => setNewInsuranceDate(e.target.value)} placeholder="保險日期" className="border p-1" />
-                    */}
                     <button onClick={handleAdd} className="bg-blue-500 text-white px-3 py-1 rounded">建立</button>
                 </div>
                 <table className="table-auto w-full border-collapse border border-gray-300">
