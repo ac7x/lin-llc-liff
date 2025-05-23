@@ -92,7 +92,19 @@ class RedisClient {
             }
 
             // 更新工作負載 - 使用深拷貝確保不會有引用問題
-            const updatedWorkLoad = JSON.parse(JSON.stringify({ ...workLoads[loadIndex], ...update }))
+            // 確保 epicIds 欄位包含當前 epic (重要修正)
+            const oldWorkload = workLoads[loadIndex];
+            const epicIds = [...(oldWorkload.epicIds || [])];
+            if (!epicIds.includes(epicId)) {
+                epicIds.push(epicId);
+            }
+            
+            const updatedWorkLoad = {
+                ...JSON.parse(JSON.stringify(oldWorkload)), 
+                ...update,
+                epicIds // 確保 epicIds 欄位正確
+            };
+            
             const updatedWorkLoads = [...workLoads]
             updatedWorkLoads[loadIndex] = updatedWorkLoad
 
