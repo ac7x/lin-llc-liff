@@ -93,6 +93,7 @@ export const updateWorkLoadTime = async (
         });
 
         console.log(`Workload time updated successfully for loadId: ${loadId}`); // Pc9e5
+        console.log('Updated workload:', updatedWorkLoad); // P8587
 
         return updatedWorkLoad;
     } catch (error) {
