@@ -5,18 +5,12 @@ import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'
 import { useEffect, useRef, useState } from 'react'
 import { DataGroup, DataItem, DataSet, Timeline, TimelineItem, TimelineOptions } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
-import { TimelineAddEventProps, TimelineMoveEventProps, WorkEpicEntity, WorkLoadEntity } from './types'
+import { WorkEpicEntity, WorkLoadEntity } from './types'
 import { useTimelineListeners } from './use-timeline-listeners'
 import { getAllWorkSchedules, updateWorkLoadTime } from './workschedule.action'
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
-type DraggableItem = { id: string, type: 'range', content: string, group: string, start: Date, end: Date }
-interface WorkLoadDataItem extends DataItem {
-  id: string
-  group: string
-  start: Date
-  end?: Date
-}
+type WorkLoadDataItem = DataItem & { id: string, group: string, start: Date, end?: Date }
 
 const WorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
@@ -26,7 +20,7 @@ const WorkSchedulePage = () => {
   const itemsDataSet = useRef<DataSet<WorkLoadDataItem> | null>(null)
 
   useEffect(() => {
-    const fetchData = async () => {
+    (async () => {
       const epicList = await getAllWorkSchedules()
       setEpics(epicList)
       setUnplanned(
@@ -36,8 +30,7 @@ const WorkSchedulePage = () => {
             .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
         )
       )
-    }
-    fetchData()
+    })()
   }, [])
 
   useEffect(() => {
@@ -60,14 +53,8 @@ const WorkSchedulePage = () => {
     itemsDataSet.current = items
     const options: TimelineOptions = {
       orientation: 'top',
-      editable: {
-        updateTime: true,
-        updateGroup: true,
-        remove: false,
-        add: true,
-        overrideItems: false
-      },
-      snap: (date) => startOfDay(date),
+      editable: { updateTime: true, updateGroup: true, remove: false, add: true, overrideItems: false },
+      snap: date => startOfDay(date),
       stack: true,
       clickToUse: false,
       height: '100%',
@@ -82,24 +69,14 @@ const WorkSchedulePage = () => {
     setTimelineInstance(tl)
     const handleResize = () => tl.redraw()
     window.addEventListener('resize', handleResize)
-    return () => {
-      tl.destroy()
-      window.removeEventListener('resize', handleResize)
-    }
+    return () => { tl.destroy(); window.removeEventListener('resize', handleResize) }
   }, [epics])
 
   useTimelineListeners({
     timeline: timelineInstance,
-    onAdd: async (props: TimelineAddEventProps) => {
+    onAdd: async ({ item, callback }) => {
       try {
-        const { item, callback } = props
-        let payload: { id: string }
-        try {
-          payload = JSON.parse(item.content as string)
-          if (!payload || !payload.id) return callback(null)
-        } catch {
-          return callback(null)
-        }
+        const payload = JSON.parse(item.content as string) as { id: string }
         const wl = unplanned.find(w => w.loadId === payload.id)
         if (!wl) return callback(null)
         const start = item.start ? new Date(item.start) : new Date()
@@ -113,46 +90,37 @@ const WorkSchedulePage = () => {
           type: 'range'
         }
         callback(obj)
-        try {
-          const epicIds = [...(wl.epicIds || [])]
-          if (!epicIds.includes(String(obj.group))) epicIds.push(String(obj.group))
-          const updatedWorkLoad = await updateWorkLoadTime(
-            String(obj.group),
-            String(wl.loadId),
-            start.toISOString(),
-            end.toISOString(),
-            epicIds,
-            3
-          )
-          if (updatedWorkLoad) {
-            const updatedEpic = JSON.parse(JSON.stringify({
-              ...epics.find(e => e.epicId === String(obj.group)),
-              workLoads: [
-                ...(epics.find(e => e.epicId === String(obj.group))?.workLoads || []).filter(w => w.loadId !== updatedWorkLoad.loadId),
-                updatedWorkLoad
-              ]
-            }))
-            setEpics(prev =>
-              prev.map(epic =>
-                epic.epicId === String(obj.group) ? updatedEpic : epic
-              )
+        const epicIds = [...(wl.epicIds || [])]
+        if (!epicIds.includes(String(obj.group))) epicIds.push(String(obj.group))
+        const updatedWorkLoad = await updateWorkLoadTime(
+          String(obj.group),
+          String(wl.loadId),
+          start.toISOString(),
+          end.toISOString(),
+          epicIds,
+          3
+        )
+        if (updatedWorkLoad) {
+          const updatedEpic = {
+            ...epics.find(e => e.epicId === String(obj.group)),
+            workLoads: [
+              ...(epics.find(e => e.epicId === String(obj.group))?.workLoads || []).filter(w => w.loadId !== updatedWorkLoad.loadId),
+              updatedWorkLoad
+            ]
+          } as WorkEpicEntity
+          setEpics(prev =>
+            prev.map(epic =>
+              epic.epicId === String(obj.group) ? updatedEpic : epic
             )
-            setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
-          }
-        } catch {
-          if (itemsDataSet.current) {
-            try { itemsDataSet.current.remove(String(wl.loadId)) } catch { }
-          }
+          )
+          setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
         }
-      } catch {
-        props.callback(null)
-      }
+      } catch { callback(null) }
     },
-    onMove: async (props: TimelineMoveEventProps) => {
-      const { item: itemId, start, end, group, callback } = props
-      if (!itemsDataSet.current) { if (callback) callback(null); return }
+    onMove: async ({ item: itemId, start, end, group, callback }) => {
+      if (!itemsDataSet.current) return callback?.(null)
       const item = itemsDataSet.current.get(itemId as string)
-      if (!item) { if (callback) callback(null); return }
+      if (!item) return callback?.(null)
       const newStart = startOfDay(start)
       const duration = end ? Math.max(1, differenceInCalendarDays(end, start)) : 1
       const newEnd = addDays(newStart, duration)
@@ -164,13 +132,11 @@ const WorkSchedulePage = () => {
         group: group || item.group,
         type: 'range'
       }
-      if (callback) callback(updatedItem)
+      callback?.(updatedItem)
       try {
         const oldEpicId = item.group as string
         const newEpicId = group || oldEpicId
-        const oldWorkload = epics
-          .find(e => e.epicId === oldEpicId)?.workLoads
-          ?.find(w => w.loadId === item.id as string)
+        const oldWorkload = epics.find(e => e.epicId === oldEpicId)?.workLoads?.find(w => w.loadId === item.id)
         const epicIds = [...(oldWorkload?.epicIds || [])]
         if (!epicIds.includes(newEpicId)) epicIds.push(newEpicId)
         const updatedWorkLoad = await updateWorkLoadTime(
@@ -183,47 +149,36 @@ const WorkSchedulePage = () => {
         )
         if (updatedWorkLoad) {
           setEpics(prev => {
-            const newState = JSON.parse(JSON.stringify(prev)) as WorkEpicEntity[]
+            const newState = [...prev]
             if (oldEpicId !== newEpicId) {
               const oldEpicIndex = newState.findIndex(e => e.epicId === oldEpicId)
-              if (oldEpicIndex !== -1 && newState[oldEpicIndex].workLoads) {
-                newState[oldEpicIndex].workLoads = newState[oldEpicIndex].workLoads.filter(
-                  w => w.loadId !== updatedWorkLoad.loadId
-                )
-              }
+              if (oldEpicIndex !== -1 && newState[oldEpicIndex].workLoads)
+                newState[oldEpicIndex].workLoads = newState[oldEpicIndex].workLoads.filter(w => w.loadId !== updatedWorkLoad.loadId)
             }
             const newEpicIndex = newState.findIndex(e => e.epicId === newEpicId)
             if (newEpicIndex !== -1) {
               if (!newState[newEpicIndex].workLoads) newState[newEpicIndex].workLoads = []
-              const existingIndex = newState[newEpicIndex].workLoads.findIndex(
-                w => w.loadId === updatedWorkLoad.loadId
-              )
-              if (existingIndex !== -1) {
-                newState[newEpicIndex].workLoads[existingIndex] = updatedWorkLoad
-              } else {
-                newState[newEpicIndex].workLoads.push(updatedWorkLoad)
-              }
+              const existingIndex = newState[newEpicIndex].workLoads.findIndex(w => w.loadId === updatedWorkLoad.loadId)
+              if (existingIndex !== -1) newState[newEpicIndex].workLoads[existingIndex] = updatedWorkLoad
+              else newState[newEpicIndex].workLoads.push(updatedWorkLoad)
             }
             return newState
           })
         }
-      } catch {
-        if (callback) callback(null)
-      }
+      } catch { callback?.(null) }
     }
   })
 
   const onDragStart = (e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad) => {
-    const dragItem: DraggableItem = {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', JSON.stringify({
       id: wl.loadId,
       type: 'range',
       content: JSON.stringify({ id: wl.loadId }),
       group: wl.epicId,
       start: new Date(),
       end: addDays(new Date(), 1)
-    }
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', JSON.stringify(dragItem))
+    }))
   }
 
   return (
