@@ -1,14 +1,16 @@
 'use client'
 
 import {
-  getAllWorkSchedules,
   updateWorkLoadTime,
   WorkEpicEntity,
   WorkLoadEntity
 } from '@/app/actions/workschedule.action'
+import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'
+import { collection } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
+import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataGroup, DataItem, DataSet, Timeline, TimelineItem, TimelineOptions } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 
@@ -30,18 +32,25 @@ const WorkSchedulePage = () => {
   const timelineInstance = useRef<Timeline | null>(null)
   const itemsDataSet = useRef<DataSet<DataItem> | null>(null)
 
+  const [epicSnapshot, epicLoading, epicError] = useCollection(
+    collection(firestore, 'workEpic')
+  )
+
   useEffect(() => {
-    getAllWorkSchedules().then(epicList => {
-      setEpics(epicList)
-      setUnplanned(
-        epicList.flatMap(e =>
-          (e.workLoads || [])
-            .filter(l => !l.plannedStartTime)
-            .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
-        )
+    if (!epicSnapshot) return
+    const epicList = epicSnapshot.docs.map(doc => ({
+      ...doc.data(),
+      epicId: doc.id
+    })) as WorkEpicEntity[]
+    setEpics(epicList)
+    setUnplanned(
+      epicList.flatMap(e =>
+        (e.workLoads || [])
+          .filter(l => !l.plannedStartTime)
+          .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
       )
-    })
-  }, [])
+    )
+  }, [epicSnapshot])
 
   useEffect(() => {
     if (!timelineRef.current || !epics.length) return
