@@ -4,7 +4,7 @@ import {
   getAllWorkSchedules,
   updateWorkLoadTime,
   WorkEpicEntity,
-  WorkLoadEntity,
+  WorkLoadEntity
 } from '@/app/actions/workschedule.action'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'
@@ -23,7 +23,7 @@ interface DraggableItem {
   end: Date
 }
 
-export default function WorkSchedulePage() {
+const WorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
@@ -31,39 +31,39 @@ export default function WorkSchedulePage() {
   const itemsDataSet = useRef<DataSet<DataItem> | null>(null)
 
   useEffect(() => {
-    getAllWorkSchedules().then((epics: WorkEpicEntity[]) => {
-      setEpics(epics)
+    getAllWorkSchedules().then(epicList => {
+      setEpics(epicList)
       setUnplanned(
-        epics.flatMap((e: WorkEpicEntity) =>
-          (e.workLoads || []).filter((l: WorkLoadEntity) => !l.plannedStartTime)
-            .map((l: WorkLoadEntity) => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
+        epicList.flatMap(e =>
+          (e.workLoads || [])
+            .filter(l => !l.plannedStartTime)
+            .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
         )
       )
     })
   }, [])
 
   useEffect(() => {
-    if (!timelineRef.current || !epics.length) return
-
+    if (!timelineRef.current || !epics.length) {
+      return
+    }
     const groups = new DataSet<DataGroup>(
-      epics.map((e: WorkEpicEntity) => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
+      epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
     )
-
     const items = new DataSet<DataItem>(
-      epics.flatMap((e: WorkEpicEntity) =>
+      epics.flatMap(e =>
         (e.workLoads || [])
-          .filter((l: WorkLoadEntity) => l.plannedStartTime)
-          .map((l: WorkLoadEntity) => ({
+          .filter(l => l.plannedStartTime)
+          .map(l => ({
             id: l.loadId,
             group: e.epicId,
             type: 'range',
             content: `<div><div>${l.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(l.executor) ? l.executor.join(', ') : l.executor || '(無執行者)'}</div></div>`,
             start: new Date(l.plannedStartTime),
-            end: l.plannedEndTime ? new Date(l.plannedEndTime) : undefined,
+            end: l.plannedEndTime ? new Date(l.plannedEndTime) : undefined
           }))
       )
     )
-
     itemsDataSet.current = items
 
     const options: TimelineOptions = {
@@ -76,9 +76,12 @@ export default function WorkSchedulePage() {
       zoomMax: 90 * 24 * 60 * 60 * 1000,
       onAdd: (item, cb) => {
         try {
-          const payload = JSON.parse(item.content as string)
-          const wl = unplanned.find((w: LooseWorkLoad) => w.loadId === payload.id)
-          if (!wl) return cb(null)
+          const payload: { id: string } = JSON.parse(item.content as string)
+          const wl = unplanned.find(w => w.loadId === payload.id)
+          if (!wl) {
+            cb(null)
+            return
+          }
           const start = item.start ? new Date(item.start) : new Date()
           const end = item.end ? new Date(item.end) : addDays(start, 1)
           const obj: TimelineItem = {
@@ -91,8 +94,10 @@ export default function WorkSchedulePage() {
           }
           cb(obj)
           updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
-          setUnplanned(prev => prev.filter((x: LooseWorkLoad) => x.loadId !== wl.loadId))
-        } catch { cb(null) }
+          setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+        } catch {
+          cb(null)
+        }
       }
     }
 
@@ -101,7 +106,9 @@ export default function WorkSchedulePage() {
 
     tl.on('move', async ({ item, start, end, group }) => {
       const d = items.get(item as string)
-      if (!d) return
+      if (!d) {
+        return
+      }
       const newStart = startOfDay(start)
       const duration = end ? Math.max(1, differenceInCalendarDays(end, start)) : 1
       const newEnd = addDays(newStart, duration)
@@ -125,17 +132,22 @@ export default function WorkSchedulePage() {
 
   useEffect(() => {
     const ref = timelineRef.current
-    if (!ref || !timelineInstance.current || !itemsDataSet.current) return
-
+    if (!ref || !timelineInstance.current || !itemsDataSet.current) {
+      return
+    }
     const handleDragOver = (e: DragEvent) => e.preventDefault()
     const handleDrop = (e: DragEvent) => {
       e.preventDefault()
       try {
         const payload: DraggableItem = JSON.parse(e.dataTransfer?.getData('text') || '{}')
         const point = timelineInstance.current!.getEventProperties(e)
-        if (!point.time) return
-        const wl = unplanned.find((w: LooseWorkLoad) => w.loadId === payload.id)
-        if (!wl) return
+        if (!point.time) {
+          return
+        }
+        const wl = unplanned.find(w => w.loadId === payload.id)
+        if (!wl) {
+          return
+        }
         const groupId = payload.group || epics[0].epicId
         const startTime = startOfDay(point.time)
         const endTime = addDays(startTime, 1)
@@ -148,9 +160,9 @@ export default function WorkSchedulePage() {
             end: endTime,
             type: 'range'
           })
-          setUnplanned(prev => prev.filter((x: LooseWorkLoad) => x.loadId !== wl.loadId))
+          setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
         })
-      } catch { /* ignore */ }
+      } catch { }
     }
     ref.addEventListener('dragover', handleDragOver)
     ref.addEventListener('drop', handleDrop)
@@ -173,27 +185,22 @@ export default function WorkSchedulePage() {
     e.dataTransfer.setData('text/plain', JSON.stringify(dragItem))
   }
 
-  // ==================== 只改這裡，未排班卡片在最下方黑底 ====================
   return (
     <div className="min-h-screen w-full bg-black flex flex-col">
-      {/* 上黑邊 */}
       <div className="flex-none h-[20vh]" />
-      {/* 銀幕區 - 置中、圓角、白底 */}
       <div className="flex-none h-[60vh] w-full flex items-center justify-center">
         <div
           className="w-full h-full max-w-[96vw] rounded-2xl bg-white border border-gray-300 shadow overflow-hidden"
           ref={timelineRef}
         />
       </div>
-      {/* 下黑邊+未排班工作 */}
       <div className="flex-none h-[20vh] w-full bg-black px-4 py-2 overflow-y-auto">
         <div className="max-w-7xl mx-auto h-full flex flex-col">
           <h2 className="text-lg font-bold text-center text-white mb-2">未排班工作</h2>
           <div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
-            {unplanned.length === 0 && (
+            {unplanned.length === 0 ? (
               <div className="text-gray-400">（無）</div>
-            )}
-            {unplanned.map((wl: LooseWorkLoad) => (
+            ) : unplanned.map(wl => (
               <div
                 key={wl.loadId}
                 className="cursor-move bg-yellow-50 border rounded px-3 py-2 text-sm hover:bg-yellow-100 flex items-center"
@@ -216,5 +223,6 @@ export default function WorkSchedulePage() {
       <ClientBottomNav />
     </div>
   )
-  // ==================== 改到這裡結束 ====================
 }
+
+export default WorkSchedulePage
