@@ -9,59 +9,56 @@ import { getAllWorkZones } from '@/app/actions/workzone.action';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import React, { useEffect, useState } from "react";
 
+// 產生 0-9a-z 的 6 碼短碼
+function shortId(prefix: string = ""): string {
+    return `${prefix}${Math.random().toString(36).slice(2, 8)}`;
+}
+
 const WorkTemplatePage: React.FC = () => {
-    // 工作種類
     const [workTypes, setWorkTypes] = useState<WorkTypeEntity[]>([]);
-    const [newWorkTypeTitle, setNewWorkTypeTitle] = useState("");
-    // 工作流程（移除 workFlows state，直接用 workTypes）
-    const [selectedWorkTypeId, setSelectedWorkTypeId] = useState("");
-    const [newStepName, setNewStepName] = useState("");
-    const [newStepOrder, setNewStepOrder] = useState(1);
-    const [newStepSkills, setNewStepSkills] = useState("");
-    // Epic 操作
+    const [newWorkTypeTitle, setNewWorkTypeTitle] = useState<string>("");
+    const [selectedWorkTypeId, setSelectedWorkTypeId] = useState<string>("");
+    const [newStepName, setNewStepName] = useState<string>("");
+    const [newStepOrder, setNewStepOrder] = useState<number>(1);
+    const [newStepSkills, setNewStepSkills] = useState<string>("");
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
-    const [selectedWorkEpicId, setSelectedWorkEpicId] = useState("");
-    const [selectedWorkZoneId, setSelectedWorkZoneId] = useState("");
+    const [selectedWorkEpicId, setSelectedWorkEpicId] = useState<string>("");
+    const [selectedWorkZoneId, setSelectedWorkZoneId] = useState<string>("");
     const [selectedWorkFlowIds, setSelectedWorkFlowIds] = useState<string[]>([]);
-    const [flowQuantities, setFlowQuantities] = useState<{ [k: string]: number }>({});
-    const [workloadCounts, setWorkloadCounts] = useState<{ [k: string]: number }>({});
-    const [showValidationError, setShowValidationError] = useState(false);
+    const [flowQuantities, setFlowQuantities] = useState<Record<string, number>>({});
+    const [workloadCounts, setWorkloadCounts] = useState<Record<string, number>>({});
+    const [showValidationError, setShowValidationError] = useState<boolean>(false);
     const [allWorkZones, setAllWorkZones] = useState<WorkZoneEntity[]>([]);
 
-    // 載入所有基礎資料
     useEffect(() => {
         (async () => {
             const types = await getAllWorkTypes(true) as WorkTypeEntity[];
             setWorkTypes(types);
             const epics = await getAllWorkEpics(false) as WorkEpicEntity[];
             setWorkEpics(epics);
-            // 修正：getAllWorkZones 不接受參數，直接呼叫即可
             const zones = await getAllWorkZones() as WorkZoneEntity[];
             setAllWorkZones(zones);
         })();
     }, []);
 
-    // 新增工作種類
     async function handleAddWorkType() {
         const title = newWorkTypeTitle.trim();
         if (!title) return alert("請輸入標題！");
-        const newWorkType: WorkTypeEntity = { typeId: `type-${Date.now()}`, title, requiredSkills: [], flows: [] };
+        const newWorkType: WorkTypeEntity = { typeId: shortId('wt-'), title, requiredSkills: [], flows: [] };
         await addWorkType(newWorkType);
         setWorkTypes(prev => [...prev, newWorkType]);
         setNewWorkTypeTitle("");
     }
 
-    // 新增步驟（流程）
     async function handleAddStep() {
         if (!selectedWorkTypeId || !newStepName.trim()) return;
-        const idx = workTypes.findIndex(t => t.typeId === selectedWorkTypeId);
-        if (idx === -1) return;
-        const workType = workTypes[idx];
+        const workType = workTypes.find(t => t.typeId === selectedWorkTypeId);
+        if (!workType) return;
         const steps = (workType.flows || []).flatMap(f => f.steps);
         const existingOrders = steps.map(s => s.order);
         if (existingOrders.includes(newStepOrder)) return alert("順序重複");
         const newFlow: WorkFlowEntity = {
-            flowId: `flow-${Date.now()}`,
+            flowId: shortId('fl-'),
             workTypeId: selectedWorkTypeId,
             steps: [{
                 stepName: newStepName,
@@ -71,13 +68,14 @@ const WorkTemplatePage: React.FC = () => {
         };
         const updatedFlows = [...(workType.flows || []), newFlow];
         await updateWorkType(selectedWorkTypeId, { flows: updatedFlows });
-        setWorkTypes(prev => prev.map((t, i) => i === idx ? { ...t, flows: updatedFlows } : t));
+        setWorkTypes(prev => prev.map(t =>
+            t.typeId === selectedWorkTypeId ? { ...t, flows: updatedFlows } : t
+        ));
         setNewStepName("");
         setNewStepSkills("");
         setNewStepOrder(newStepOrder + 1);
     }
 
-    // Epic 加入工作流程
     async function handleAddToWorkEpic() {
         if (!selectedWorkEpicId || !selectedWorkTypeId || selectedWorkFlowIds.length === 0) {
             setShowValidationError(true);
@@ -88,24 +86,30 @@ const WorkTemplatePage: React.FC = () => {
         if (!epic || !type || !type.flows) return;
         const flows = type.flows.filter(f => selectedWorkFlowIds.includes(f.flowId));
         if (flows.length === 0) return;
-        const now = Date.now();
         const tasks: WorkTaskEntity[] = [];
         const loads: WorkLoadEntity[] = [];
-        flows.forEach((flow, idx) => {
+        flows.forEach((flow) => {
             const qty = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
             const stepName = flow.steps[0]?.stepName || "";
-            const taskId = `task-${epic.epicId}-${idx}-${now}`;
+            const taskId = shortId('tk-');
             tasks.push({
                 taskId, flowId: flow.flowId, targetQuantity: qty, unit: '單位',
                 completedQuantity: 0, status: '待分配', title: `${epic.title}-${type.title}-${stepName}`
             });
             for (let j = 0; j < split; j++) {
+                const loadId = shortId('ld-');
                 loads.push({
-                    loadId: `load-${epic.epicId}-${idx}-${j}-${now}`,
-                    taskId, plannedQuantity: Math.floor(qty / split), unit: "單位",
-                    plannedStartTime: "", plannedEndTime: "", actualQuantity: 0, executor: [],
-                    title: `${epic.title}-${type.title}-${stepName}-${j + 1}`, epicIds: [epic.epicId]
+                    loadId,
+                    taskId,
+                    plannedQuantity: Math.floor(qty / split),
+                    unit: "單位",
+                    plannedStartTime: "",
+                    plannedEndTime: "",
+                    actualQuantity: 0,
+                    executor: [],
+                    title: `${epic.title}-${type.title}-${stepName}-${j + 1}`,
+                    epicIds: [epic.epicId]
                 });
             }
         });
@@ -118,7 +122,6 @@ const WorkTemplatePage: React.FC = () => {
         setShowValidationError(false);
     }
 
-    // 對應 options
     const epicOptions = workEpics.map(e => <option value={e.epicId} key={e.epicId}>{e.title}</option>);
     const typeOptions = workTypes.map(t => <option value={t.typeId} key={t.typeId}>{t.title}</option>);
     const selectedType = workTypes.find(t => t.typeId === selectedWorkTypeId);
