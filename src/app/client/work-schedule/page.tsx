@@ -97,7 +97,7 @@ const WorkSchedulePage = () => {
             type: 'range'
           }
           cb(obj)
-          const updatedWorkLoad = await updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
+          const updatedWorkLoad = await updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString(), new Date().toISOString())
           if (updatedWorkLoad) {
             setEpics(prevEpics => {
               return prevEpics.map(epic => {
@@ -112,6 +112,7 @@ const WorkSchedulePage = () => {
               })
             })
             setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+            console.log(`Workload time updated successfully for loadId: ${wl.loadId}`)
           }
         } catch { cb(null) }
       }
@@ -132,7 +133,8 @@ const WorkSchedulePage = () => {
           group || d.group,
           d.id as string,
           newStart.toISOString(),
-          newEnd.toISOString()
+          newEnd.toISOString(),
+          new Date().toISOString()
         )
 
         if (updatedWorkLoad) {
@@ -149,6 +151,7 @@ const WorkSchedulePage = () => {
               }
             })
           })
+          console.log(`Workload time updated successfully for loadId: ${d.id}`)
         }
       } catch (err) {
         console.error('更新工作負載時間失敗:', err)
@@ -179,7 +182,7 @@ const WorkSchedulePage = () => {
         const groupId = payload.group || epics[0].epicId
         const startTime = startOfDay(point.time)
         const endTime = addDays(startTime, 1)
-        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString()).then((updatedWorkLoad) => {
+        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString(), new Date().toISOString()).then((updatedWorkLoad) => {
           if (updatedWorkLoad) {
             itemsDataSet.current?.add({
               id: wl.loadId,
@@ -202,6 +205,7 @@ const WorkSchedulePage = () => {
               })
             })
             setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+            console.log(`Workload time updated successfully for loadId: ${wl.loadId}`)
           }
         })
       } catch { }

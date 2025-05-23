@@ -17,6 +17,7 @@ export interface WorkLoadEntity {
     title: string
     notes?: string
     epicIds: string[]
+    updatedAt?: string // P9421
 }
 
 /**
@@ -82,13 +83,16 @@ export const updateWorkLoadTime = async (
                 workLoads[index] = {
                     ...workLoads[index],
                     plannedStartTime,
-                    plannedEndTime
+                    plannedEndTime,
+                    updatedAt: new Date().toISOString() // P9421
                 };
                 updatedWorkLoad = { ...workLoads[index] };
             }
 
             transaction.update(epicRef, { workLoads });
         });
+
+        console.log(`Workload time updated successfully for loadId: ${loadId}`); // Pc9e5
 
         return updatedWorkLoad;
     } catch (error) {
