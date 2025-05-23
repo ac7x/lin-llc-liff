@@ -1,14 +1,21 @@
 import { useEffect } from 'react'
-import { Timeline } from 'vis-timeline/standalone'
+import { Timeline, TimelineItem } from 'vis-timeline/standalone'
 
-/**
- * Timeline event handler props
- */
+export interface AddEventProps {
+    item: TimelineItem
+    callback: (item: TimelineItem | null) => void
+}
+
+export interface MoveEventProps {
+    item: string // TimelineItem id
+    start: Date
+    end?: Date
+    group?: string
+    event?: Event
+}
+
 export type TimelineEventHandler<T = unknown> = (props: T) => void
 
-/**
- * Props for useTimelineListeners
- */
 export interface UseTimelineListenersProps {
     timeline: Timeline | null
     onSelect?: TimelineEventHandler
@@ -20,24 +27,19 @@ export interface UseTimelineListenersProps {
     onDoubleClick?: TimelineEventHandler
     onContextMenu?: TimelineEventHandler
     onDrop?: TimelineEventHandler
-    onAdd?: TimelineEventHandler
-    onMove?: TimelineEventHandler
+    onAdd?: TimelineEventHandler<AddEventProps>
+    onMove?: TimelineEventHandler<MoveEventProps>
     onRemove?: TimelineEventHandler
     onStartResizing?: TimelineEventHandler
     onEndResizing?: TimelineEventHandler
-    // ...可以持續擴充
+    // ...持續擴充
 }
 
-/**
- * Hook: 自動註冊/移除 Timeline 事件監聽
- */
 export const useTimelineListeners = (props: UseTimelineListenersProps): void => {
     const { timeline, ...listeners } = props
 
     useEffect(() => {
-        if (!timeline) {
-            return
-        }
+        if (!timeline) return
 
         Object.entries(listeners).forEach(([event, handler]) => {
             if (handler) {

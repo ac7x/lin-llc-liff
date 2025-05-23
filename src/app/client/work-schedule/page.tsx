@@ -8,7 +8,7 @@ import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataGroup, DataItem, DataSet, Timeline, TimelineItem, TimelineOptions } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 import { firestore } from './firebase/clientApp'
-import { useTimelineListeners } from './useTimelineListeners'
+import { AddEventProps, MoveEventProps, useTimelineListeners } from './useTimelineListeners'
 import {
   updateWorkLoadTime,
   WorkEpicEntity,
@@ -91,7 +91,7 @@ const WorkSchedulePage = () => {
 
   useTimelineListeners({
     timeline: timelineInstance.current,
-    onAdd: async (props) => {
+    onAdd: async (props: AddEventProps) => {
       try {
         const { item, callback: cb } = props
         const payload: { id: string } = JSON.parse(item.content as string)
@@ -121,7 +121,7 @@ const WorkSchedulePage = () => {
         }
       } catch (err) { console.error('新增工作負載失敗:', err) }
     },
-    onMove: async (props) => {
+    onMove: async (props: MoveEventProps) => {
       const { item: itemId, start, end, group } = props
       if (!itemsDataSet.current) return
 
