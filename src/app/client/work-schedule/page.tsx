@@ -148,7 +148,7 @@ const WorkSchedulePage = () => {
             start: newStart,
             end: newEnd,
             group: group || item.group,
-            type: item.type as any // 轉換為正確的 TimelineItemType
+            type: 'range' // 使用確切的類型而非 any
           }
           callback(updatedItem)
         }
