@@ -1,12 +1,17 @@
 import { useEffect } from 'react'
 import { Timeline, TimelineItem } from 'vis-timeline/standalone'
 
-// 事件參數型別
+/**
+ * 新增事件參數型別
+ */
 export interface AddEventProps {
     item: TimelineItem
     callback: (item: TimelineItem | null) => void
 }
 
+/**
+ * 移動事件參數型別
+ */
 export interface MoveEventProps {
     item: string // TimelineItem id
     start: Date
@@ -15,8 +20,14 @@ export interface MoveEventProps {
     event?: Event
 }
 
+/**
+ * Timeline 事件處理函式型別
+ */
 export type TimelineEventHandler<T = unknown> = (props: T) => void
 
+/**
+ * useTimelineListeners 的 props
+ */
 export interface UseTimelineListenersProps {
     timeline: Timeline | null
     onSelect?: TimelineEventHandler<any>
@@ -55,8 +66,10 @@ export interface UseTimelineListenersProps {
     // ...持續擴充
 }
 
-// 事件對應表
-const EVENT_PROP_MAP = [
+/**
+ * 事件對應表
+ */
+const eventPropMap = [
     { event: 'select', prop: 'onSelect' },
     { event: 'deselect', prop: 'onDeselect' },
     { event: 'itemover', prop: 'onItemOver' },
@@ -89,16 +102,22 @@ const EVENT_PROP_MAP = [
     { event: 'markerChange', prop: 'onMarkerChange' },
     { event: 'currentTimeTick', prop: 'onCurrentTimeTick' },
     { event: 'timechanged', prop: 'onTimeChanged' },
-    { event: 'destroy', prop: 'onDestroy' },
+    { event: 'destroy', prop: 'onDestroy' }
 ] as const
 
+/**
+ * 綁定與移除 Timeline 事件監聽器
+ * @param props UseTimelineListenersProps
+ */
 export const useTimelineListeners = (props: UseTimelineListenersProps): void => {
     const { timeline } = props
 
     useEffect(() => {
-        if (!timeline) return
+        if (!timeline) {
+            return
+        }
 
-        EVENT_PROP_MAP.forEach(({ event, prop }) => {
+        eventPropMap.forEach(({ event, prop }) => {
             const handler = props[prop as keyof UseTimelineListenersProps]
             if (handler) {
                 timeline.on(event, handler as any)
@@ -106,7 +125,7 @@ export const useTimelineListeners = (props: UseTimelineListenersProps): void => 
         })
 
         return () => {
-            EVENT_PROP_MAP.forEach(({ event, prop }) => {
+            eventPropMap.forEach(({ event, prop }) => {
                 const handler = props[prop as keyof UseTimelineListenersProps]
                 if (handler) {
                     timeline.off(event, handler as any)
@@ -114,5 +133,5 @@ export const useTimelineListeners = (props: UseTimelineListenersProps): void => 
             })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [timeline, ...EVENT_PROP_MAP.map(({ prop }) => props[prop as keyof UseTimelineListenersProps])])
+    }, [timeline, ...eventPropMap.map(({ prop }) => props[prop as keyof UseTimelineListenersProps])])
 }
