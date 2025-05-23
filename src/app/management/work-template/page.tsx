@@ -151,9 +151,26 @@ const WorkTemplatePage: React.FC = () => {
                     {workTypes.map(t => <li key={t.typeId}>{t.title}</li>)}
                 </ul>
                 <h2 className="font-bold mt-6 mb-2">流程管理</h2>
-                <select value={selectedWorkTypeId} onChange={e => setSelectedWorkTypeId(e.target.value)} className="border p-1 mb-2">
-                    <option value="">選擇種類</option>{typeOptions}
-                </select>
+                <div className="flex gap-2 mb-2">
+                    <select
+                        value={selectedWorkTypeId}
+                        onChange={e => setSelectedWorkTypeId(e.target.value)}
+                        className="border p-1"
+                    >
+                        <option value="">選擇種類</option>
+                        {typeOptions}
+                    </select>
+                    <select
+                        value={selectedWorkZoneId}
+                        onChange={e => setSelectedWorkZoneId(e.target.value)}
+                        className="border p-1"
+                    >
+                        <option value="">請選擇工作區</option>
+                        {allWorkZones.map(zone => (
+                            <option key={zone.zoneId} value={zone.zoneId}>{zone.title}</option>
+                        ))}
+                    </select>
+                </div>
                 <div>
                     <input value={newStepName} onChange={e => setNewStepName(e.target.value)} placeholder="步驟名稱" className="border p-1 mr-1" />
                     <input type="number" value={newStepOrder} min={1} onChange={e => setNewStepOrder(Number(e.target.value))} className="border w-16 p-1 mr-1" />
@@ -221,19 +238,7 @@ const WorkTemplatePage: React.FC = () => {
                 </div>
                 {showValidationError && <div className="text-red-500">請確保所有項目都已選擇！</div>}
                 <button onClick={handleAddToWorkEpic} className="bg-green-500 text-white px-3 py-1 mt-2">加入標的</button>
-                <div className="mb-4">
-                    <label className="block mb-2 font-medium">選擇工作區：</label>
-                    <select
-                        className="border p-2 rounded w-full"
-                        value={selectedWorkZoneId}
-                        onChange={e => setSelectedWorkZoneId(e.target.value)}
-                    >
-                        <option value="">請選擇工作區</option>
-                        {allWorkZones.map(zone => (
-                            <option key={zone.zoneId} value={zone.zoneId}>{zone.title}</option>
-                        ))}
-                    </select>
-                </div>
+                {/* 已從底部移除單獨的選擇工作區 */}
             </main>
             <ManagementBottomNav />
         </>
