@@ -62,13 +62,35 @@ const WorkSchedulePage = () => {
     itemsDataSet.current = items
 
     const options: TimelineOptions = {
-      stack: true,
       orientation: 'top',
-      editable: { updateTime: true, updateGroup: true, remove: false, add: true },
+      editable: {
+        updateTime: true,
+        updateGroup: true,
+        remove: false,
+        add: true,
+        overrideItems: false  // 允許項目級別的設定覆蓋
+      },
+      // 自訂遊標吸附函數 - 讓項目按天對齊
+      snap: (date, scale, step) => {
+        return startOfDay(date)
+      },
+      // 確保項目之間不會重疊
+      stack: true,
+      // 點擊即使用
+      clickToUse: false,
+      // 支援拖放
+      height: '100%',
       locale: 'zh-tw',
-      tooltip: { followMouse: true },
-      zoomMin: 24 * 60 * 60 * 1000,
-      zoomMax: 90 * 24 * 60 * 60 * 1000
+      tooltip: {
+        followMouse: true,
+        overflowMethod: 'cap'
+      },
+      zoomMin: 24 * 60 * 60 * 1000, // 最小縮放為1天
+      zoomMax: 90 * 24 * 60 * 60 * 1000, // 最大縮放為90天
+      // 顯示當前時間線
+      showCurrentTime: true,
+      // 設置項目默認類型
+      type: 'range'
     }
 
     const tl = new Timeline(timelineRef.current, items, groups, options)
@@ -86,12 +108,33 @@ const WorkSchedulePage = () => {
     timeline: timelineInstance,
     onAdd: async (props: TimelineAddEventProps) => {
       try {
-        const { item, callback: cb } = props
-        const payload: { id: string } = JSON.parse(item.content as string)
+        const { item, callback } = props
+        let payload: { id: string };
+
+        try {
+          // 嘗試解析拖曳的內容
+          payload = JSON.parse(item.content as string);
+          if (!payload || !payload.id) {
+            console.error('無效的拖曳項目資料');
+            return callback(null);
+          }
+        } catch (parseError) {
+          console.error('解析拖曳項目資料失敗:', parseError);
+          return callback(null);
+        }
+
+        // 找到對應的未排程工作負載
         const wl = unplanned.find(w => w.loadId === payload.id)
-        if (!wl) return cb(null)
+        if (!wl) {
+          console.error(`找不到工作負載 ID: ${payload.id}`);
+          return callback(null);
+        }
+
+        // 計算開始和結束時間
         const start = item.start ? new Date(item.start) : new Date()
         const end = item.end ? new Date(item.end) : addDays(start, 1)
+
+        // 建立時間軸上的項目
         const obj: TimelineItem = {
           id: wl.loadId,
           group: item.group || epics[0].epicId,
@@ -100,19 +143,47 @@ const WorkSchedulePage = () => {
           end,
           type: 'range'
         }
-        cb(obj)
-        const updatedWorkLoad = await updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
-        if (updatedWorkLoad) {
-          setEpics(prev =>
-            prev.map(epic =>
-              updatedWorkLoad.epicIds?.includes(epic.epicId)
-                ? { ...epic, workLoads: (epic.workLoads || []).map(load => load.loadId === updatedWorkLoad.loadId ? updatedWorkLoad : load) }
-                : epic
-            )
+
+        // 先確認更新 UI
+        callback(obj)
+
+        try {
+          // 嘗試更新資料庫
+          const updatedWorkLoad = await updateWorkLoadTime(
+            String(obj.group),
+            String(wl.loadId),
+            start.toISOString(),
+            end.toISOString(),
+            3 // 重試3次
           )
-          setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+
+          if (updatedWorkLoad) {
+            // 更新本地狀態
+            setEpics(prev =>
+              prev.map(epic =>
+                updatedWorkLoad.epicIds?.includes(epic.epicId)
+                  ? { ...epic, workLoads: (epic.workLoads || []).map(load => load.loadId === updatedWorkLoad.loadId ? updatedWorkLoad : load) }
+                  : epic
+              )
+            )
+            setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+          }
+        } catch (dbError) {
+          console.error('更新資料庫失敗:', dbError);
+          // 資料庫更新失敗，但UI已更新 - 可以考慮提醒使用者刷新頁面
+          // 或實作一個回滾機制
+          if (itemsDataSet.current) {
+            try {
+              itemsDataSet.current.remove(String(wl.loadId));
+            } catch (removeError) {
+              console.error('無法從時間軸移除失敗的項目:', removeError);
+            }
+          }
         }
-      } catch (err) { console.error('新增工作負載失敗:', err) }
+      } catch (err) {
+        console.error('新增工作負載失敗:', err);
+        props.callback(null); // 確保取消操作
+      }
     },
     onMove: async (props: TimelineMoveEventProps) => {
       const { item: itemId, start, end, group, callback } = props
@@ -131,27 +202,30 @@ const WorkSchedulePage = () => {
       const duration = end ? Math.max(1, differenceInCalendarDays(end, start)) : 1
       const newEnd = addDays(newStart, duration)
 
+      // 使用類型轉換確保類型正確
+      const updatedItem: TimelineItem = {
+        id: item.id,
+        content: item.content as string,
+        start: newStart,
+        end: newEnd,
+        group: group || item.group,
+        type: 'range'
+      }
+
+      // 先更新畫面反應，立即得到反饋
+      if (callback) {
+        callback(updatedItem)
+      }
+
       try {
+        // 再嘗試更新資料庫
         const updatedWorkLoad = await updateWorkLoadTime(
           group || item.group,
           item.id,
           newStart.toISOString(),
-          newEnd.toISOString()
+          newEnd.toISOString(),
+          3 // 重試 3 次
         )
-
-        // 確認移動並更新畫面上的項目
-        if (callback) {
-          // 使用類型轉換確保類型正確
-          const updatedItem: TimelineItem = {
-            id: item.id,
-            content: item.content as string,
-            start: newStart,
-            end: newEnd,
-            group: group || item.group,
-            type: 'range' // 使用確切的類型而非 any
-          }
-          callback(updatedItem)
-        }
 
         if (updatedWorkLoad) {
           setEpics(prev =>

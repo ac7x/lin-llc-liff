@@ -35,40 +35,109 @@ export const getAllWorkSchedules = async (): Promise<WorkEpicEntity[]> => {
 
 /**
  * 更新單一工作負載的時間，直接寫 Redis，並觸發同步
+ * 新增重試機制和直接寫入 Firestore 的備選方案
  */
 export const updateWorkLoadTime = async (
     epicId: string,
     loadId: string,
     plannedStartTime: string,
     plannedEndTime: string | null,
+    retryCount = 3
 ): Promise<WorkLoadEntity | null> => {
     if (!epicId || !loadId || !plannedStartTime) {
         throw new Error('缺少必要參數')
     }
 
-    // 1. 更新 Redis
-    const success = await redisCache.updateWorkLoad(epicId, loadId, {
+    // 準備要更新的資料
+    const updateData = {
         plannedStartTime,
         plannedEndTime
-    })
+    };
 
+    // 1. 嘗試使用 Redis 更新，具有重試機制
+    let success = false;
+    let lastError = null;
+
+    for (let i = 0; i < retryCount; i++) {
+        try {
+            // 嘗試更新 Redis
+            success = await redisCache.updateWorkLoad(epicId, loadId, updateData);
+            if (success) break; // 如果成功就跳出循環
+
+            console.log(`Redis 更新嘗試 ${i + 1}/${retryCount} 失敗，正在重試...`);
+            // 短暫等待後重試
+            await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (err) {
+            lastError = err;
+            console.error(`Redis 更新嘗試 ${i + 1}/${retryCount} 發生錯誤:`, err);
+            // 短暫等待後重試
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+    }
+
+    // 如果 Redis 全部嘗試都失敗，則直接嘗試更新 Firestore
     if (!success) {
-        throw new Error('更新失敗')
+        console.warn('Redis 更新失敗，直接嘗試更新 Firestore');
+        try {
+            // 先讀取 Firestore 資料
+            const docRef = firestoreAdmin.collection('workEpic').doc(epicId);
+            const epicDoc = await docRef.get();
+
+            if (!epicDoc.exists) {
+                throw new Error(`Epic 不存在: ${epicId}`);
+            }
+
+            const epicData = epicDoc.data() as WorkEpicEntity;
+            const workLoads = epicData.workLoads || [];
+            const loadIndex = workLoads.findIndex(w => w.loadId === loadId);
+
+            if (loadIndex === -1) {
+                throw new Error(`工作負載不存在: ${loadId}`);
+            }
+
+            // 更新工作負載
+            workLoads[loadIndex] = {
+                ...workLoads[loadIndex],
+                ...updateData
+            };
+
+            // 直接寫回 Firestore
+            await docRef.update({ workLoads });
+
+            // 更新成功後，同步回 Redis
+            try {
+                const updatedEpic = { ...epicData, workLoads };
+                const cachedSchedules = await redisCache.getWorkSchedules();
+                const updatedSchedules = cachedSchedules.map(e =>
+                    e.epicId === epicId ? updatedEpic : e
+                );
+                await redisCache.setWorkSchedules(updatedSchedules);
+            } catch (redisErr) {
+                // Redis 同步失敗不影響主流程，僅記錄
+                console.error('Redis 同步更新後資料失敗:', redisErr);
+            }
+
+            return workLoads[loadIndex];
+        } catch (firestoreErr) {
+            // Firestore 也失敗，拋出原始 Redis 錯誤
+            console.error('Firestore 直接更新也失敗:', firestoreErr);
+            throw lastError || new Error('更新失敗（Redis 和 Firestore 都失敗）');
+        }
     }
 
     // 2. 取得更新後的資料
-    const schedules = await redisCache.getWorkSchedules()
-    const epic = schedules.find(e => e.epicId === epicId)
-    const workLoad = epic?.workLoads?.find(w => w.loadId === loadId)
+    const schedules = await redisCache.getWorkSchedules();
+    const epic = schedules.find(e => e.epicId === epicId);
+    const workLoad = epic?.workLoads?.find(w => w.loadId === loadId);
 
     if (!workLoad) {
-        throw new Error('找不到更新後的工作負載')
+        throw new Error('找不到更新後的工作負載');
     }
 
     // 3. 排程同步到 Firestore（延遲執行，避免頻繁同步）
-    await scheduleSyncToFirestore(epicId)
+    await scheduleSyncToFirestore(epicId);
 
-    return workLoad
+    return workLoad;
 }
 
 /**
@@ -118,16 +187,52 @@ async function syncSchedulesToFirestore() {
 
         // 只同步需要更新的 epics
         for (const epicId of epicIds) {
-            const epic = schedules.find(e => e.epicId === epicId)
-            if (epic) {
+            try {
+                const epic = schedules.find(e => e.epicId === epicId)
+                if (!epic) {
+                    console.warn(`[同步 Firestore] 找不到 epicId: ${epicId}`)
+                    continue
+                }
+
+                // 取得最新的 Firestore 資料進行比較，避免覆蓋其他更新
                 const epicRef = firestoreAdmin.collection('workEpic').doc(epicId)
-                await epicRef.set(epic, { merge: true })
+                const firestoreDoc = await epicRef.get()
+
+                if (!firestoreDoc.exists) {
+                    console.warn(`[同步 Firestore] Firestore 中不存在 epicId: ${epicId}，執行完整寫入`)
+                    await epicRef.set(epic)
+                    continue
+                }
+
+                // 智能合併工作負載資料：僅更新 plannedStartTime 和 plannedEndTime
+                const firestoreData = firestoreDoc.data() as WorkEpicEntity
+                const updatedWorkLoads = epic.workLoads?.map(workLoad => {
+                    const existingWorkLoad = firestoreData.workLoads?.find(w => w.loadId === workLoad.loadId)
+                    if (existingWorkLoad) {
+                        // 僅更新計畫時間，保留其他欄位的最新資料
+                        return {
+                            ...existingWorkLoad,
+                            plannedStartTime: workLoad.plannedStartTime,
+                            plannedEndTime: workLoad.plannedEndTime
+                        }
+                    }
+                    return workLoad
+                }) || []
+
+                // 更新 Firestore，僅更新工作負載陣列
+                await epicRef.update({ workLoads: updatedWorkLoads })
+                console.log(`[同步 Firestore] 成功同步 epicId: ${epicId}`)
+            } catch (epicError) {
+                // 單個 epic 更新失敗不應中斷整個同步過程
+                console.error(`[同步 Firestore] 更新 epicId: ${epicId} 失敗:`, epicError)
             }
         }
 
         // 清除同步狀態
         await client.del(CACHE_KEYS.SYNC_STATUS)
+        console.log('[同步 Firestore] 完成同步')
     } catch (err) {
         console.error('[同步 Firestore 失敗]', err)
+        // 同步失敗不拋出錯誤，避免影響使用者體驗，但會保留同步狀態以便下次重試
     }
 }

@@ -68,22 +68,44 @@ class RedisClient {
         loadId: string,
         update: Partial<Pick<WorkLoadEntity, 'plannedStartTime' | 'plannedEndTime'>>
     ): Promise<boolean> {
-        const schedules = await this.getWorkSchedules()
-        const epicIndex = schedules.findIndex(e => e.epicId === epicId)
-        if (epicIndex === -1) return false
+        try {
+            // 確保連線
+            const client = await this.ensureConnection()
+            if (!client) throw new Error('無法連接到 Redis')
 
-        const workLoads = schedules[epicIndex].workLoads || []
-        const loadIndex = workLoads.findIndex(l => l.loadId === loadId)
-        if (loadIndex === -1) return false
+            // 取得排程資料
+            const schedules = await this.getWorkSchedules()
 
-        workLoads[loadIndex] = { ...workLoads[loadIndex], ...update }
-        schedules[epicIndex].workLoads = workLoads
+            // 尋找對應的 epic
+            const epicIndex = schedules.findIndex(e => e.epicId === epicId)
+            if (epicIndex === -1) {
+                console.warn(`找不到 Epic: ${epicId}`)
+                return false
+            }
 
-        await this.setWorkSchedules(schedules)
-        // 設定需要同步的標記
-        const client = await this.ensureConnection()
-        await client.setEx(CACHE_KEYS.SYNC_FLAG, DEFAULT_EXPIRE, 'true')
-        return true
+            // 尋找對應的工作負載
+            const workLoads = schedules[epicIndex].workLoads || []
+            const loadIndex = workLoads.findIndex(l => l.loadId === loadId)
+            if (loadIndex === -1) {
+                console.warn(`找不到工作負載: ${loadId}`)
+                return false
+            }
+
+            // 更新工作負載
+            workLoads[loadIndex] = { ...workLoads[loadIndex], ...update }
+            schedules[epicIndex].workLoads = workLoads
+
+            // 寫入 Redis
+            await this.setWorkSchedules(schedules)
+
+            // 設定需要同步的標記
+            await client.setEx(CACHE_KEYS.SYNC_FLAG, DEFAULT_EXPIRE, 'true')
+
+            return true
+        } catch (error) {
+            console.error('Redis updateWorkLoad 失敗:', error)
+            throw error // 重新拋出以便上層進行重試或降級處理
+        }
     }
 }
 
