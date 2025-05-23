@@ -77,6 +77,9 @@ export const updateWorkLoadTime = async (
             const epicData = epicDoc.data();
             if (!epicData || !Array.isArray(epicData.workLoads)) return;
 
+            console.log(`Updating workload time for epicId: ${epicId}, loadId: ${loadId}, plannedStartTime: ${plannedStartTime}, plannedEndTime: ${plannedEndTime}`); // P5f30
+            console.log(`Workloads before update:`, epicData.workLoads); // P48d7
+
             const workLoads = [...epicData.workLoads];
             const index = workLoads.findIndex(wl => wl.loadId === loadId);
             if (index !== -1) {
@@ -89,12 +92,12 @@ export const updateWorkLoadTime = async (
                 updatedWorkLoad = { ...workLoads[index] };
             }
 
+            console.log(`Workloads after update:`, workLoads); // Pbd96
+
             transaction.update(epicRef, { workLoads });
         });
 
-        console.log(`Workload time updated successfully for loadId: ${loadId}`); // Pc9e5
-        console.log(`Updating workload time for epicId: ${epicId}, loadId: ${loadId}, plannedStartTime: ${plannedStartTime}, plannedEndTime: ${plannedEndTime}`); // P1ddf
-        console.log(`Updated workload object:`, updatedWorkLoad); // Pfcfe
+        console.log(`Updated workload object:`, updatedWorkLoad); // Pfaf2
 
         return updatedWorkLoad;
     } catch (error) {
