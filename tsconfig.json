@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2022", // 可依 Node 版本調整，現代建議
     "lib": [
       "dom",
       "dom.iterable",
       "esnext"
     ],
-    "allowJs": true,
+    "allowJs": false, // 若無 JS 檔案，建議關閉
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
@@ -38,8 +38,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    "src/modules/line/liff/infrastructure/liff.action.ts"
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
