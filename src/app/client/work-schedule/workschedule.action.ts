@@ -15,6 +15,7 @@ const CACHE_TIMES = {
 
 /**
  * 取得所有工作排程（支援 Redis 快取）
+ * 只在 server 端執行，快取內容為 JSON 字串
  */
 export const getAllWorkSchedules = async (): Promise<WorkEpicEntity[]> => {
     const cached = await redisCache.get(CACHE_KEYS.ALL_SCHEDULES)
@@ -22,7 +23,7 @@ export const getAllWorkSchedules = async (): Promise<WorkEpicEntity[]> => {
         try {
             return JSON.parse(cached) as WorkEpicEntity[]
         } catch {
-            // 快取解析失敗，繼續執行查詢
+            // 快取解析失敗，繼續查詢 Firestore
         }
     }
 
@@ -32,6 +33,9 @@ export const getAllWorkSchedules = async (): Promise<WorkEpicEntity[]> => {
     return data
 }
 
+/**
+ * 更新單一工作負載的時間，並清除快取
+ */
 export const updateWorkLoadTime = async (
     epicId: string,
     loadId: string,
@@ -63,7 +67,7 @@ export const updateWorkLoadTime = async (
         workLoads[idx] = {
             ...workLoads[idx],
             plannedStartTime,
-            plannedEndTime: plannedEndTime || null  // 確保空值時設為 null
+            plannedEndTime: plannedEndTime || null
         }
         updatedWorkLoad = workLoads[idx]
         transaction.update(epicRef, { workLoads })
@@ -73,6 +77,7 @@ export const updateWorkLoadTime = async (
         throw new Error('更新失敗')
     }
 
+    // 清除快取，確保下次查詢拿到最新資料
     await redisCache.set(CACHE_KEYS.ALL_SCHEDULES, '', CACHE_TIMES.EXPIRE_NOW)
     return updatedWorkLoad
 }

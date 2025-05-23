@@ -7,7 +7,7 @@ export {
     firestore
 } from './firebase.client'
 
-// Firebase Admin 相關匯出
+// Firebase Admin 相關匯出（已移除 redis 快取，僅 server 端用）
 export {
     FirebaseAdminClient,
     firebaseAdminClient,

@@ -11,5 +11,6 @@ const firebaseConfig = {
   measurementId: "G-KBMLTJL6KK"
 }
 
+// 已移除 redis 快取，僅保留 Firestore client 初始化
 export const firebaseApp: FirebaseApp = initializeApp(firebaseConfig)
 export const firestore: Firestore = getFirestore(firebaseApp)
