@@ -102,10 +102,37 @@ export type TimelineEventHandler<T = unknown> = (props: T) => void
  */
 export interface UseTimelineListenersProps {
     timeline: Timeline | null
+    onSelect?: TimelineEventHandler<TimelineSelectEventProps>
+    onDeselect?: TimelineEventHandler<unknown>
+    onItemOver?: TimelineEventHandler<unknown>
+    onItemOut?: TimelineEventHandler<unknown>
+    onItemSelected?: TimelineEventHandler<unknown>
+    onItemUnselected?: TimelineEventHandler<unknown>
+    onRangeChange?: TimelineEventHandler<unknown>
+    onRangeChanged?: TimelineEventHandler<unknown>
+    onClick?: TimelineEventHandler<unknown>
+    onDoubleClick?: TimelineEventHandler<unknown>
+    onContextMenu?: TimelineEventHandler<unknown>
+    onBackgroundClick?: TimelineEventHandler<unknown>
+    onBackgroundDoubleClick?: TimelineEventHandler<unknown>
+    onBackgroundContextMenu?: TimelineEventHandler<unknown>
+    onDrop?: TimelineEventHandler<unknown>
     onAdd?: TimelineEventHandler<TimelineAddEventProps>
     onMove?: TimelineEventHandler<TimelineMoveEventProps>
     onRemove?: TimelineEventHandler<TimelineRemoveEventProps>
-    onUpdate?: TimelineEventHandler<TimelineUpdateEventProps>
-    onSelect?: TimelineEventHandler<TimelineSelectEventProps>
-    // ...其他 vis-timeline 支援事件，依需求擴充
+    onItemUpdate?: TimelineEventHandler<TimelineUpdateEventProps>
+    onStartResizing?: TimelineEventHandler<unknown>
+    onEndResizing?: TimelineEventHandler<unknown>
+    onChanged?: TimelineEventHandler<unknown>
+    onMouseOver?: TimelineEventHandler<unknown>
+    onMouseDown?: TimelineEventHandler<unknown>
+    onMouseUp?: TimelineEventHandler<unknown>
+    onMouseMove?: TimelineEventHandler<unknown>
+    onMouseOut?: TimelineEventHandler<unknown>
+    onGroupDragged?: TimelineEventHandler<unknown>
+    onGroupDraggedEnd?: TimelineEventHandler<unknown>
+    onMarkerChange?: TimelineEventHandler<unknown>
+    onCurrentTimeTick?: TimelineEventHandler<unknown>
+    onTimeChanged?: TimelineEventHandler<unknown>
+    onDestroy?: TimelineEventHandler<unknown>
 }
