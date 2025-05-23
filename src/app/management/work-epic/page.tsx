@@ -9,9 +9,7 @@ import { addWorkZone, getAllWorkZones, WorkZoneEntity } from '@/app/actions/work
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import { useEffect, useState } from 'react';
 
-/**
- * 產生短唯一ID，與 work-template 相同邏輯
- */
+// 與 work-template 相同的 shortId 實作
 function shortId(prefix = ''): string {
     return `${prefix}${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -116,10 +114,8 @@ export default function WorkEpicPage() {
             alert('請完整填寫標題、負責人、地址');
             return;
         }
-        // 統一用 shortId
-        const epicId = shortId('epic-');
         const newEpic: WorkEpicEntity = {
-            epicId,
+            epicId: shortId('epic-'),
             title: newTitle,
             startDate: '', // 可再加日期輸入
             endDate: '',
@@ -148,9 +144,8 @@ export default function WorkEpicPage() {
             setNewSiteSupervisors([]);
             setNewSafetyOfficers([]);
             setNewAddress('');
-        } catch (err) {
+        } catch {
             alert('建立失敗，請稍後再試');
-            // 可日後加上更詳細的錯誤訊息顯示
         }
     };
 
