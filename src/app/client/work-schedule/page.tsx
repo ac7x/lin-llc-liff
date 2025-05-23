@@ -4,7 +4,7 @@ import {
   updateWorkLoadTime,
   WorkEpicEntity,
   WorkLoadEntity
-} from '@/app/actions/workschedule.action'
+} from './workschedule.action'
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'

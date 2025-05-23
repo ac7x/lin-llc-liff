@@ -3,13 +3,11 @@
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'
-import { collection, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
-import { useEffect, useRef, useState } from 'react'
+import { collection, doc, DocumentData, QueryDocumentSnapshot, runTransaction } from 'firebase/firestore'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataGroup, DataItem, DataSet, Timeline, TimelineItem, TimelineOptions } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
-import { updateWorkLoadTime as updateWorkLoadTimeRepo } from './infrastructure/repository/workScheduleRepository'
-import useTimelineEventHandlers from './interfaces/hooks/useTimelineEventHandlers'
 
 interface WorkLoadEntity {
   loadId: string
@@ -75,7 +73,31 @@ function parseEpicSnapshot(
   return { epics, unplanned }
 }
 
-const updateWorkLoadTime = updateWorkLoadTimeRepo
+const useUpdateWorkLoadTime = () =>
+  useCallback(async (
+    epicId: string,
+    loadId: string,
+    plannedStartTime: string,
+    plannedEndTime: string | null
+  ): Promise<WorkLoadEntity | null> => {
+    if (!epicId || !loadId || !plannedStartTime) throw new Error('缺少必要參數')
+    const epicRef = doc(firestore, 'workEpic', epicId)
+    let updatedWorkLoad: WorkLoadEntity | null = null
+    await runTransaction(firestore, async transaction => {
+      const epicDoc = await transaction.get(epicRef)
+      if (!epicDoc.exists()) return
+      const epicData = epicDoc.data()
+      if (!epicData || !Array.isArray(epicData.workLoads)) return
+      const workLoads = [...epicData.workLoads]
+      const idx = workLoads.findIndex((wl: WorkLoadEntity) => wl.loadId === loadId)
+      if (idx !== -1) {
+        workLoads[idx] = { ...workLoads[idx], plannedStartTime, plannedEndTime }
+        updatedWorkLoad = workLoads[idx]
+      }
+      transaction.update(epicRef, { workLoads })
+    })
+    return updatedWorkLoad
+  }, [])
 
 const ClientWorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
@@ -84,6 +106,7 @@ const ClientWorkSchedulePage = () => {
   const timelineInstance = useRef<Timeline | null>(null)
   const itemsDataSet = useRef<DataSet<DataItem> | null>(null)
   const [epicSnapshot, epicLoading, epicError] = useCollection(collection(firestore, 'workEpic'))
+  const updateWorkLoadTime = useUpdateWorkLoadTime()
 
   useEffect(() => {
     if (!epicSnapshot) return
@@ -187,16 +210,44 @@ const ClientWorkSchedulePage = () => {
     }
   }, [epics, unplanned, updateWorkLoadTime])
 
-  // timeline 事件監聽 hook
-  useTimelineEventHandlers(
-    timelineRef as React.RefObject<HTMLDivElement>,
-    timelineInstance.current,
-    itemsDataSet.current,
-    unplanned,
-    epics,
-    updateWorkLoadTime,
-    patchWorkLoadLocal
-  )
+  useEffect(() => {
+    const ref = timelineRef.current
+    if (!ref || !timelineInstance.current || !itemsDataSet.current) return
+
+    const handleDragOver = (e: DragEvent) => e.preventDefault()
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault()
+      try {
+        const payload: DraggableItem = JSON.parse(e.dataTransfer?.getData('text') || '{}')
+        const point = timelineInstance.current!.getEventProperties(e)
+        if (!point.time) return
+        const wl = unplanned.find(w => w.loadId === payload.id)
+        if (!wl) return
+        const groupId = payload.group || epics[0].epicId
+        const startTime = startOfDay(point.time)
+        const endTime = addDays(startTime, 1)
+        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString()).then(updatedWorkLoad => {
+          if (updatedWorkLoad) {
+            itemsDataSet.current?.add({
+              id: wl.loadId,
+              group: groupId,
+              content: getWorkloadContent(wl),
+              start: startTime,
+              end: endTime,
+              type: 'range'
+            })
+            patchWorkLoadLocal(updatedWorkLoad)
+          }
+        })
+      } catch { }
+    }
+    ref.addEventListener('dragover', handleDragOver)
+    ref.addEventListener('drop', handleDrop)
+    return () => {
+      ref.removeEventListener('dragover', handleDragOver)
+      ref.removeEventListener('drop', handleDrop)
+    }
+  }, [unplanned, epics, updateWorkLoadTime])
 
   const onDragStart = (e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad) => {
     const dragItem: DraggableItem = {
