@@ -81,7 +81,7 @@ const WorkSchedulePage = () => {
       tooltip: { followMouse: true },
       zoomMin: 24 * 60 * 60 * 1000,
       zoomMax: 90 * 24 * 60 * 60 * 1000,
-      onAdd: (item, cb) => {
+      onAdd: async (item, cb) => {
         try {
           const payload: { id: string } = JSON.parse(item.content as string)
           const wl = unplanned.find(w => w.loadId === payload.id)
@@ -97,8 +97,22 @@ const WorkSchedulePage = () => {
             type: 'range'
           }
           cb(obj)
-          updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
-          setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+          const updatedWorkLoad = await updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
+          if (updatedWorkLoad) {
+            setEpics(prevEpics => {
+              return prevEpics.map(epic => {
+                if (epic.epicId !== updatedWorkLoad.epicIds[0]) return epic
+                return {
+                  ...epic,
+                  workLoads: (epic.workLoads || []).map(load => {
+                    if (load.loadId !== updatedWorkLoad.loadId) return load
+                    return updatedWorkLoad
+                  })
+                }
+              })
+            })
+            setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+          }
         } catch { cb(null) }
       }
     }
@@ -114,39 +128,28 @@ const WorkSchedulePage = () => {
       const newEnd = addDays(newStart, duration)
 
       try {
-        // 1. 更新後端資料
-        await updateWorkLoadTime(
+        const updatedWorkLoad = await updateWorkLoadTime(
           group || d.group,
           d.id as string,
           newStart.toISOString(),
           newEnd.toISOString()
         )
 
-        // 2. 更新 Timeline 視覺元件
-        items.update({ id: d.id, start: newStart, end: newEnd })
-
-        // 3. 關鍵修復：更新本地 epics 狀態
-        setEpics(prevEpics => {
-          return prevEpics.map(epic => {
-            // 找到對應的 epic
-            if (epic.epicId !== (group || d.group)) return epic
-
-            // 更新該 epic 中的 workLoad
-            return {
-              ...epic,
-              workLoads: (epic.workLoads || []).map(load => {
-                if (load.loadId !== d.id) return load
-
-                // 更新拖曳後的時間
-                return {
-                  ...load,
-                  plannedStartTime: newStart.toISOString(),
-                  plannedEndTime: newEnd.toISOString()
-                }
-              })
-            }
+        if (updatedWorkLoad) {
+          items.update({ id: d.id, start: newStart, end: newEnd })
+          setEpics(prevEpics => {
+            return prevEpics.map(epic => {
+              if (epic.epicId !== updatedWorkLoad.epicIds[0]) return epic
+              return {
+                ...epic,
+                workLoads: (epic.workLoads || []).map(load => {
+                  if (load.loadId !== updatedWorkLoad.loadId) return load
+                  return updatedWorkLoad
+                })
+              }
+            })
           })
-        })
+        }
       } catch (err) {
         console.error('更新工作負載時間失敗:', err)
       }
@@ -176,16 +179,30 @@ const WorkSchedulePage = () => {
         const groupId = payload.group || epics[0].epicId
         const startTime = startOfDay(point.time)
         const endTime = addDays(startTime, 1)
-        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString()).then(() => {
-          itemsDataSet.current?.add({
-            id: wl.loadId,
-            group: groupId,
-            content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
-            start: startTime,
-            end: endTime,
-            type: 'range'
-          })
-          setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString()).then((updatedWorkLoad) => {
+          if (updatedWorkLoad) {
+            itemsDataSet.current?.add({
+              id: wl.loadId,
+              group: groupId,
+              content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
+              start: startTime,
+              end: endTime,
+              type: 'range'
+            })
+            setEpics(prevEpics => {
+              return prevEpics.map(epic => {
+                if (epic.epicId !== updatedWorkLoad.epicIds[0]) return epic
+                return {
+                  ...epic,
+                  workLoads: (epic.workLoads || []).map(load => {
+                    if (load.loadId !== updatedWorkLoad.loadId) return load
+                    return updatedWorkLoad
+                  })
+                }
+              })
+            })
+            setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+          }
         })
       } catch { }
     }
