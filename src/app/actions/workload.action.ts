@@ -14,10 +14,6 @@ export interface WorkLoadEntity {
     epicIds: string[];
 }
 
-/**
- * 取得所有 WorkLoad
- * @returns WorkLoadEntity 陣列
- */
 export async function getAllWorkLoads(): Promise<WorkLoadEntity[]> {
     const { firestoreAdmin } = await import('@/modules/shared/infrastructure/persistence/firebase-admin/adminApp');
     const snapshot = await firestoreAdmin.collection('workEpic').get();
@@ -25,9 +21,7 @@ export async function getAllWorkLoads(): Promise<WorkLoadEntity[]> {
     snapshot.docs.forEach(doc => {
         const data = doc.data();
         if (Array.isArray(data.workLoads)) {
-            (data.workLoads as WorkLoadEntity[]).forEach(load => {
-                allLoads.push(load);
-            });
+            (data.workLoads as WorkLoadEntity[]).forEach(load => allLoads.push(load));
         }
     });
     return allLoads;
