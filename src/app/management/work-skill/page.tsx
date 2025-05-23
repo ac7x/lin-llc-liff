@@ -1,5 +1,6 @@
 "use client";
 import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/clientApp";
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import {
   addDoc,
   arrayUnion,
@@ -207,6 +208,7 @@ export default function AdminWorkSkillPage() {
       </table>
       {(loadingSkills || loadingMembers) && <div>載入中...</div>}
       {errorSkills && <div>讀取錯誤: {String(errorSkills)}</div>}
+      <ManagementBottomNav />
     </div>
   );
 }
