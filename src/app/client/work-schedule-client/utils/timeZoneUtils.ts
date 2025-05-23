@@ -11,7 +11,7 @@ import 'moment-timezone';
  * @returns 轉換為 UTC 的 Moment 物件
  */
 export const useUTC = (date: Date | string | number): Moment => {
-  return moment(date).utc();
+	return moment(date).utc();
 };
 
 /**
@@ -21,7 +21,7 @@ export const useUTC = (date: Date | string | number): Moment => {
  * @returns 指定時區的 Moment 物件
  */
 export const useTimezone = (date: Date | string | number, timezone: string): Moment => {
-  return moment.tz(date, timezone);
+	return moment.tz(date, timezone);
 };
 
 /**
@@ -29,7 +29,7 @@ export const useTimezone = (date: Date | string | number, timezone: string): Mom
  * @returns 時區偏移量 (分鐘)
  */
 export const getCurrentTimezoneOffset = (): number => {
-  return new Date().getTimezoneOffset();
+	return new Date().getTimezoneOffset();
 };
 
 /**
@@ -37,7 +37,7 @@ export const getCurrentTimezoneOffset = (): number => {
  * @returns 時區名稱
  */
 export const getCurrentTimezoneName = (): string => {
-  return moment.tz.guess();
+	return moment.tz.guess();
 };
 
 /**
@@ -45,7 +45,7 @@ export const getCurrentTimezoneName = (): string => {
  * @returns 傳入日期時會轉換為 UTC 的函數
  */
 export const createUTCMomentFunction = (): (date: Date) => Moment => {
-  return (date: Date) => moment(date).utc();
+	return (date: Date) => moment(date).utc();
 };
 
 /**
@@ -54,5 +54,5 @@ export const createUTCMomentFunction = (): (date: Date) => Moment => {
  * @returns 傳入日期時會轉換為指定時區的函數
  */
 export const createTimezoneMomentFunction = (timezone: string): (date: Date) => Moment => {
-  return (date: Date) => moment(date).utcOffset(timezone);
+	return (date: Date) => moment(date).utcOffset(timezone);
 };

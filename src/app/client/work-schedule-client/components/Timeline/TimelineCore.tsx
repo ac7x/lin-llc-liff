@@ -159,7 +159,6 @@ export const TimelineCore: React.FC<TimelineProps> = ({
     groups: dataGroups,
     setItems
   } = useTimelineData({
-    initialItems: items, 
     initialGroups: groups
   });
   
@@ -187,7 +186,6 @@ export const TimelineCore: React.FC<TimelineProps> = ({
   
   // 編輯功能
   useTimelineEditing({
-    onAdd,
     onUpdate,
     onMove
   });
