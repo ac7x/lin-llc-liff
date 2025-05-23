@@ -75,27 +75,60 @@ function parseEpicSnapshot(
 
 const useUpdateWorkLoadTime = () =>
   useCallback(async (
-    epicId: string,
+    newEpicId: string,
     loadId: string,
     plannedStartTime: string,
-    plannedEndTime: string | null
+    plannedEndTime: string | null,
+    oldEpicId?: string
   ): Promise<WorkLoadEntity | null> => {
-    if (!epicId || !loadId || !plannedStartTime) throw new Error('缺少必要參數')
-    const epicRef = doc(firestore, 'workEpic', epicId)
+    if (!newEpicId || !loadId || !plannedStartTime) throw new Error('缺少必要參數')
+    
+    const newEpicRef = doc(firestore, 'workEpic', newEpicId)
+    const oldEpicRef = oldEpicId ? doc(firestore, 'workEpic', oldEpicId) : null
+
     let updatedWorkLoad: WorkLoadEntity | null = null
+
     await runTransaction(firestore, async transaction => {
-      const epicDoc = await transaction.get(epicRef)
-      if (!epicDoc.exists()) return
-      const epicData = epicDoc.data()
-      if (!epicData || !Array.isArray(epicData.workLoads)) return
-      const workLoads = [...epicData.workLoads]
-      const idx = workLoads.findIndex((wl: WorkLoadEntity) => wl.loadId === loadId)
-      if (idx !== -1) {
-        workLoads[idx] = { ...workLoads[idx], plannedStartTime, plannedEndTime }
-        updatedWorkLoad = workLoads[idx]
+      // 從原Epic刪除
+      if (oldEpicRef && oldEpicId !== newEpicId) {
+        const oldEpicDoc = await transaction.get(oldEpicRef)
+        if (!oldEpicDoc.exists()) throw new Error('原Epic不存在')
+        const oldEpicData = oldEpicDoc.data()
+        const oldWorkLoads = [...(oldEpicData.workLoads || [])]
+        const oldIndex = oldWorkLoads.findIndex((wl: WorkLoadEntity) => wl.loadId === loadId)
+        if (oldIndex === -1) throw new Error('未找到原工作負載')
+        
+        const [movedWorkLoad] = oldWorkLoads.splice(oldIndex, 1)
+        updatedWorkLoad = { ...movedWorkLoad, plannedStartTime, plannedEndTime }
+        transaction.update(oldEpicRef, { workLoads: oldWorkLoads })
       }
-      transaction.update(epicRef, { workLoads })
+
+      // 添加到新Epic或更新
+      const newEpicDoc = await transaction.get(newEpicRef)
+      if (!newEpicDoc.exists()) throw new Error('目標Epic不存在')
+      const newEpicData = newEpicDoc.data()
+      const newWorkLoads = [...(newEpicData.workLoads || [])]
+      
+      const newIndex = newWorkLoads.findIndex((wl: WorkLoadEntity) => wl.loadId === loadId)
+      if (newIndex === -1) {
+        newWorkLoads.push(updatedWorkLoad || {
+          loadId,
+          plannedStartTime,
+          plannedEndTime: plannedEndTime || '',
+          taskId: '',
+          plannedQuantity: 0,
+          unit: '',
+          actualQuantity: 0,
+          executor: [],
+          title: '',
+          epicIds: [newEpicId]
+        } as WorkLoadEntity)
+      } else {
+        newWorkLoads[newIndex] = { ...newWorkLoads[newIndex], plannedStartTime, plannedEndTime }
+      }
+      transaction.update(newEpicRef, { workLoads: newWorkLoads })
     })
+
     return updatedWorkLoad
   }, [])
 
@@ -115,17 +148,29 @@ const ClientWorkSchedulePage = () => {
     setUnplanned(unplanned)
   }, [epicSnapshot])
 
-  const patchWorkLoadLocal = (updatedWorkLoad: WorkLoadEntity) => {
-    setEpics(prevEpics =>
-      prevEpics.map(epic =>
-        epic.epicId !== updatedWorkLoad.epicIds[0] ? epic : {
-          ...epic,
-          workLoads: (epic.workLoads || []).map(load =>
-            load.loadId !== updatedWorkLoad.loadId ? load : updatedWorkLoad
-          )
-        }
+  const patchWorkLoadLocal = (updatedWorkLoad: WorkLoadEntity, oldEpicId?: string) => {
+    setEpics(prevEpics => {
+      let newEpics = [...prevEpics]
+      
+      // 從原Epic刪除
+      if (oldEpicId) {
+        newEpics = newEpics.map(epic => 
+          epic.epicId === oldEpicId
+            ? { ...epic, workLoads: epic.workLoads?.filter(wl => wl.loadId !== updatedWorkLoad.loadId) || [] }
+            : epic
+        )
+      }
+
+      // 添加到新Epic
+      return newEpics.map(epic =>
+        epic.epicId === updatedWorkLoad.epicIds[0]
+          ? { 
+              ...epic, 
+              workLoads: [...(epic.workLoads || []), updatedWorkLoad]
+            }
+          : epic
       )
-    )
+    })
     setUnplanned(prev => prev.filter(x => x.loadId !== updatedWorkLoad.loadId))
   }
 
@@ -170,8 +215,14 @@ const ClientWorkSchedulePage = () => {
             start, end, type: 'range'
           }
           cb(obj)
-          const updatedWorkLoad = await updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
-          if (updatedWorkLoad) patchWorkLoadLocal(updatedWorkLoad)
+          const updatedWorkLoad = await updateWorkLoadTime(
+            String(obj.group), 
+            String(wl.loadId), 
+            start.toISOString(), 
+            end.toISOString(),
+            wl.epicId // 新增原EpicID
+          )
+          if (updatedWorkLoad) patchWorkLoadLocal(updatedWorkLoad, wl.epicId)
         } catch { cb(null) }
       }
     }
@@ -185,19 +236,28 @@ const ClientWorkSchedulePage = () => {
       const newStart = startOfDay(start)
       const duration = end ? Math.max(1, differenceInCalendarDays(end, start)) : 1
       const newEnd = addDays(newStart, duration)
+      
       try {
         const updatedWorkLoad = await updateWorkLoadTime(
-          group || d.group,
+          group || d.group,  // 新EpicID
           d.id as string,
           newStart.toISOString(),
-          newEnd.toISOString()
+          newEnd.toISOString(),
+          d.group  // 原EpicID
         )
+
         if (updatedWorkLoad) {
-          items.update({ id: d.id, start: newStart, end: newEnd })
-          patchWorkLoadLocal(updatedWorkLoad)
+          items.update({ 
+            id: d.id, 
+            start: newStart, 
+            end: newEnd,
+            group: group || d.group
+          })
+          patchWorkLoadLocal(updatedWorkLoad, d.group as string)
         }
       } catch (err) {
-        console.error('更新工作負載時間失敗:', err)
+        console.error('更新失敗:', err)
+        items.update({ id: d.id, start: d.start, end: d.end, group: d.group })
       }
     })
 
@@ -226,7 +286,7 @@ const ClientWorkSchedulePage = () => {
         const groupId = payload.group || epics[0].epicId
         const startTime = startOfDay(point.time)
         const endTime = addDays(startTime, 1)
-        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString()).then(updatedWorkLoad => {
+        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString(), wl.epicId).then(updatedWorkLoad => {
           if (updatedWorkLoad) {
             itemsDataSet.current?.add({
               id: wl.loadId,
@@ -236,7 +296,7 @@ const ClientWorkSchedulePage = () => {
               end: endTime,
               type: 'range'
             })
-            patchWorkLoadLocal(updatedWorkLoad)
+            patchWorkLoadLocal(updatedWorkLoad, wl.epicId)
           }
         })
       } catch { }
