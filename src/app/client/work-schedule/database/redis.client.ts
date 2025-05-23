@@ -91,15 +91,26 @@ class RedisClient {
                 return false
             }
 
-            // 更新工作負載
-            workLoads[loadIndex] = { ...workLoads[loadIndex], ...update }
-            schedules[epicIndex].workLoads = workLoads
+            // 更新工作負載 - 使用深拷貝確保不會有引用問題
+            const updatedWorkLoad = JSON.parse(JSON.stringify({ ...workLoads[loadIndex], ...update }))
+            const updatedWorkLoads = [...workLoads]
+            updatedWorkLoads[loadIndex] = updatedWorkLoad
 
-            // 寫入 Redis
-            await this.setWorkSchedules(schedules)
+            // 創建新的 schedules 陣列和 epic 物件，避免直接修改原始參考
+            const updatedSchedules = [...schedules]
+            updatedSchedules[epicIndex] = {
+                ...schedules[epicIndex],
+                workLoads: updatedWorkLoads
+            }
+
+            // 寫入 Redis - 使用更新後的 updatedSchedules
+            await this.setWorkSchedules(updatedSchedules)
 
             // 設定需要同步的標記
             await client.setEx(CACHE_KEYS.SYNC_FLAG, DEFAULT_EXPIRE, 'true')
+
+            // 記錄成功更新的資訊
+            console.log(`成功更新工作負載 ID: ${loadId} (Redis)`)
 
             return true
         } catch (error) {

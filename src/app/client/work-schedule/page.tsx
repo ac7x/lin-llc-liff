@@ -71,7 +71,7 @@ const WorkSchedulePage = () => {
         overrideItems: false  // 允許項目級別的設定覆蓋
       },
       // 自訂遊標吸附函數 - 讓項目按天對齊
-      snap: (date, scale, step) => {
+      snap: (date, _scale, _step) => {
         return startOfDay(date)
       },
       // 確保項目之間不會重疊
@@ -158,14 +158,22 @@ const WorkSchedulePage = () => {
           )
 
           if (updatedWorkLoad) {
-            // 更新本地狀態
+            // 更新本地狀態 - 深拷貝以避免引用問題
+            const updatedEpic = JSON.parse(JSON.stringify({
+              ...epics.find(e => e.epicId === String(obj.group)),
+              workLoads: [
+                ...(epics.find(e => e.epicId === String(obj.group))?.workLoads || []).filter(w => w.loadId !== updatedWorkLoad.loadId),
+                updatedWorkLoad
+              ]
+            }));
+
             setEpics(prev =>
               prev.map(epic =>
-                updatedWorkLoad.epicIds?.includes(epic.epicId)
-                  ? { ...epic, workLoads: (epic.workLoads || []).map(load => load.loadId === updatedWorkLoad.loadId ? updatedWorkLoad : load) }
-                  : epic
+                epic.epicId === String(obj.group) ? updatedEpic : epic
               )
             )
+
+            // 從未排程列表中移除
             setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
           }
         } catch (dbError) {
@@ -228,13 +236,47 @@ const WorkSchedulePage = () => {
         )
 
         if (updatedWorkLoad) {
-          setEpics(prev =>
-            prev.map(epic =>
-              updatedWorkLoad.epicIds?.includes(epic.epicId)
-                ? { ...epic, workLoads: (epic.workLoads || []).map(load => load.loadId === updatedWorkLoad.loadId ? updatedWorkLoad : load) }
-                : epic
-            )
-          )
+          // 處理跨群組拖曳的情況
+          const oldEpicId = item.group;
+          const newEpicId = group || oldEpicId;
+
+          // 正確更新 epics，處理跨群組拖曳
+          setEpics(prev => {
+            // 建立一個深拷貝，避免直接修改狀態
+            const newState = JSON.parse(JSON.stringify(prev)) as WorkEpicEntity[];
+
+            // 如果是跨群組拖曳，先從原始群組移除
+            if (oldEpicId !== newEpicId) {
+              const oldEpicIndex = newState.findIndex(e => e.epicId === oldEpicId);
+              if (oldEpicIndex !== -1 && newState[oldEpicIndex].workLoads) {
+                newState[oldEpicIndex].workLoads = newState[oldEpicIndex].workLoads.filter(
+                  w => w.loadId !== updatedWorkLoad.loadId
+                );
+              }
+            }
+
+            // 在新群組中新增或更新
+            const newEpicIndex = newState.findIndex(e => e.epicId === newEpicId);
+            if (newEpicIndex !== -1) {
+              if (!newState[newEpicIndex].workLoads) {
+                newState[newEpicIndex].workLoads = [];
+              }
+
+              const existingIndex = newState[newEpicIndex].workLoads.findIndex(
+                w => w.loadId === updatedWorkLoad.loadId
+              );
+
+              if (existingIndex !== -1) {
+                // 更新現有的工作負載
+                newState[newEpicIndex].workLoads[existingIndex] = updatedWorkLoad;
+              } else {
+                // 添加新的工作負載
+                newState[newEpicIndex].workLoads.push(updatedWorkLoad);
+              }
+            }
+
+            return newState;
+          })
         }
       } catch (err) {
         console.error('更新工作負載時間失敗:', err)

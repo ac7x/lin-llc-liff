@@ -206,18 +206,40 @@ async function syncSchedulesToFirestore() {
 
                 // 智能合併工作負載資料：僅更新 plannedStartTime 和 plannedEndTime
                 const firestoreData = firestoreDoc.data() as WorkEpicEntity
-                const updatedWorkLoads = epic.workLoads?.map(workLoad => {
-                    const existingWorkLoad = firestoreData.workLoads?.find(w => w.loadId === workLoad.loadId)
+
+                // 創建一個工作負載 ID 到物件的映射，用於快速查找
+                const firestoreWorkLoadsMap = new Map<string, WorkLoadEntity>()
+                firestoreData.workLoads?.forEach(wl => {
+                    if (wl.loadId) firestoreWorkLoadsMap.set(wl.loadId, wl)
+                })
+
+                // 創建更新後的工作負載陣列，確保不會遺漏任何項目
+                const updatedWorkLoads: WorkLoadEntity[] = []
+
+                // 處理 Redis 中存在的所有工作負載
+                epic.workLoads?.forEach(workLoad => {
+                    if (!workLoad.loadId) return
+
+                    const existingWorkLoad = firestoreWorkLoadsMap.get(workLoad.loadId)
                     if (existingWorkLoad) {
-                        // 僅更新計畫時間，保留其他欄位的最新資料
-                        return {
+                        // 如果 Firestore 中存在此工作負載，則合併資料，優先使用 Redis 中的計畫時間
+                        updatedWorkLoads.push({
                             ...existingWorkLoad,
                             plannedStartTime: workLoad.plannedStartTime,
                             plannedEndTime: workLoad.plannedEndTime
-                        }
+                        })
+                        // 從映射中移除已處理的項目
+                        firestoreWorkLoadsMap.delete(workLoad.loadId)
+                    } else {
+                        // 如果 Firestore 中不存在，則添加新的工作負載
+                        updatedWorkLoads.push(workLoad)
                     }
-                    return workLoad
-                }) || []
+                })
+
+                // 添加 Firestore 中存在但 Redis 中不存在的工作負載（避免資料遺失）
+                firestoreWorkLoadsMap.forEach(wl => {
+                    updatedWorkLoads.push(wl)
+                })
 
                 // 更新 Firestore，僅更新工作負載陣列
                 await epicRef.update({ workLoads: updatedWorkLoads })
