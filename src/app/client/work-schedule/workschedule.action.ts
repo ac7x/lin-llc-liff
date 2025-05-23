@@ -1,6 +1,6 @@
 'use server'
 
-import { firestoreAdmin } from '@/modules/shared/infrastructure/persistence/firebase-admin/adminApp'
+import { firestoreAdmin } from './firebase-admin/adminApp'
 
 export interface WorkLoadEntity {
     loadId: string

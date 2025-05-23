@@ -1,11 +1,5 @@
 'use client'
 
-import {
-  updateWorkLoadTime,
-  WorkEpicEntity,
-  WorkLoadEntity
-} from './workschedule.action'
-import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'
 import { collection } from 'firebase/firestore'
@@ -13,16 +7,29 @@ import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataGroup, DataItem, DataSet, Timeline, TimelineItem, TimelineOptions } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
+import { firestore } from './firebase/clientApp'
+import { useTimelineListeners } from './useTimelineListeners'
+import {
+  updateWorkLoadTime,
+  WorkEpicEntity,
+  WorkLoadEntity
+} from './workschedule.action'
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
 type DraggableItem = { id: string, type: 'range', content: string, group: string, start: Date, end: Date }
+interface WorkLoadDataItem extends DataItem {
+  id: string
+  group: string
+  start: Date
+  end?: Date
+}
 
 const WorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
   const timelineInstance = useRef<Timeline | null>(null)
-  const itemsDataSet = useRef<DataSet<DataItem> | null>(null)
+  const itemsDataSet = useRef<DataSet<WorkLoadDataItem> | null>(null)
   const [epicSnapshot] = useCollection(collection(firestore, 'workEpic'))
 
   useEffect(() => {
@@ -45,7 +52,7 @@ const WorkSchedulePage = () => {
     if (!timelineRef.current || !epics.length) return
 
     const groups = new DataSet<DataGroup>(epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` })))
-    const items = new DataSet<DataItem>(
+    const items = new DataSet<WorkLoadDataItem>(
       epics.flatMap(e =>
         (e.workLoads || [])
           .filter(l => l.plannedStartTime)
@@ -68,54 +75,77 @@ const WorkSchedulePage = () => {
       locale: 'zh-tw',
       tooltip: { followMouse: true },
       zoomMin: 24 * 60 * 60 * 1000,
-      zoomMax: 90 * 24 * 60 * 60 * 1000,
-      onAdd: async (item, cb) => {
-        try {
-          const payload: { id: string } = JSON.parse(item.content as string)
-          const wl = unplanned.find(w => w.loadId === payload.id)
-          if (!wl) return cb(null)
-          const start = item.start ? new Date(item.start) : new Date()
-          const end = item.end ? new Date(item.end) : addDays(start, 1)
-          const obj: TimelineItem = {
-            id: wl.loadId,
-            group: item.group || epics[0].epicId,
-            content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
-            start,
-            end,
-            type: 'range'
-          }
-          cb(obj)
-          const updatedWorkLoad = await updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
-          if (updatedWorkLoad) {
-            setEpics(prev =>
-              prev.map(epic =>
-                updatedWorkLoad.epicIds?.includes(epic.epicId)
-                  ? { ...epic, workLoads: (epic.workLoads || []).map(load => load.loadId === updatedWorkLoad.loadId ? updatedWorkLoad : load) }
-                  : epic
-              )
-            )
-            setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
-          }
-        } catch { cb(null) }
-      }
+      zoomMax: 90 * 24 * 60 * 60 * 1000
     }
 
     const tl = new Timeline(timelineRef.current, items, groups, options)
     timelineInstance.current = tl
 
-    tl.on('move', async ({ item, start, end, group }) => {
-      const d = items.get(item as string)
-      if (!d) return
+    const handleResize = () => timelineInstance.current?.redraw()
+    window.addEventListener('resize', handleResize)
+    return () => {
+      tl.destroy()
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [epics])
+
+  useTimelineListeners({
+    timeline: timelineInstance.current,
+    onAdd: async (props) => {
+      try {
+        const { item, callback: cb } = props
+        const payload: { id: string } = JSON.parse(item.content as string)
+        const wl = unplanned.find(w => w.loadId === payload.id)
+        if (!wl) return cb(null)
+        const start = item.start ? new Date(item.start) : new Date()
+        const end = item.end ? new Date(item.end) : addDays(start, 1)
+        const obj: TimelineItem = {
+          id: wl.loadId,
+          group: item.group || epics[0].epicId,
+          content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
+          start,
+          end,
+          type: 'range'
+        }
+        cb(obj)
+        const updatedWorkLoad = await updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
+        if (updatedWorkLoad) {
+          setEpics(prev =>
+            prev.map(epic =>
+              updatedWorkLoad.epicIds?.includes(epic.epicId)
+                ? { ...epic, workLoads: (epic.workLoads || []).map(load => load.loadId === updatedWorkLoad.loadId ? updatedWorkLoad : load) }
+                : epic
+            )
+          )
+          setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+        }
+      } catch (err) { console.error('新增工作負載失敗:', err) }
+    },
+    onMove: async (props) => {
+      const { item: itemId, start, end, group } = props
+      if (!itemsDataSet.current) return
+
+      const item = itemsDataSet.current.get(itemId as string)
+      if (!item) return
+
       const newStart = startOfDay(start)
       const duration = end ? Math.max(1, differenceInCalendarDays(end, start)) : 1
       const newEnd = addDays(newStart, duration)
+
       try {
         const updatedWorkLoad = await updateWorkLoadTime(
-          group || d.group, d.id as string,
-          newStart.toISOString(), newEnd.toISOString()
+          group || item.group,
+          item.id,
+          newStart.toISOString(),
+          newEnd.toISOString()
         )
         if (updatedWorkLoad) {
-          items.update({ id: d.id, start: newStart, end: newEnd })
+          itemsDataSet.current.update({
+            id: item.id,
+            start: newStart,
+            end: newEnd,
+            group: group || item.group
+          })
           setEpics(prev =>
             prev.map(epic =>
               updatedWorkLoad.epicIds?.includes(epic.epicId)
@@ -125,64 +155,17 @@ const WorkSchedulePage = () => {
           )
         }
       } catch (err) { console.error('更新工作負載時間失敗:', err) }
-    })
-
-    const handleResize = () => timelineInstance.current?.redraw()
-    window.addEventListener('resize', handleResize)
-    return () => {
-      tl.destroy()
-      window.removeEventListener('resize', handleResize)
     }
-  }, [epics, unplanned])
-
-  useEffect(() => {
-    const ref = timelineRef.current
-    if (!ref || !timelineInstance.current || !itemsDataSet.current) return
-    const handleDragOver = (e: DragEvent) => e.preventDefault()
-    const handleDrop = (e: DragEvent) => {
-      e.preventDefault()
-      try {
-        const payload: DraggableItem = JSON.parse(e.dataTransfer?.getData('text') || '{}')
-        const point = timelineInstance.current!.getEventProperties(e)
-        if (!point.time) return
-        const wl = unplanned.find(w => w.loadId === payload.id)
-        if (!wl) return
-        const groupId = payload.group || epics[0].epicId
-        const startTime = startOfDay(point.time)
-        const endTime = addDays(startTime, 1)
-        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString()).then(updatedWorkLoad => {
-          if (updatedWorkLoad) {
-            itemsDataSet.current?.add({
-              id: wl.loadId, group: groupId,
-              content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
-              start: startTime, end: endTime, type: 'range'
-            })
-            setEpics(prev =>
-              prev.map(epic =>
-                updatedWorkLoad.epicIds?.includes(epic.epicId)
-                  ? { ...epic, workLoads: (epic.workLoads || []).map(load => load.loadId === updatedWorkLoad.loadId ? updatedWorkLoad : load) }
-                  : epic
-              )
-            )
-            setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
-          }
-        })
-      } catch { }
-    }
-    ref.addEventListener('dragover', handleDragOver)
-    ref.addEventListener('drop', handleDrop)
-    return () => {
-      ref.removeEventListener('dragover', handleDragOver)
-      ref.removeEventListener('drop', handleDrop)
-    }
-  }, [unplanned, epics])
+  })
 
   const onDragStart = (e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad) => {
     const dragItem: DraggableItem = {
       id: wl.loadId,
       type: 'range',
-      content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
-      group: wl.epicId, start: new Date(), end: addDays(new Date(), 1)
+      content: JSON.stringify({ id: wl.loadId }),
+      group: wl.epicId,
+      start: new Date(),
+      end: addDays(new Date(), 1)
     }
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', JSON.stringify(dragItem))
