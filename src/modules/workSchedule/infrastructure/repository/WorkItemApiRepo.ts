@@ -218,13 +218,13 @@ export class WorkItemApiRepository implements WorkItemRepository {
     }
 
     /**
-     * 檢查時間範圍內是否有衝突
+     * 檢查工作項目時間衝突
      */
-    async checkTimeConflicts(startTime: Date, endTime: Date, excludeId?: string): Promise<WorkItem[]> {
+    async checkTimeConflicts(workItem: WorkItemVO, excludeId?: string): Promise<WorkItem[]> {
         try {
             const params = new URLSearchParams({
-                startTime: startTime.toISOString(),
-                endTime: endTime.toISOString(),
+                startTime: workItem.startTime.toISOString(),
+                endTime: workItem.endTime.toISOString(),
                 checkConflicts: 'true'
             });
 

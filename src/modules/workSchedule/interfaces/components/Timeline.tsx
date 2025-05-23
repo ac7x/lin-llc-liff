@@ -15,7 +15,7 @@ export interface TimelineProps {
     workItems: WorkItem[];
     config?: TimelineConfigDTO;
     groups?: TimelineGroupDTO[];
-    updateWorkTimeUseCase: UpdateWorkTimeUseCase;
+    onUpdateWorkTime: (id: string, startTime: Date, endTime: Date) => Promise<void>;
     className?: string;
     style?: React.CSSProperties;
     onItemSelect?: (workItem: WorkItem | null) => void;
@@ -34,7 +34,7 @@ export function Timeline({
     workItems,
     config = {},
     groups,
-    updateWorkTimeUseCase,
+    onUpdateWorkTime,
     className = '',
     style,
     onItemSelect,

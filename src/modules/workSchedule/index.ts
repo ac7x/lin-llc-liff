@@ -2,11 +2,12 @@
 // 提供統一的入口點來存取所有工作排程相關的功能
 
 // Domain Layer - 領域層
-export type { WorkItem, WorkItemPriority, WorkItemStatus, WorkItemType, WorkItemVO } from './domain/model/WorkItem';
-export type { WorkItemRepository } from './domain/repository/WorkItemRepo';
+import type { WorkItem, WorkItemPriority, WorkItemStatus, WorkItemType, WorkItemVO } from './domain/model/WorkItem';
+import type { WorkItemRepository } from './domain/repository/WorkItemRepo';
+import { ScheduleService } from './domain/service/ScheduleService';
 
 // Application Layer - 應用層
-export type {
+import type {
     CreateWorkItemDTO,
     TimelineConfigDTO,
     TimelineGroupDTO,
@@ -16,6 +17,7 @@ export type {
     WorkItemQueryDTO,
     WorkItemResponseDTO
 } from './application/dto/WorkItemDTO';
+import { UpdateWorkTimeUseCase } from './application/usecases/UpdateWorkTime';
 
 // Infrastructure Layer - 基礎設施層
 import { TimelineAdapter } from './infrastructure/adapter/TimelineAdapter';
@@ -24,13 +26,25 @@ import { WorkItemApiRepository } from './infrastructure/repository/WorkItemApiRe
 // Interface Layer - 介面層
 import { default as TimelineComponent } from './interfaces/components/Timeline';
 import { default as ToolbarComponent } from './interfaces/components/Toolbar';
-export { useTimelineEvents } from './interfaces/hooks/useTimelineEvents';
+import { useTimelineEvents } from './interfaces/hooks/useTimelineEvents';
 
-// Re-export components with default names
+// Re-export types
+export type {
+    CreateWorkItemDTO,
+    TimelineConfigDTO,
+    TimelineGroupDTO,
+    TimelineItemDTO,
+    UpdateWorkItemDTO, WorkItem, WorkItemDTO, WorkItemPriority, WorkItemQueryDTO, WorkItemRepository, WorkItemResponseDTO, WorkItemStatus,
+    WorkItemType,
+    WorkItemVO
+};
+
+// Re-export components
 export const Timeline = TimelineComponent;
 export const Toolbar = ToolbarComponent;
+export { useTimelineEvents };
 
-// Types - 型別定義
+// Rest of type exports
 export type {
     TimelineActions,
     TimelineClickEvent,
@@ -50,7 +64,7 @@ export type {
     UseTimelineReturn
 } from './types/timeline';
 
-// Utils - 工具函式
+// Utils exports
 export {
     addDays,
     addHours,
@@ -83,7 +97,7 @@ export {
     toISOString
 } from './utils/timeUtils';
 
-// Constants - 常數定義
+// Constants exports
 export {
     ANIMATION_CONFIG,
     CSS_CLASSES,
@@ -109,7 +123,7 @@ export {
     ZOOM_CONFIG
 } from './constants/timelineConstants';
 
-// Config - 設定
+// Config exports
 export {
     API_CONFIG,
     CACHE_CONFIG,
@@ -130,13 +144,22 @@ export {
 
 // 便利的工廠函式
 export const createWorkScheduleModule = () => {
+    const apiRepo = new WorkItemApiRepository();
+
     // 建立儲存庫實例並實作必要的介面方法
     const repository: WorkItemRepository = {
-        ...new WorkItemApiRepository(),
-        // 正確實作 checkTimeConflicts 方法以符合介面定義
+        findById: apiRepo.findById.bind(apiRepo),
+        findByTimeRange: apiRepo.findByTimeRange.bind(apiRepo),
+        findByAssignee: apiRepo.findByAssignee.bind(apiRepo),
+        findByStatus: apiRepo.findByStatus.bind(apiRepo),
+        findAll: apiRepo.findAll.bind(apiRepo),
+        save: apiRepo.save.bind(apiRepo),
+        update: apiRepo.update.bind(apiRepo),
+        delete: apiRepo.delete.bind(apiRepo),
+        saveBatch: apiRepo.saveBatch.bind(apiRepo),
+        // 調整 checkTimeConflicts 方法以符合介面定義
         checkTimeConflicts: async (workItem: WorkItemVO, excludeId?: string) => {
-            const repo = new WorkItemApiRepository();
-            return repo.checkTimeConflicts(workItem.startTime, workItem.endTime, excludeId);
+            return apiRepo.checkTimeConflicts(workItem.startTime, workItem.endTime, excludeId);
         }
     };
 
