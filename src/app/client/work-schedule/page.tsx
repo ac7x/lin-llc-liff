@@ -23,7 +23,7 @@ const WorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
-  const timelineInstance = useRef<Timeline | null>(null)
+  const [timelineInstance, setTimelineInstance] = useState<Timeline | null>(null)
   const itemsDataSet = useRef<DataSet<WorkLoadDataItem> | null>(null)
 
   // 改為呼叫 server action 取得資料，走 Redis 快取
@@ -73,9 +73,9 @@ const WorkSchedulePage = () => {
     }
 
     const tl = new Timeline(timelineRef.current, items, groups, options)
-    timelineInstance.current = tl
+    setTimelineInstance(tl)
 
-    const handleResize = () => timelineInstance.current?.redraw()
+    const handleResize = () => tl.redraw()
     window.addEventListener('resize', handleResize)
     return () => {
       tl.destroy()
@@ -84,7 +84,7 @@ const WorkSchedulePage = () => {
   }, [epics])
 
   useTimelineListeners({
-    timeline: timelineInstance.current,
+    timeline: timelineInstance,
     onAdd: async (props: TimelineAddEventProps) => {
       try {
         const { item, callback: cb } = props
@@ -134,12 +134,6 @@ const WorkSchedulePage = () => {
           newEnd.toISOString()
         )
         if (updatedWorkLoad) {
-          itemsDataSet.current.update({
-            id: item.id,
-            start: newStart,
-            end: newEnd,
-            group: group || item.group
-          })
           setEpics(prev =>
             prev.map(epic =>
               updatedWorkLoad.epicIds?.includes(epic.epicId)
