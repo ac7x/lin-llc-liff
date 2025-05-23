@@ -9,7 +9,6 @@ import { TimelineAddEventProps, TimelineMoveEventProps, WorkEpicEntity, WorkLoad
 import { useTimelineListeners } from './use-timeline-listeners'
 import { getAllWorkSchedules, updateWorkLoadTime } from './workschedule.action'
 
-
 type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
 type DraggableItem = { id: string, type: 'range', content: string, group: string, start: Date, end: Date }
 interface WorkLoadDataItem extends DataItem {
@@ -26,7 +25,7 @@ const WorkSchedulePage = () => {
   const [timelineInstance, setTimelineInstance] = useState<Timeline | null>(null)
   const itemsDataSet = useRef<DataSet<WorkLoadDataItem> | null>(null)
 
-  // 改為呼叫 server action 取得資料，走 Redis 快取
+  // 取得資料：直接從 Redis 拿
   useEffect(() => {
     const fetchData = async () => {
       const epicList = await getAllWorkSchedules()
