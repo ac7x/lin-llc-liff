@@ -7,14 +7,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataGroup, DataItem, DataSet, Timeline, TimelineItem, TimelineOptions } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
-import { firestore } from './firebase.client'
-import { TimelineAddEventProps, TimelineMoveEventProps } from './types'
+import { firestore } from './database/firebase.client'
+import { TimelineAddEventProps, TimelineMoveEventProps, WorkEpicEntity, WorkLoadEntity } from './types'
 import { useTimelineListeners } from './use-timeline-listeners'
-import {
-  updateWorkLoadTime,
-  WorkEpicEntity,
-  WorkLoadEntity
-} from './workschedule.action'
+import { updateWorkLoadTime } from './workschedule.action'
+
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
 type DraggableItem = { id: string, type: 'range', content: string, group: string, start: Date, end: Date }
