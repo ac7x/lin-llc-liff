@@ -2,15 +2,12 @@
 
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'
-import { collection } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
-import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataGroup, DataItem, DataSet, Timeline, TimelineItem, TimelineOptions } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
-import { firestore } from './database/firebase.client'
 import { TimelineAddEventProps, TimelineMoveEventProps, WorkEpicEntity, WorkLoadEntity } from './types'
 import { useTimelineListeners } from './use-timeline-listeners'
-import { updateWorkLoadTime } from './workschedule.action'
+import { getAllWorkSchedules, updateWorkLoadTime } from './workschedule.action'
 
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
@@ -28,23 +25,22 @@ const WorkSchedulePage = () => {
   const timelineRef = useRef<HTMLDivElement>(null)
   const timelineInstance = useRef<Timeline | null>(null)
   const itemsDataSet = useRef<DataSet<WorkLoadDataItem> | null>(null)
-  const [epicSnapshot] = useCollection(collection(firestore, 'workEpic'))
 
+  // 改為呼叫 server action 取得資料，走 Redis 快取
   useEffect(() => {
-    if (!epicSnapshot) return
-    const epicList = epicSnapshot.docs.map(doc => ({
-      ...doc.data(),
-      epicId: doc.id
-    })) as WorkEpicEntity[]
-    setEpics(epicList)
-    setUnplanned(
-      epicList.flatMap(e =>
-        (e.workLoads || [])
-          .filter(l => !l.plannedStartTime)
-          .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
+    const fetchData = async () => {
+      const epicList = await getAllWorkSchedules()
+      setEpics(epicList)
+      setUnplanned(
+        epicList.flatMap(e =>
+          (e.workLoads || [])
+            .filter(l => !l.plannedStartTime)
+            .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
+        )
       )
-    )
-  }, [epicSnapshot])
+    }
+    fetchData()
+  }, [])
 
   useEffect(() => {
     if (!timelineRef.current || !epics.length) return
