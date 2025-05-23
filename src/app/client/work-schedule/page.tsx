@@ -151,6 +151,8 @@ const WorkSchedulePage = () => {
             })
           })
           console.log(`Workload time updated successfully for loadId: ${d.id}`)
+          console.log(`Moved item: ${item}, start: ${start}, end: ${end}, group: ${group}`) // Pa58b
+          console.log(`Updated workload object:`, updatedWorkLoad) // Pe83c
         }
       } catch (err) {
         console.error('更新工作負載時間失敗:', err)

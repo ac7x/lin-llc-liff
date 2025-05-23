@@ -93,6 +93,8 @@ export const updateWorkLoadTime = async (
         });
 
         console.log(`Workload time updated successfully for loadId: ${loadId}`); // Pc9e5
+        console.log(`Updating workload time for epicId: ${epicId}, loadId: ${loadId}, plannedStartTime: ${plannedStartTime}, plannedEndTime: ${plannedEndTime}`); // P1ddf
+        console.log(`Updated workload object:`, updatedWorkLoad); // Pfcfe
 
         return updatedWorkLoad;
     } catch (error) {
