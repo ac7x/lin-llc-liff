@@ -142,7 +142,7 @@ const ClientWorkSchedulePage = () => {
             type: 'range',
             content: getWorkloadContent(l),
             start: new Date(l.plannedStartTime),
-            end: l.plannedEndTime ? new Date(l.plannedEndTime) : undefined
+            end: l.plannedEndTime ? new Date(l.plannedEndTime) : addDays(new Date(l.plannedStartTime), 1)
           }))
       )
     )
@@ -179,7 +179,7 @@ const ClientWorkSchedulePage = () => {
     const tl = new Timeline(timelineRef.current, items, groups, options)
     timelineInstance.current = tl
 
-    tl.on('move', async ({ item, start, end, group }) => {
+    tl.on('change', async ({ item, start, end, group }) => {
       const d = items.get(item as string)
       if (!d) return
       const newStart = startOfDay(start)
