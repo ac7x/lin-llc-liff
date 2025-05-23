@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { UseTimelineListenersProps } from './types'
+import { redisCache } from './database/redis.client'
 
 /**
  * 事件對應表
