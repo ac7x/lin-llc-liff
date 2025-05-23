@@ -101,7 +101,7 @@ const WorkSchedulePage = () => {
           if (updatedWorkLoad) {
             setEpics(prevEpics => {
               return prevEpics.map(epic => {
-                if (epic.epicId !== updatedWorkLoad.epicIds[0]) return epic
+                if (!updatedWorkLoad || !updatedWorkLoad.epicIds?.includes(epic.epicId)) return epic
                 return {
                   ...epic,
                   workLoads: (epic.workLoads || []).map(load => {
@@ -139,7 +139,7 @@ const WorkSchedulePage = () => {
           items.update({ id: d.id, start: newStart, end: newEnd })
           setEpics(prevEpics => {
             return prevEpics.map(epic => {
-              if (epic.epicId !== updatedWorkLoad.epicIds[0]) return epic
+              if (!updatedWorkLoad || !updatedWorkLoad.epicIds?.includes(epic.epicId)) return epic
               return {
                 ...epic,
                 workLoads: (epic.workLoads || []).map(load => {
@@ -191,7 +191,7 @@ const WorkSchedulePage = () => {
             })
             setEpics(prevEpics => {
               return prevEpics.map(epic => {
-                if (epic.epicId !== updatedWorkLoad.epicIds[0]) return epic
+                if (!updatedWorkLoad || !updatedWorkLoad.epicIds?.includes(epic.epicId)) return epic
                 return {
                   ...epic,
                   workLoads: (epic.workLoads || []).map(load => {

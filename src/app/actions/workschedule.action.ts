@@ -60,13 +60,15 @@ export const updateWorkLoadTime = async (
     loadId: string,
     plannedStartTime: string,
     plannedEndTime: string | null,
-): Promise<void> => {
+): Promise<WorkLoadEntity | undefined> => {
     try {
         if (!epicId || !loadId || !plannedStartTime) {
             throw new Error('缺少必要參數');
         }
 
         const epicRef = firestoreAdmin.collection('workEpic').doc(epicId);
+        let updatedWorkLoad: WorkLoadEntity | undefined = undefined;
+
         await firestoreAdmin.runTransaction(async (transaction) => {
             const epicDoc = await transaction.get(epicRef);
             if (!epicDoc.exists) return;
@@ -82,10 +84,13 @@ export const updateWorkLoadTime = async (
                     plannedStartTime,
                     plannedEndTime
                 };
+                updatedWorkLoad = { ...workLoads[index] };
             }
 
             transaction.update(epicRef, { workLoads });
         });
+
+        return updatedWorkLoad;
     } catch (error) {
         console.error('更新工作負載時間失敗:', error);
         throw error;
