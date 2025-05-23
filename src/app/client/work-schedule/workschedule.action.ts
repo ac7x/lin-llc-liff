@@ -5,27 +5,14 @@ import { redisCache } from './database/redis.client'
 import type { WorkEpicEntity, WorkLoadEntity } from './types'
 
 const CACHE_KEYS = {
-    ALL_SCHEDULES: 'workEpic:all'
+    ALL_SCHEDULES: 'workEpic:all',
+    SYNC_STATUS: 'workEpic:syncStatus'
 } as const
 
 const CACHE_TIMES = {
     FIVE_MINUTES: 300,
-    EXPIRE_NOW: 1
+    SYNC_DELAY: 60  // 同步延遲 1 分鐘
 } as const
-
-// Firestore 同步（異步，不阻塞主流程）
-async function syncSchedulesToFirestore(schedules: WorkEpicEntity[]) {
-    try {
-        // 這裡可以根據實際狀況優化，只同步有改動的部份
-        for (const epic of schedules) {
-            const epicRef = firestoreAdmin.collection('workEpic').doc(epic.epicId)
-            await epicRef.set(epic, { merge: true })
-        }
-    } catch (err) {
-        console.error('[同步 Firestore 失敗]', err)
-        // 可考慮寫操作日誌或補償
-    }
-}
 
 /**
  * 取得所有工作排程（直接從 Redis 拿）
@@ -47,53 +34,100 @@ export const getAllWorkSchedules = async (): Promise<WorkEpicEntity[]> => {
 }
 
 /**
- * 更新單一工作負載的時間，直接寫 Redis，再同步 Firestore
+ * 更新單一工作負載的時間，直接寫 Redis，並觸發同步
  */
 export const updateWorkLoadTime = async (
     epicId: string,
     loadId: string,
     plannedStartTime: string,
     plannedEndTime: string | null,
-): Promise<WorkLoadEntity> => {
+): Promise<WorkLoadEntity | null> => {
     if (!epicId || !loadId || !plannedStartTime) {
         throw new Error('缺少必要參數')
     }
-    // 1. 讀 Redis
-    const cached = await redisCache.get(CACHE_KEYS.ALL_SCHEDULES)
-    let schedules: WorkEpicEntity[] = []
-    if (cached) {
-        schedules = JSON.parse(cached) as WorkEpicEntity[]
-    } else {
-        // redis 沒有直接查 Firestore（極少數情況）
-        const snapshot = await firestoreAdmin.collection('workEpic').get()
-        schedules = snapshot.docs.map(doc => doc.data() as WorkEpicEntity)
-    }
 
-    // 2. 找到對應 epic + load
-    let updatedWorkLoad: WorkLoadEntity | undefined = undefined
-    schedules = schedules.map(epic => {
-        if (epic.epicId !== epicId) return epic
-        if (!epic.workLoads) return epic
-        epic.workLoads = epic.workLoads.map(load => {
-            if (load.loadId !== loadId) return load
-            updatedWorkLoad = {
-                ...load,
-                plannedStartTime,
-                plannedEndTime: plannedEndTime || null
-            }
-            return updatedWorkLoad
-        })
-        return epic
+    // 1. 更新 Redis
+    const success = await redisCache.updateWorkLoad(epicId, loadId, {
+        plannedStartTime,
+        plannedEndTime
     })
 
-    if (!updatedWorkLoad) {
-        throw new Error('找不到指定的工作負載')
+    if (!success) {
+        throw new Error('更新失敗')
     }
 
-    // 3. 寫回 Redis
-    await redisCache.set(CACHE_KEYS.ALL_SCHEDULES, JSON.stringify(schedules), CACHE_TIMES.FIVE_MINUTES)
-    // 4. fire-and-forget 同步 Firestore
-    syncSchedulesToFirestore(schedules)
-    // 5. 回傳
-    return updatedWorkLoad
+    // 2. 取得更新後的資料
+    const schedules = await redisCache.getWorkSchedules()
+    const epic = schedules.find(e => e.epicId === epicId)
+    const workLoad = epic?.workLoads?.find(w => w.loadId === loadId)
+
+    if (!workLoad) {
+        throw new Error('找不到更新後的工作負載')
+    }
+
+    // 3. 排程同步到 Firestore（延遲執行，避免頻繁同步）
+    await scheduleSyncToFirestore(epicId)
+
+    return workLoad
+}
+
+/**
+ * 排程同步到 Firestore
+ */
+async function scheduleSyncToFirestore(epicId: string) {
+    const client = await redisCache.getClient()
+    const syncStatus = await client.get(CACHE_KEYS.SYNC_STATUS)
+
+    // 已有同步排程，更新同步狀態即可
+    if (syncStatus) {
+        const status = JSON.parse(syncStatus)
+        status.epicIds = [...new Set([...status.epicIds, epicId])]
+        await client.setEx(
+            CACHE_KEYS.SYNC_STATUS,
+            CACHE_TIMES.SYNC_DELAY,
+            JSON.stringify(status)
+        )
+        return
+    }
+
+    // 設定新的同步狀態
+    const newStatus = { epicIds: [epicId], timestamp: Date.now() }
+    await client.setEx(
+        CACHE_KEYS.SYNC_STATUS,
+        CACHE_TIMES.SYNC_DELAY,
+        JSON.stringify(newStatus)
+    )
+
+    // 延遲同步，等待可能的其他更新
+    setTimeout(async () => {
+        await syncSchedulesToFirestore()
+    }, CACHE_TIMES.SYNC_DELAY * 1000)
+}
+
+/**
+ * 執行同步到 Firestore
+ */
+async function syncSchedulesToFirestore() {
+    try {
+        const client = await redisCache.getClient()
+        const syncStatus = await client.get(CACHE_KEYS.SYNC_STATUS)
+        if (!syncStatus) return
+
+        const { epicIds } = JSON.parse(syncStatus)
+        const schedules = await redisCache.getWorkSchedules()
+
+        // 只同步需要更新的 epics
+        for (const epicId of epicIds) {
+            const epic = schedules.find(e => e.epicId === epicId)
+            if (epic) {
+                const epicRef = firestoreAdmin.collection('workEpic').doc(epicId)
+                await epicRef.set(epic, { merge: true })
+            }
+        }
+
+        // 清除同步狀態
+        await client.del(CACHE_KEYS.SYNC_STATUS)
+    } catch (err) {
+        console.error('[同步 Firestore 失敗]', err)
+    }
 }
