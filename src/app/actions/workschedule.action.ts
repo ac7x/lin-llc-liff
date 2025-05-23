@@ -95,7 +95,10 @@ export const updateWorkLoadTime = async (
             console.log(`Workloads after update:`, workLoads); // Pbd96
 
             transaction.update(epicRef, { workLoads });
+            await transaction.commit(); // Pd262
         });
+
+        await firestoreAdmin.collection('workEpic').doc(epicId).update({ workLoads }); // Pd9d2
 
         console.log(`Updated workload object:`, updatedWorkLoad); // Pfaf2
 
