@@ -32,6 +32,21 @@ export interface WorkEpicEntity extends WorkEpicTemplate {
     workLoads?: WorkLoadEntity[];
 }
 
+// 遞迴移除 undefined 屬性，型別安全
+function removeUndefined<T>(obj: T): T {
+    if (Array.isArray(obj)) {
+        return obj.map(removeUndefined) as unknown as T;
+    } else if (obj && typeof obj === 'object') {
+        return Object.entries(obj).reduce((acc, [key, value]) => {
+            if (value !== undefined) {
+                (acc as Record<string, unknown>)[key] = removeUndefined(value);
+            }
+            return acc;
+        }, {} as T);
+    }
+    return obj;
+}
+
 function toISO(date: string | number | Date | undefined | null): string {
     if (!date) return '';
     const d = new Date(date);
@@ -73,7 +88,7 @@ export async function addWorkEpic(epic: WorkEpicTemplate | WorkEpicEntity): Prom
         workTasks: 'workTasks' in epic ? epic.workTasks || [] : [],
         workLoads: 'workLoads' in epic ? fixLoads(epic.workLoads) : [],
     };
-    await firestoreAdmin.collection('workEpic').doc(epic.epicId).set(data);
+    await firestoreAdmin.collection('workEpic').doc(epic.epicId).set(removeUndefined(data));
 }
 
 export async function updateWorkEpic(epicId: string, updates: Partial<WorkEpicEntity>): Promise<void> {
@@ -83,7 +98,7 @@ export async function updateWorkEpic(epicId: string, updates: Partial<WorkEpicEn
     if (updates.insuranceDate) fixed.insuranceDate = toISO(updates.insuranceDate);
     if (updates.createdAt) fixed.createdAt = toISO(updates.createdAt);
     if (updates.workLoads) fixed.workLoads = fixLoads(updates.workLoads);
-    await firestoreAdmin.collection('workEpic').doc(epicId).update(fixed);
+    await firestoreAdmin.collection('workEpic').doc(epicId).update(removeUndefined(fixed));
 }
 
 export async function deleteWorkEpic(epicId: string): Promise<void> {

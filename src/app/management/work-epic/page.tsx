@@ -1,11 +1,7 @@
 'use client';
 
 import {
-    addWorkEpic,
-    deleteWorkEpic,
-    getAllWorkEpics,
-    updateWorkEpic,
-    WorkEpicEntity
+    addWorkEpic, deleteWorkEpic, getAllWorkEpics, updateWorkEpic, WorkEpicEntity,
 } from '@/app/actions/workepic.action';
 import { getAllWorkMembers, WorkMember } from '@/app/actions/workmember.action';
 import { getAllWorkTasks, WorkTaskEntity } from '@/app/actions/worktask.action';
@@ -13,29 +9,12 @@ import { addWorkZone, getAllWorkZones, WorkZoneEntity } from '@/app/actions/work
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import { useEffect, useState } from 'react';
 
-function removeUndefined<T>(obj: T): T {
-    if (Array.isArray(obj)) {
-        return obj.map(removeUndefined) as unknown as T;
-    } else if (obj && typeof obj === 'object') {
-        // 型別安全地遞迴去除 undefined
-        return Object.entries(obj).reduce((acc, [key, value]) => {
-            if (value !== undefined) {
-                (acc as Record<string, unknown>)[key] = removeUndefined(value);
-            }
-            return acc;
-        }, {} as T);
-    }
-    return obj;
-}
-
 function shortId(prefix = ''): string {
     return `${prefix}${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function toISO(date: string | undefined | null): string {
-    if (!date) {
-        return '';
-    }
+    if (!date) return '';
     if (date.includes('T')) {
         const d = new Date(date);
         return isNaN(d.getTime()) ? '' : d.toISOString();
@@ -44,7 +23,7 @@ function toISO(date: string | undefined | null): string {
     return isNaN(d.getTime()) ? '' : d.toISOString();
 }
 
-const ProgressBar = ({ completed, total }: { completed: number; total: number }) => {
+const ProgressBar = ({ completed, total }: { completed: number, total: number }) => {
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
     return (
         <div>
@@ -57,13 +36,8 @@ const ProgressBar = ({ completed, total }: { completed: number; total: number })
 };
 
 const SingleSelect = ({
-    value, onChange, options, placeholder
-}: {
-    value: string;
-    onChange: (val: string) => void;
-    options: WorkMember[];
-    placeholder: string;
-}) => (
+    value, onChange, options, placeholder,
+}: { value: string, onChange: (val: string) => void, options: WorkMember[], placeholder: string }) => (
     <select value={value} onChange={e => onChange(e.target.value)} className="border p-1">
         <option value="">{placeholder}</option>
         {options.map(opt => (
@@ -73,13 +47,8 @@ const SingleSelect = ({
 );
 
 const MultiSelect = ({
-    value, onChange, options, placeholder
-}: {
-    value: string[];
-    onChange: (selected: string[]) => void;
-    options: WorkMember[];
-    placeholder: string;
-}) => (
+    value, onChange, options, placeholder,
+}: { value: string[], onChange: (selected: string[]) => void, options: WorkMember[], placeholder: string }) => (
     <select
         multiple
         value={value}
@@ -96,7 +65,7 @@ const MultiSelect = ({
     </select>
 );
 
-type MemberSimple = { memberId: string; name: string };
+type MemberSimple = { memberId: string, name: string };
 
 export default function WorkEpicPage() {
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
@@ -112,6 +81,8 @@ export default function WorkEpicPage() {
     const [newSiteSupervisors, setNewSiteSupervisors] = useState<MemberSimple[]>([]);
     const [newSafetyOfficers, setNewSafetyOfficers] = useState<MemberSimple[]>([]);
     const [newAddress, setNewAddress] = useState('');
+    // 假設若有保險日期輸入，可加一行
+    // const [newInsuranceDate, setNewInsuranceDate] = useState('');
 
     useEffect(() => {
         (async () => {
@@ -119,7 +90,7 @@ export default function WorkEpicPage() {
             const tasks = await getAllWorkTasks() as WorkTaskEntity[];
             setWorkEpics(epics.map(epic => ({
                 ...epic,
-                workTasks: tasks.filter(t => epic.workTasks?.some(wt => wt.taskId === t.taskId))
+                workTasks: tasks.filter(t => epic.workTasks?.some(wt => wt.taskId === t.taskId)),
             })));
             setMembers(await getAllWorkMembers());
             setAllWorkZones(await getAllWorkZones() as WorkZoneEntity[]);
@@ -128,16 +99,13 @@ export default function WorkEpicPage() {
 
     const getProgress = (epic: WorkEpicEntity) => {
         let total = 0, completed = 0;
-        if (epic.workTasks) {
-            epic.workTasks.forEach(t => {
-                total += t.targetQuantity;
-                completed += t.completedQuantity;
-            });
-        }
+        if (epic.workTasks) epic.workTasks.forEach(t => {
+            total += t.targetQuantity;
+            completed += t.completedQuantity;
+        });
         return { completed, total };
     };
 
-    // 新增
     const handleAdd = async () => {
         if (!newTitle.trim() || !newOwner || !newAddress.trim()) {
             alert('請完整填寫標題、負責人、地址');
@@ -146,7 +114,7 @@ export default function WorkEpicPage() {
         const newEpic: WorkEpicEntity = {
             epicId: shortId('epic-'),
             title: newTitle,
-            startDate: '',
+            startDate: '', // 可再加日期輸入
             endDate: '',
             insuranceStatus: '無',
             owner: newOwner,
@@ -161,24 +129,26 @@ export default function WorkEpicPage() {
             workTypes: [],
             workFlows: [],
             workTasks: [],
-            workLoads: []
+            workLoads: [],
+            // 若有保險日期輸入則帶入
+            // insuranceDate: newInsuranceDate ? toISO(newInsuranceDate) : undefined,
         };
         newEpic.startDate = toISO(newEpic.startDate);
         newEpic.endDate = toISO(newEpic.endDate);
         try {
-            await addWorkEpic(removeUndefined(newEpic));
+            await addWorkEpic(newEpic);
             setWorkEpics(prev => [...prev, newEpic]);
             setNewTitle('');
             setNewOwner(null);
             setNewSiteSupervisors([]);
             setNewSafetyOfficers([]);
             setNewAddress('');
+            // setNewInsuranceDate('');
         } catch {
             alert('建立失敗，請稍後再試');
         }
     };
 
-    // 編輯
     const handleEdit = (epic: WorkEpicEntity) => {
         setEditingId(epic.epicId);
         setEditFields({ ...epic });
@@ -195,7 +165,7 @@ export default function WorkEpicPage() {
             endDate: toISO(editFields.endDate as string),
             workZones: selectedZones
         };
-        await updateWorkEpic(epicId, removeUndefined(updates));
+        await updateWorkEpic(epicId, updates);
         setWorkEpics(prev => prev.map(e => e.epicId === epicId ? { ...e, ...updates } : e));
         setEditingId(null);
     };
@@ -204,7 +174,6 @@ export default function WorkEpicPage() {
         setEditFields({});
     };
 
-    // 刪除
     const handleDelete = async (epicId: string) => {
         if (window.confirm('確定要刪除這個標的嗎？')) {
             await deleteWorkEpic(epicId);
@@ -214,9 +183,7 @@ export default function WorkEpicPage() {
 
     const handleAddWorkZone = async (epic: WorkEpicEntity) => {
         const name = window.prompt('請輸入新工作區名稱：');
-        if (!name) {
-            return;
-        }
+        if (!name) return;
         const newZone: WorkZoneEntity = {
             zoneId: shortId('zone-'),
             title: name,
@@ -227,7 +194,7 @@ export default function WorkEpicPage() {
         };
         await addWorkZone(epic.epicId, newZone);
         const updatedZones = [...(epic.workZones || []), newZone];
-        await updateWorkEpic(epic.epicId, removeUndefined({ workZones: updatedZones }));
+        await updateWorkEpic(epic.epicId, { workZones: updatedZones });
         setWorkEpics(prev => prev.map(e => e.epicId === epic.epicId ? { ...e, workZones: updatedZones } : e));
         alert('已建立新工作區！');
     };
@@ -250,6 +217,9 @@ export default function WorkEpicPage() {
                         setNewSafetyOfficers(members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })));
                     }} options={members} placeholder="安全員" />
                     <input value={newAddress} onChange={e => setNewAddress(e.target.value)} placeholder="地址" className="border p-1" />
+                    {/* 若有保險日期輸入，可加這一行：
+                    <input type="date" value={newInsuranceDate} onChange={e => setNewInsuranceDate(e.target.value)} placeholder="保險日期" className="border p-1" />
+                    */}
                     <button onClick={handleAdd} className="bg-blue-500 text-white px-3 py-1 rounded">建立</button>
                 </div>
                 <table className="table-auto w-full border-collapse border border-gray-300">
