@@ -236,6 +236,41 @@ const ClientWorkSchedulePage = () => {
       }
     })
 
+    tl.on('resize', async ({ item, start, end, group }) => {
+      const d = items.get(item as string)
+      if (!d) return
+      const newStart = startOfDay(start)
+      const duration = end ? Math.max(1, differenceInCalendarDays(end, start)) : 1
+      const newEnd = addDays(newStart, duration)
+
+      try {
+        const updatedWorkLoad = await updateWorkLoadTime(
+          group || d.group,
+          d.id as string,
+          newStart.toISOString(),
+          newEnd.toISOString()
+        )
+
+        if (updatedWorkLoad) {
+          items.update({ id: d.id, start: newStart, end: newEnd })
+          setEpics(prevEpics => {
+            return prevEpics.map(epic => {
+              if (epic.epicId !== updatedWorkLoad.epicIds[0]) return epic
+              return {
+                ...epic,
+                workLoads: (epic.workLoads || []).map(load => {
+                  if (load.loadId !== updatedWorkLoad.loadId) return load
+                  return updatedWorkLoad
+                })
+              }
+            })
+          })
+        }
+      } catch (err) {
+        console.error('更新工作負載時間失敗:', err)
+      }
+    })
+
     const handleResize = () => timelineInstance.current?.redraw()
     window.addEventListener('resize', handleResize)
 
