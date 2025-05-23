@@ -4,7 +4,7 @@ import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'
 import { collection, doc, runTransaction } from 'firebase/firestore'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataGroup, DataItem, DataSet, Timeline, TimelineItem, TimelineOptions } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
@@ -87,43 +87,46 @@ const ClientWorkSchedulePage = () => {
     )
   }, [epicSnapshot])
 
-  // 用戶端直接更新 Firestore 的函數
-  const updateWorkLoadTime = async (
-    epicId: string,
-    loadId: string,
-    plannedStartTime: string,
-    plannedEndTime: string | null,
-  ): Promise<void> => {
-    try {
-      if (!epicId || !loadId || !plannedStartTime) {
-        throw new Error('缺少必要參數')
-      }
-
-      const epicRef = doc(firestore, 'workEpic', epicId)
-      await runTransaction(firestore, async (transaction) => {
-        const epicDoc = await transaction.get(epicRef)
-        if (!epicDoc.exists()) return
-
-        const epicData = epicDoc.data()
-        if (!epicData || !Array.isArray(epicData.workLoads)) return
-
-        const workLoads = [...epicData.workLoads]
-        const index = workLoads.findIndex(wl => wl.loadId === loadId)
-        if (index !== -1) {
-          workLoads[index] = {
-            ...workLoads[index],
-            plannedStartTime,
-            plannedEndTime
-          }
+  // 用戶端直接更新 Firestore 的函數（已用 useCallback 包裹）
+  const updateWorkLoadTime = useCallback(
+    async (
+      epicId: string,
+      loadId: string,
+      plannedStartTime: string,
+      plannedEndTime: string | null,
+    ): Promise<void> => {
+      try {
+        if (!epicId || !loadId || !plannedStartTime) {
+          throw new Error('缺少必要參數')
         }
 
-        transaction.update(epicRef, { workLoads })
-      })
-    } catch (error) {
-      console.error('更新工作負載時間失敗:', error)
-      throw error
-    }
-  }
+        const epicRef = doc(firestore, 'workEpic', epicId)
+        await runTransaction(firestore, async (transaction) => {
+          const epicDoc = await transaction.get(epicRef)
+          if (!epicDoc.exists()) return
+
+          const epicData = epicDoc.data()
+          if (!epicData || !Array.isArray(epicData.workLoads)) return
+
+          const workLoads = [...epicData.workLoads]
+          const index = workLoads.findIndex(wl => wl.loadId === loadId)
+          if (index !== -1) {
+            workLoads[index] = {
+              ...workLoads[index],
+              plannedStartTime,
+              plannedEndTime
+            }
+          }
+
+          transaction.update(epicRef, { workLoads })
+        })
+      } catch (error) {
+        console.error('更新工作負載時間失敗:', error)
+        throw error
+      }
+    },
+    []
+  )
 
   useEffect(() => {
     if (!timelineRef.current || !epics.length) return

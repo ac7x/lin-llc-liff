@@ -1,28 +1,47 @@
 // utils/timelineEvents.ts
 import { Timeline } from 'vis-timeline/standalone'
 
+/**
+ * Properties passed to timeline event handlers.
+ * Expand this interface if you need more detail for specific events.
+ */
+export interface TimelineEventProperties {
+    item?: string | number
+    group?: string | number
+    event?: Event
+    time?: Date
+    [key: string]: unknown
+}
+
+export type TimelineEventHandler = (props: TimelineEventProperties) => void
+
 export type TimelineEventHandlers = {
-    onAdd?: (...args: any[]) => void
-    onMove?: (...args: any[]) => void
-    onUpdate?: (...args: any[]) => void
-    onRemove?: (...args: any[]) => void
-    onSelect?: (...args: any[]) => void
-    onClick?: (...args: any[]) => void
-    onDoubleClick?: (...args: any[]) => void
-    onContextMenu?: (...args: any[]) => void
-    onItemOver?: (...args: any[]) => void
-    onItemOut?: (...args: any[]) => void
-    onRangeChange?: (...args: any[]) => void
-    onRangeChanged?: (...args: any[]) => void
-    onTimeChange?: (...args: any[]) => void
-    onTimeChanged?: (...args: any[]) => void
+    onAdd?: TimelineEventHandler
+    onMove?: TimelineEventHandler
+    onUpdate?: TimelineEventHandler
+    onRemove?: TimelineEventHandler
+    onSelect?: TimelineEventHandler
+    onClick?: TimelineEventHandler
+    onDoubleClick?: TimelineEventHandler
+    onContextMenu?: TimelineEventHandler
+    onItemOver?: TimelineEventHandler
+    onItemOut?: TimelineEventHandler
+    onRangeChange?: TimelineEventHandler
+    onRangeChanged?: TimelineEventHandler
+    onTimeChange?: TimelineEventHandler
+    onTimeChanged?: TimelineEventHandler
     // ...如有其他事件，依官方 docs 補齊
 }
 
-export function registerTimelineEvents(
+/**
+ * Register timeline events with the given handlers.
+ * @param timeline Timeline instance
+ * @param handlers Handlers mapping
+ */
+export const registerTimelineEvents = (
     timeline: Timeline,
     handlers: TimelineEventHandlers
-) {
+): void => {
     if (handlers.onAdd) timeline.on('add', handlers.onAdd)
     if (handlers.onMove) timeline.on('move', handlers.onMove)
     if (handlers.onUpdate) timeline.on('update', handlers.onUpdate)
