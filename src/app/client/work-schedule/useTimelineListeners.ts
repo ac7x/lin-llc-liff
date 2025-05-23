@@ -30,46 +30,46 @@ export type TimelineEventHandler<T = unknown> = (props: T) => void
  */
 export interface UseTimelineListenersProps {
     timeline: Timeline | null
-    onSelect?: TimelineEventHandler<any>
-    onDeselect?: TimelineEventHandler<any>
-    onItemOver?: TimelineEventHandler<any>
-    onItemOut?: TimelineEventHandler<any>
-    onItemSelected?: TimelineEventHandler<any>
-    onItemUnselected?: TimelineEventHandler<any>
-    onRangeChange?: TimelineEventHandler<any>
-    onRangeChanged?: TimelineEventHandler<any>
-    onClick?: TimelineEventHandler<any>
-    onDoubleClick?: TimelineEventHandler<any>
-    onContextMenu?: TimelineEventHandler<any>
-    onBackgroundClick?: TimelineEventHandler<any>
-    onBackgroundDoubleClick?: TimelineEventHandler<any>
-    onBackgroundContextMenu?: TimelineEventHandler<any>
-    onDrop?: TimelineEventHandler<any>
+    onSelect?: TimelineEventHandler<unknown>
+    onDeselect?: TimelineEventHandler<unknown>
+    onItemOver?: TimelineEventHandler<unknown>
+    onItemOut?: TimelineEventHandler<unknown>
+    onItemSelected?: TimelineEventHandler<unknown>
+    onItemUnselected?: TimelineEventHandler<unknown>
+    onRangeChange?: TimelineEventHandler<unknown>
+    onRangeChanged?: TimelineEventHandler<unknown>
+    onClick?: TimelineEventHandler<unknown>
+    onDoubleClick?: TimelineEventHandler<unknown>
+    onContextMenu?: TimelineEventHandler<unknown>
+    onBackgroundClick?: TimelineEventHandler<unknown>
+    onBackgroundDoubleClick?: TimelineEventHandler<unknown>
+    onBackgroundContextMenu?: TimelineEventHandler<unknown>
+    onDrop?: TimelineEventHandler<unknown>
     onAdd?: TimelineEventHandler<AddEventProps>
     onMove?: TimelineEventHandler<MoveEventProps>
-    onRemove?: TimelineEventHandler<any>
-    onItemUpdate?: TimelineEventHandler<any>
-    onStartResizing?: TimelineEventHandler<any>
-    onEndResizing?: TimelineEventHandler<any>
-    onChanged?: TimelineEventHandler<any>
-    onMouseOver?: TimelineEventHandler<any>
-    onMouseDown?: TimelineEventHandler<any>
-    onMouseUp?: TimelineEventHandler<any>
-    onMouseMove?: TimelineEventHandler<any>
-    onMouseOut?: TimelineEventHandler<any>
-    onGroupDragged?: TimelineEventHandler<any>
-    onGroupDraggedEnd?: TimelineEventHandler<any>
-    onMarkerChange?: TimelineEventHandler<any>
-    onCurrentTimeTick?: TimelineEventHandler<any>
-    onTimeChanged?: TimelineEventHandler<any>
-    onDestroy?: TimelineEventHandler<any>
+    onRemove?: TimelineEventHandler<unknown>
+    onItemUpdate?: TimelineEventHandler<unknown>
+    onStartResizing?: TimelineEventHandler<unknown>
+    onEndResizing?: TimelineEventHandler<unknown>
+    onChanged?: TimelineEventHandler<unknown>
+    onMouseOver?: TimelineEventHandler<unknown>
+    onMouseDown?: TimelineEventHandler<unknown>
+    onMouseUp?: TimelineEventHandler<unknown>
+    onMouseMove?: TimelineEventHandler<unknown>
+    onMouseOut?: TimelineEventHandler<unknown>
+    onGroupDragged?: TimelineEventHandler<unknown>
+    onGroupDraggedEnd?: TimelineEventHandler<unknown>
+    onMarkerChange?: TimelineEventHandler<unknown>
+    onCurrentTimeTick?: TimelineEventHandler<unknown>
+    onTimeChanged?: TimelineEventHandler<unknown>
+    onDestroy?: TimelineEventHandler<unknown>
     // ...持續擴充
 }
 
 /**
  * 事件對應表
  */
-const eventPropMap = [
+const EVENT_PROP_MAP = [
     { event: 'select', prop: 'onSelect' },
     { event: 'deselect', prop: 'onDeselect' },
     { event: 'itemover', prop: 'onItemOver' },
@@ -102,7 +102,7 @@ const eventPropMap = [
     { event: 'markerChange', prop: 'onMarkerChange' },
     { event: 'currentTimeTick', prop: 'onCurrentTimeTick' },
     { event: 'timechanged', prop: 'onTimeChanged' },
-    { event: 'destroy', prop: 'onDestroy' }
+    { event: 'destroy', prop: 'onDestroy' },
 ] as const
 
 /**
@@ -113,25 +113,23 @@ export const useTimelineListeners = (props: UseTimelineListenersProps): void => 
     const { timeline } = props
 
     useEffect(() => {
-        if (!timeline) {
-            return
-        }
+        if (!timeline) return
 
-        eventPropMap.forEach(({ event, prop }) => {
+        EVENT_PROP_MAP.forEach(({ event, prop }) => {
             const handler = props[prop as keyof UseTimelineListenersProps]
             if (handler) {
-                timeline.on(event, handler as any)
+                timeline.on(event, handler as (...args: unknown[]) => void)
             }
         })
 
         return () => {
-            eventPropMap.forEach(({ event, prop }) => {
+            EVENT_PROP_MAP.forEach(({ event, prop }) => {
                 const handler = props[prop as keyof UseTimelineListenersProps]
                 if (handler) {
-                    timeline.off(event, handler as any)
+                    timeline.off(event, handler as (...args: unknown[]) => void)
                 }
             })
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [timeline, ...eventPropMap.map(({ prop }) => props[prop as keyof UseTimelineListenersProps])])
+    }, [timeline, ...EVENT_PROP_MAP.map(({ prop }) => props[prop as keyof UseTimelineListenersProps])])
 }
