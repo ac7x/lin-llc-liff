@@ -2,53 +2,47 @@
 // 提供統一的入口點來存取所有工作排程相關的功能
 
 // Domain Layer - 領域層
-export { WorkItem, WorkItemPriority, WorkItemStatus, WorkItemType, WorkItemVO } from './domain/model/WorkItem';
+export type { WorkItem, WorkItemPriority, WorkItemStatus, WorkItemType, WorkItemVO } from './domain/model/WorkItem';
 export type { WorkItemRepository } from './domain/repository/WorkItemRepo';
-export { ScheduleService } from './domain/service/ScheduleService';
+import { UpdateWorkTimeUseCase } from './application/usecases/UpdateWorkTime';
+import { ScheduleService } from './domain/service/ScheduleService';
 
 // Application Layer - 應用層
 export type {
-    CreateWorkItemRequest, TimelineDataItem, UpdateWorkItemRequest, WorkItemDTO, WorkItemFilters,
-    WorkItemSummary
+    CreateWorkItemDTO, TimelineConfigDTO, TimelineGroupDTO, TimelineItemDTO, UpdateWorkItemDTO, WorkItemDTO, WorkItemQueryDTO, WorkItemResponseDTO
 } from './application/dto/WorkItemDTO';
-export { UpdateWorkTimeUseCase } from './application/usecases/UpdateWorkTime';
+export { Timeline, Toolbar, useTimelineEvents };
 
 // Infrastructure Layer - 基礎設施層
-export { TimelineAdapter } from './infrastructure/adapter/TimelineAdapter';
-export { WorkItemApiRepository } from './infrastructure/repository/WorkItemApiRepo';
+import { TimelineAdapter } from './infrastructure/adapter/TimelineAdapter';
+import { WorkItemApiRepository } from './infrastructure/repository/WorkItemApiRepo';
 
 // Interface Layer - 介面層
-export { Timeline } from './interfaces/components/Timeline';
-export { Toolbar } from './interfaces/components/Toolbar';
-export { useTimelineEvents } from './interfaces/hooks/useTimelineEvents';
+import { Timeline } from './interfaces/components/Timeline';
+import { Toolbar } from './interfaces/components/Toolbar';
+import { useTimelineEvents } from './interfaces/hooks/useTimelineEvents';
 
 // Types - 型別定義
-export type {
-    EventHandlers, TimelineData, TimelineEvent, TimelineGroup, TimelineItem, TimelineOptions, TimelineState, ViewMode
-} from './types/timeline';
+export type { TimelineActions, TimelineClickEvent, TimelineConfiguration, TimelineEditableOptions, TimelineEventHandlers, TimelineGroupData, TimelineItemData, TimelineItemEvent, TimelineKeyboardShortcuts, TimelineLocalization, TimelineRangeEvent, TimelineSelectEvent, TimelineState, TimelineTimeEvent, TimelineUtils, UseTimelineReturn } from './types/timeline';
 
 // Utils - 工具函式
-export {
-    adjustTimeToSlot, createTimeRange,
-    formatDuration, formatTimeForTimeline, getDuration, getTimeSlots, isTimeOverlap, isValidTimeRange, isWorkingHours, parseTimelineTime
-} from './utils/timeUtils';
+export { addDays, addHours, addMinutes, calculateDurationHours, calculateDurationMinutes, calculateDurationMs, formatDuration, formatLocalDate, formatLocalDateTime, formatLocalTime, formatTimeRange, fromISOString, getMonthEnd, getMonthStart, getRelativeTime, getTodayEnd, getTodayStart, getWeekEnd, getWeekStart, getYearEnd, getYearStart, isThisMonth, isThisWeek, isThisYear, isTimeRangeOverlapping, isToday, isValidDate, TimeRangeValidator, toISOString } from './utils/timeUtils';
 
 // Constants - 常數定義
-export {
-    DEFAULT_TIMELINE_OPTIONS, PRIORITY_COLORS, STATUS_COLORS, TIMELINE_CONFIG, TIME_FORMATS, VIEW_MODES, WORK_ITEM_COLORS
-} from './constants/timelineConstants';
+export { ANIMATION_CONFIG, CSS_CLASSES, DEFAULT_TIME_WINDOWS, DEFAULT_TIMELINE_CONFIG, DRAG_CONFIG, EMPTY_MESSAGES, ERROR_MESSAGES, KEYBOARD_SHORTCUTS, LOADING_MESSAGES, PRIORITY_COLORS, PRIORITY_INDICATORS, PRIORITY_LABELS, STATUS_COLORS, STATUS_LABELS, SUCCESS_MESSAGES, TIME_FORMAT, TIMELINE_DIMENSIONS, TOOLTIP_MESSAGES, TYPE_COLORS, TYPE_ICONS, TYPE_LABELS, ZOOM_CONFIG } from './constants/timelineConstants';
 
 // Config - 設定
 export {
-    API_CONFIG, PERFORMANCE_CONFIG, TIMELINE_FEATURES,
-    UI_CONFIG
+    API_CONFIG, CACHE_CONFIG, DEBUG_CONFIG, ERROR_CONFIG, FEATURE_FLAGS, getApiUrl, getConfig, getEnvVar, I18N_CONFIG, isDevelopment, isProduction, isTest, SECURITY_CONFIG, STORAGE_CONFIG, TIMELINE_CONFIG
 } from './config/env';
 
 // 便利的工廠函式
 export const createWorkScheduleModule = () => {
     const repository = new WorkItemApiRepository();
-    const scheduleService = new ScheduleService(repository);
-    const updateWorkTimeUseCase = new UpdateWorkTimeUseCase(repository);
+    // TODO: 修正 WorkItemApiRepository 與 WorkItemRepository 介面不相容問題
+    // 若 ScheduleService 需要正確的 WorkItemRepository 實作，需確保 checkTimeConflicts 符合介面
+    const scheduleService = new ScheduleService(repository as any);
+    const updateWorkTimeUseCase = new UpdateWorkTimeUseCase(repository as any, scheduleService);
     const timelineAdapter = new TimelineAdapter();
 
     return {
