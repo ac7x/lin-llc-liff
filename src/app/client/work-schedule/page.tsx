@@ -32,7 +32,7 @@ const WorkSchedulePage = () => {
   const timelineInstance = useRef<Timeline | null>(null)
   const itemsDataSet = useRef<DataSet<DataItem> | null>(null)
 
-  const [epicSnapshot, epicLoading, epicError] = useCollection(
+  const [epicSnapshot] = useCollection(
     collection(firestore, 'workEpic')
   )
 
