@@ -23,7 +23,7 @@ interface DraggableItem {
   end: Date
 }
 
-const WorkSchedulePage = () => {
+const ClientWorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
@@ -211,4 +211,4 @@ const WorkSchedulePage = () => {
   )
 }
 
-export default WorkSchedulePage
+export default ClientWorkSchedulePage
