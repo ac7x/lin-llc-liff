@@ -8,35 +8,50 @@ import { WorkTypeEntity } from "./worktype.action";
 import { WorkZoneEntity } from "./workzone.action";
 
 export interface WorkEpicTemplate {
-    epicId: string; // 唯一識別碼
-    title: string; // 標題
-    startDate: string; // 預計開始時間
-    endDate: string; // 預計結束時間
+    epicId: string;
+    title: string;
+    startDate: string; // ISO 格式
+    endDate: string;   // ISO 格式
 }
 
 export interface WorkEpicEntity extends WorkEpicTemplate {
-    insuranceStatus?: "無" | "有"; // 修改為可選屬性
-    insuranceDate?: string; // 保險日期（僅當保險狀態為 "有" 時存在）
-    owner: { memberId: string; name: string }; // 負責人
-    siteSupervisors?: { memberId: string; name: string }[]; // 監工
-    safetyOfficers?: { memberId: string; name: string }[]; // 安全衛生人員（公安）
-    status: "待開始" | "進行中" | "已完成" | "已取消"; // 狀態
-    priority: number; // 優先級，數字愈低愈優先
-    region: "北部" | "中部" | "南部" | "東部" | "離島"; // 區域
-    address: string; // 詳細地址
-    createdAt: string; // 建立時間
-    workZones?: WorkZoneEntity[]; // 多個工作區域
-    workTypes?: WorkTypeEntity[]; // 新增屬性
-    workFlows?: WorkFlowEntity[]; // 新增屬性
-    workTasks?: WorkTaskEntity[]; // 新增屬性
-    workLoads?: WorkLoadEntity[]; // 新增屬性
+    insuranceStatus?: "無" | "有";
+    insuranceDate?: string; // ISO 格式
+    owner: { memberId: string; name: string };
+    siteSupervisors?: { memberId: string; name: string }[];
+    safetyOfficers?: { memberId: string; name: string }[];
+    status: "待開始" | "進行中" | "已完成" | "已取消";
+    priority: number;
+    region: "北部" | "中部" | "南部" | "東部" | "離島";
+    address: string;
+    createdAt: string; // ISO 格式
+    workZones?: WorkZoneEntity[];
+    workTypes?: WorkTypeEntity[];
+    workFlows?: WorkFlowEntity[];
+    workTasks?: WorkTaskEntity[];
+    workLoads?: WorkLoadEntity[];
 }
 
-/**
- * 取得所有 WorkEpic
- * @param isTemplate 是否僅回傳模板型態
- * @returns WorkEpicTemplate 或 WorkEpicEntity 陣列
- */
+function toISO(date: any): string {
+    if (!date) return "";
+    try {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return "";
+        return d.toISOString();
+    } catch {
+        return "";
+    }
+}
+
+function fixLoads(loads?: WorkLoadEntity[]): WorkLoadEntity[] {
+    if (!loads) return [];
+    return loads.map(l => ({
+        ...l,
+        plannedStartTime: toISO(l.plannedStartTime),
+        plannedEndTime: toISO(l.plannedEndTime),
+    }));
+}
+
 export async function getAllWorkEpics(isTemplate: boolean): Promise<WorkEpicTemplate[] | WorkEpicEntity[]> {
     const snapshot = await firestoreAdmin.collection("workEpic").get();
     if (isTemplate) {
@@ -46,15 +61,13 @@ export async function getAllWorkEpics(isTemplate: boolean): Promise<WorkEpicTemp
     }
 }
 
-/**
- * 新增 WorkEpic 至 Firestore 資料庫
- * @param epic WorkEpicTemplate 或 WorkEpicEntity 物件，包含 Epic 資訊
- * @returns 無回傳值，僅執行新增動作
- */
 export async function addWorkEpic(epic: WorkEpicTemplate | WorkEpicEntity): Promise<void> {
     const data: WorkEpicEntity = {
         ...epic,
-        createdAt: "createdAt" in epic ? epic.createdAt : new Date().toISOString(),
+        startDate: toISO(epic.startDate),
+        endDate: toISO(epic.endDate),
+        insuranceDate: toISO((epic as any).insuranceDate),
+        createdAt: "createdAt" in epic ? toISO((epic as any).createdAt) : new Date().toISOString(),
         owner: "owner" in epic && epic.owner ? epic.owner : { memberId: "", name: "未指定" },
         status: "status" in epic && epic.status ? epic.status : "待開始",
         priority: "priority" in epic && epic.priority ? epic.priority : 1,
@@ -77,27 +90,25 @@ export async function addWorkEpic(epic: WorkEpicTemplate | WorkEpicEntity): Prom
         data.workTasks = epic.workTasks || [];
     }
     if ("workLoads" in epic) {
-        data.workLoads = epic.workLoads || [];
+        data.workLoads = fixLoads(epic.workLoads);
     }
 
     await firestoreAdmin.collection("workEpic").doc(epic.epicId).set(data);
 }
 
-/**
- * 更新指定 WorkEpic 至 Firestore 資料庫
- * @param epicId WorkEpic 的唯一識別碼
- * @param updates 欲更新的 WorkEpicEntity 欄位內容
- * @returns 無回傳值，僅執行更新動作
- */
 export async function updateWorkEpic(epicId: string, updates: Partial<WorkEpicEntity>): Promise<void> {
-    await firestoreAdmin.collection("workEpic").doc(epicId).update(updates);
+    const fixed: Partial<WorkEpicEntity> = {
+        ...updates,
+    };
+    if (typeof updates.startDate !== 'undefined') fixed.startDate = toISO(updates.startDate);
+    if (typeof updates.endDate !== 'undefined') fixed.endDate = toISO(updates.endDate);
+    if (typeof updates.insuranceDate !== 'undefined') fixed.insuranceDate = toISO(updates.insuranceDate);
+    if (typeof updates.createdAt !== 'undefined') fixed.createdAt = toISO(updates.createdAt);
+    if (typeof updates.workLoads !== 'undefined') fixed.workLoads = fixLoads(updates.workLoads);
+
+    await firestoreAdmin.collection("workEpic").doc(epicId).update(fixed);
 }
 
-/**
- * 從 Firestore 資料庫刪除指定 WorkEpic
- * @param epicId WorkEpic 的唯一識別碼
- * @returns 無回傳值，僅執行刪除動作
- */
 export async function deleteWorkEpic(epicId: string): Promise<void> {
     await firestoreAdmin.collection("workEpic").doc(epicId).delete();
 }

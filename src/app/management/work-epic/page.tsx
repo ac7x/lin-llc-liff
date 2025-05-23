@@ -9,6 +9,17 @@ import { addWorkZone, getAllWorkZones, WorkZoneEntity } from '@/app/actions/work
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import { useEffect, useState } from 'react';
 
+// ★ ISO工具
+function toISO(date: string | undefined | null): string {
+    if (!date) return "";
+    if (date.includes("T")) {
+        const d = new Date(date);
+        return isNaN(d.getTime()) ? "" : d.toISOString();
+    }
+    const d = new Date(date + "T00:00:00.000Z");
+    return isNaN(d.getTime()) ? "" : d.toISOString();
+}
+
 // 進度條
 const ProgressBar = ({ completed, total }: { completed: number, total: number }) => {
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -102,8 +113,8 @@ export default function WorkEpicPage() {
         const newEpic: WorkEpicEntity = {
             epicId: `epic-${Date.now()}`,
             title: newTitle,
-            startDate: '',
-            endDate: '',
+            startDate: "", // 可再加日期輸入
+            endDate: "",
             insuranceStatus: '無',
             owner: newOwner,
             siteSupervisors: newSiteSupervisors,
@@ -115,6 +126,9 @@ export default function WorkEpicPage() {
             createdAt: new Date().toISOString(),
             workZones: []
         };
+        // ★ 保證時間欄位為 ISO
+        newEpic.startDate = toISO(newEpic.startDate);
+        newEpic.endDate = toISO(newEpic.endDate);
         await addWorkEpic(newEpic);
         setWorkEpics(prev => [...prev, newEpic]);
         setNewTitle('');
@@ -130,14 +144,20 @@ export default function WorkEpicPage() {
         setEditFields({ ...epic });
         setEditWorkZoneIds(Array.isArray(epic.workZones) ? epic.workZones.map(z => z.zoneId) : []);
     };
-    // 將 value 型別從 any 改為 unknown
     const handleEditField = (field: keyof WorkEpicEntity, value: unknown) => {
         setEditFields(prev => ({ ...prev, [field]: value }));
     };
     const handleSave = async (epicId: string) => {
         const selectedZones = allWorkZones.filter(z => editWorkZoneIds.includes(z.zoneId));
-        await updateWorkEpic(epicId, { ...editFields, workZones: selectedZones });
-        setWorkEpics(prev => prev.map(e => e.epicId === epicId ? { ...e, ...editFields, workZones: selectedZones } : e));
+        // ★ 保證時間欄位為 ISO
+        const updates = {
+            ...editFields,
+            startDate: toISO(editFields.startDate as string),
+            endDate: toISO(editFields.endDate as string),
+            workZones: selectedZones
+        };
+        await updateWorkEpic(epicId, updates);
+        setWorkEpics(prev => prev.map(e => e.epicId === epicId ? { ...e, ...updates } : e));
         setEditingId(null);
     };
     const handleCancel = () => {
@@ -164,7 +184,6 @@ export default function WorkEpicPage() {
             createdAt: new Date().toISOString(),
             status: '啟用' as const
         };
-        // 修正：addWorkZone 需要 epicId 與 zone 兩個參數
         await addWorkZone(epic.epicId, newZone);
         const updatedZones = [...(epic.workZones || []), newZone];
         await updateWorkEpic(epic.epicId, { workZones: updatedZones });
@@ -221,8 +240,8 @@ export default function WorkEpicPage() {
                                         <>
                                             <td className="border px-2 py-1 w-52"><ProgressBar {...progress} /></td>
                                             <td className="border px-2 py-1"><input value={editFields.title || ''} onChange={e => handleEditField('title', e.target.value)} className="border p-1 w-full" /></td>
-                                            <td className="border px-2 py-1"><input type="date" value={editFields.startDate || ''} onChange={e => handleEditField('startDate', e.target.value)} className="border p-1 w-full" /></td>
-                                            <td className="border px-2 py-1"><input type="date" value={editFields.endDate || ''} onChange={e => handleEditField('endDate', e.target.value)} className="border p-1 w-full" /></td>
+                                            <td className="border px-2 py-1"><input type="date" value={editFields.startDate ? String(editFields.startDate).slice(0, 10) : ''} onChange={e => handleEditField('startDate', e.target.value)} className="border p-1 w-full" /></td>
+                                            <td className="border px-2 py-1"><input type="date" value={editFields.endDate ? String(editFields.endDate).slice(0, 10) : ''} onChange={e => handleEditField('endDate', e.target.value)} className="border p-1 w-full" /></td>
                                             <td className="border px-2 py-1">
                                                 <select value={editFields.insuranceStatus || '無'} onChange={e => handleEditField('insuranceStatus', e.target.value)} className="border p-1 w-full">
                                                     <option value="無">無</option>
@@ -265,7 +284,7 @@ export default function WorkEpicPage() {
                                             </td>
                                             <td className="border px-2 py-1"><input value={editFields.address || ''} onChange={e => handleEditField('address', e.target.value)} className="border p-1 w-full" /></td>
                                             <td className="border px-2 py-1">
-                                                <select multiple value={editWorkZoneIds} onChange={e => setEditWorkZoneIds(Array.from(e.target.selectedOptions).map(opt => opt.value))} className="border p-1 min-w-[120px] h-[80px]">
+                                                <select multiple value={editWorkZoneIds} onChange={e => setEditWorkZoneIds(Array.from(e.target.selectedOptions).map(opt => opt.value))} className="border p-1 w-full">
                                                     <option disabled value="">選擇工作區</option>
                                                     {allWorkZones.map(z => (
                                                         <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
@@ -299,10 +318,6 @@ export default function WorkEpicPage() {
                                             </td>
                                         </>
                                     )}
-                                    {/* 顯示工作區 */}
-                                    <div>
-                                        工作區：{Array.isArray(epic.workZones) && epic.workZones.length > 0 ? epic.workZones.map(z => z.title).join(', ') : '無'}
-                                    </div>
                                 </tr>
                             );
                         })}

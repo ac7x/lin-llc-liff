@@ -22,6 +22,17 @@ interface WorkMember {
 
 const workloadsPerPage = 10;
 
+// ★ ISO 工具
+function toISO(date: string | undefined | null): string {
+  if (!date) return "";
+  if (date.includes("T")) {
+    const d = new Date(date);
+    return isNaN(d.getTime()) ? "" : d.toISOString();
+  }
+  const d = new Date(date + "T00:00:00.000Z");
+  return isNaN(d.getTime()) ? "" : d.toISOString();
+}
+
 export default function WorkTaskPage() {
   const [tasks, setTasks] = useState<WorkTaskEntity[]>([]);
   const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
@@ -56,12 +67,18 @@ export default function WorkTaskPage() {
   };
 
   const handleWorkLoadChange = async (loadId: string, changes: Partial<WorkLoadEntity>) => {
+    // ★ 這裡將 plannedStartTime/EndTime 轉成 ISO
+    const changesFixed: Partial<WorkLoadEntity> = {
+      ...changes,
+      ...(typeof changes.plannedStartTime !== "undefined" ? { plannedStartTime: toISO(changes.plannedStartTime) } : {}),
+      ...(typeof changes.plannedEndTime !== "undefined" ? { plannedEndTime: toISO(changes.plannedEndTime) } : {}),
+    };
     const epic = epics.find(e => Array.isArray(e.workLoads) && e.workLoads.some(l => l.loadId === loadId));
     if (!epic) return;
-    const updatedLoads = (epic.workLoads || []).map(load => load.loadId === loadId ? { ...load, ...changes } : load);
+    const updatedLoads = (epic.workLoads || []).map(load => load.loadId === loadId ? { ...load, ...changesFixed } : load);
     await updateWorkEpic(epic.epicId, { workLoads: updatedLoads });
     setEpics(prev => prev.map(e => e.epicId === epic.epicId ? { ...e, workLoads: updatedLoads } : e));
-    setWorkloads(prev => prev.map(load => load.loadId === loadId ? { ...load, ...changes } : load));
+    setWorkloads(prev => prev.map(load => load.loadId === loadId ? { ...load, ...changesFixed } : load));
   };
 
   const handleActualQuantityChange = async (loadId: string, actualQuantity: number) => {

@@ -14,6 +14,18 @@ function shortId(prefix: string = ""): string {
     return `${prefix}${Math.random().toString(36).slice(2, 8)}`;
 }
 
+// 時間轉 ISO 格式
+function toISO(date: any): string {
+    if (!date) return "";
+    try {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return "";
+        return d.toISOString();
+    } catch {
+        return "";
+    }
+}
+
 const WorkTemplatePage: React.FC = () => {
     const [workTypes, setWorkTypes] = useState<WorkTypeEntity[]>([]);
     const [newWorkTypeTitle, setNewWorkTypeTitle] = useState<string>("");
@@ -104,7 +116,7 @@ const WorkTemplatePage: React.FC = () => {
                     taskId,
                     plannedQuantity: Math.floor(qty / split),
                     unit: "單位",
-                    plannedStartTime: "",
+                    plannedStartTime: "", // 後續可於 UI 編輯時帶入
                     plannedEndTime: "",
                     actualQuantity: 0,
                     executor: [],
@@ -113,11 +125,17 @@ const WorkTemplatePage: React.FC = () => {
                 });
             }
         });
+        // 時間欄位統一成 ISO 格式（這裡 loads 會被 action 再次 fix，但這裡也可做前端防呆）
+        const fixedLoads = loads.map(l => ({
+            ...l,
+            plannedStartTime: toISO(l.plannedStartTime),
+            plannedEndTime: toISO(l.plannedEndTime),
+        }));
         await updateWorkEpic(selectedWorkEpicId, {
             workTypes: [...(epic.workTypes || []), type],
             workFlows: [...(epic.workFlows || []), ...flows],
             workTasks: [...(epic.workTasks || []), ...tasks],
-            workLoads: [...(epic.workLoads || []), ...loads]
+            workLoads: [...(epic.workLoads || []), ...fixedLoads]
         });
         setShowValidationError(false);
     }
