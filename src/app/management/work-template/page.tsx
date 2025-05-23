@@ -7,7 +7,7 @@ import { addWorkType, getAllWorkTypes, updateWorkType, WorkTypeEntity } from '@/
 import type { WorkZoneEntity } from '@/app/actions/workzone.action';
 import { getAllWorkZones } from '@/app/actions/workzone.action';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
-import React, { useEffect, useState } from 'react';
+import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
 
 function shortId(prefix = ''): string {
     return `${prefix}${Math.random().toString(36).slice(2, 8)}`;
@@ -139,6 +139,31 @@ const WorkTemplatePage: React.FC = () => {
         ? selectedEpic.workZones
         : allWorkZones;
 
+    // --- 全選功能的狀態與邏輯 ---
+    const allSelected = filteredFlows.length > 0 && filteredFlows.every(f => selectedWorkFlowIds.includes(f.flowId));
+    const someSelected = filteredFlows.some(f => selectedWorkFlowIds.includes(f.flowId));
+    const selectAllRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (selectAllRef.current) {
+            selectAllRef.current.indeterminate = someSelected && !allSelected;
+        }
+    }, [someSelected, allSelected, filteredFlows.length]);
+
+    const handleSelectAllChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedWorkFlowIds(filteredFlows.map(f => f.flowId));
+        } else {
+            setSelectedWorkFlowIds([]);
+        }
+    };
+
+    const handleFlowCheckboxChange = (flowId: string, checked: boolean) => {
+        setSelectedWorkFlowIds(ids =>
+            checked ? [...ids, flowId] : ids.filter(id => id !== flowId)
+        );
+    };
+
     return (
         <>
             <main className="p-4">
@@ -204,22 +229,30 @@ const WorkTemplatePage: React.FC = () => {
                 <select value={selectedWorkTypeId} onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }} className="border p-1 mb-2">
                     <option value="">選擇種類</option>{typeOptions}
                 </select>
+                {filteredFlows.length > 0 && (
+                    <div className="mb-2">
+                        <label className="mr-2">
+                            <input
+                                ref={selectAllRef}
+                                type="checkbox"
+                                checked={allSelected}
+                                onChange={handleSelectAllChange}
+                            /> 全選
+                        </label>
+                    </div>
+                )}
                 <div>
                     {filteredFlows.map(f => (
                         <div key={f.flowId}>
                             <input
                                 type="checkbox"
                                 checked={selectedWorkFlowIds.includes(f.flowId)}
-                                onChange={e => {
-                                    setSelectedWorkFlowIds(ids =>
-                                        e.target.checked ? [...ids, f.flowId] : ids.filter(id => id !== f.flowId)
-                                    );
-                                }}
+                                onChange={e => handleFlowCheckboxChange(f.flowId, e.target.checked)}
                             />
                             <span>{f.steps[0]?.stepName || ''}</span>
                             <input
                                 type="number"
-                                value={flowQuantities[f.flowId] || ''}
+                                value={flowQuantities[f.flowId] ?? ''}
                                 min={1}
                                 onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))}
                                 placeholder="數量"
@@ -227,7 +260,7 @@ const WorkTemplatePage: React.FC = () => {
                             />
                             <input
                                 type="number"
-                                value={workloadCounts[f.flowId] || 1}
+                                value={workloadCounts[f.flowId] ?? 1}
                                 min={1}
                                 onChange={e => setWorkloadCounts(c => ({ ...c, [f.flowId]: Number(e.target.value) || 1 }))}
                                 placeholder="分割"
