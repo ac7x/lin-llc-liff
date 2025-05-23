@@ -2,9 +2,6 @@
 
 import { firestoreAdmin } from '@/modules/shared/infrastructure/persistence/firebase-admin/adminApp'
 
-/**
- * 任務負載
- */
 export interface WorkLoadEntity {
     loadId: string
     taskId: string
@@ -19,9 +16,6 @@ export interface WorkLoadEntity {
     epicIds: string[]
 }
 
-/**
- * 專案標的
- */
 export interface WorkEpicEntity {
     epicId: string
     title: string
@@ -44,55 +38,33 @@ export interface WorkEpicEntity {
     workLoads?: WorkLoadEntity[]
 }
 
-/**
- * 取得所有 WorkEpic 及其 WorkLoad
- */
 export const getAllWorkSchedules = async (): Promise<WorkEpicEntity[]> => {
     const snapshot = await firestoreAdmin.collection('workEpic').get()
     return snapshot.docs.map(doc => doc.data() as WorkEpicEntity)
 }
 
-/**
- * 更新工作負載時間
- */
 export const updateWorkLoadTime = async (
     epicId: string,
     loadId: string,
     plannedStartTime: string,
     plannedEndTime: string | null,
 ): Promise<WorkLoadEntity | undefined> => {
-    try {
-        if (!epicId || !loadId || !plannedStartTime) {
-            throw new Error('缺少必要參數');
+    if (!epicId || !loadId || !plannedStartTime) throw new Error('缺少必要參數')
+    const epicRef = firestoreAdmin.collection('workEpic').doc(epicId)
+    let updatedWorkLoad: WorkLoadEntity | undefined
+
+    await firestoreAdmin.runTransaction(async transaction => {
+        const epicDoc = await transaction.get(epicRef)
+        const epicData = epicDoc.exists ? epicDoc.data() : null
+        if (!epicData?.workLoads) return
+
+        const workLoads = [...epicData.workLoads]
+        const idx = workLoads.findIndex(wl => wl.loadId === loadId)
+        if (idx !== -1) {
+            workLoads[idx] = { ...workLoads[idx], plannedStartTime, plannedEndTime }
+            updatedWorkLoad = { ...workLoads[idx] }
+            transaction.update(epicRef, { workLoads })
         }
-
-        const epicRef = firestoreAdmin.collection('workEpic').doc(epicId);
-        let updatedWorkLoad: WorkLoadEntity | undefined = undefined;
-
-        await firestoreAdmin.runTransaction(async (transaction) => {
-            const epicDoc = await transaction.get(epicRef);
-            if (!epicDoc.exists) return;
-
-            const epicData = epicDoc.data();
-            if (!epicData || !Array.isArray(epicData.workLoads)) return;
-
-            const workLoads = [...epicData.workLoads];
-            const index = workLoads.findIndex(wl => wl.loadId === loadId);
-            if (index !== -1) {
-                workLoads[index] = {
-                    ...workLoads[index],
-                    plannedStartTime,
-                    plannedEndTime
-                };
-                updatedWorkLoad = { ...workLoads[index] };
-            }
-
-            transaction.update(epicRef, { workLoads });
-        });
-
-        return updatedWorkLoad;
-    } catch (error) {
-        console.error('更新工作負載時間失敗:', error);
-        throw error;
-    }
+    })
+    return updatedWorkLoad
 }
