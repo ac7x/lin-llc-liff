@@ -71,7 +71,8 @@ const WorkSchedulePage = () => {
         overrideItems: false  // 允許項目級別的設定覆蓋
       },
       // 自訂遊標吸附函數 - 讓項目按天對齊
-      snap: (date, _scale, _step) => {
+      snap: (date) => {
+        // scale 和 step 參數被 ESLint 標記為未使用，因此移除
         return startOfDay(date)
       },
       // 確保項目之間不會重疊

@@ -109,7 +109,7 @@ class RedisClient {
             // 設定需要同步的標記
             await client.setEx(CACHE_KEYS.SYNC_FLAG, DEFAULT_EXPIRE, 'true')
 
-            // 記錄成功更新的資訊
+            // 記錄成功更新的資訊就當ㄧㄡ處
             console.log(`成功更新工作負載 ID: ${loadId} (Redis)`)
 
             return true
