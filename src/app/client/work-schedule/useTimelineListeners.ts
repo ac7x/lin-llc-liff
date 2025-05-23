@@ -1,25 +1,36 @@
 import { useEffect } from 'react'
 import { Timeline } from 'vis-timeline/standalone'
 
-interface UseTimelineListenersProps {
+/**
+ * Timeline event handler props
+ */
+export type TimelineEventHandler<T = unknown> = (props: T) => void
+
+/**
+ * Props for useTimelineListeners
+ */
+export interface UseTimelineListenersProps {
     timeline: Timeline | null
-    onSelect?: (props: any) => void
-    onItemOver?: (props: any) => void
-    onItemOut?: (props: any) => void
-    onRangeChange?: (props: any) => void
-    onRangeChanged?: (props: any) => void
-    onClick?: (props: any) => void
-    onDoubleClick?: (props: any) => void
-    onContextMenu?: (props: any) => void
-    onDrop?: (props: any) => void
-    onAdd?: (props: any) => void
-    onMove?: (props: any) => void
-    onRemove?: (props: any) => void
-    onStartResizing?: (props: any) => void
-    onEndResizing?: (props: any) => void
+    onSelect?: TimelineEventHandler
+    onItemOver?: TimelineEventHandler
+    onItemOut?: TimelineEventHandler
+    onRangeChange?: TimelineEventHandler
+    onRangeChanged?: TimelineEventHandler
+    onClick?: TimelineEventHandler
+    onDoubleClick?: TimelineEventHandler
+    onContextMenu?: TimelineEventHandler
+    onDrop?: TimelineEventHandler
+    onAdd?: TimelineEventHandler
+    onMove?: TimelineEventHandler
+    onRemove?: TimelineEventHandler
+    onStartResizing?: TimelineEventHandler
+    onEndResizing?: TimelineEventHandler
     // ...可以持續擴充
 }
 
+/**
+ * Hook: 自動註冊/移除 Timeline 事件監聽
+ */
 export const useTimelineListeners = (props: UseTimelineListenersProps): void => {
     const { timeline, ...listeners } = props
 
