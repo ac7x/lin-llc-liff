@@ -1,16 +1,50 @@
 'use client'
 
-import {
-  getAllWorkSchedules,
-  updateWorkLoadTime,
-  WorkEpicEntity,
-  WorkLoadEntity
-} from '@/app/actions/workschedule.action'
+import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'
+import { collection, doc, runTransaction } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
+import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataGroup, DataItem, DataSet, Timeline, TimelineItem, TimelineOptions } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
+
+// 定義介面
+interface WorkLoadEntity {
+  loadId: string
+  taskId: string
+  plannedQuantity: number
+  unit: string
+  plannedStartTime: string
+  plannedEndTime: string
+  actualQuantity: number
+  executor: string[]
+  title: string
+  notes?: string
+  epicIds: string[]
+}
+
+interface WorkEpicEntity {
+  epicId: string
+  title: string
+  startDate: string
+  endDate: string
+  insuranceStatus?: '無' | '有'
+  insuranceDate?: string
+  owner: { memberId: string, name: string }
+  siteSupervisors?: { memberId: string, name: string }[]
+  safetyOfficers?: { memberId: string, name: string }[]
+  status: '待開始' | '進行中' | '已完成' | '已取消'
+  priority: number
+  region: '北部' | '中部' | '南部' | '東部' | '離島'
+  address: string
+  createdAt: string
+  workZones?: unknown[]
+  workTypes?: unknown[]
+  workFlows?: unknown[]
+  workTasks?: unknown[]
+  workLoads?: WorkLoadEntity[]
+}
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
 
@@ -30,18 +64,66 @@ const ClientWorkSchedulePage = () => {
   const timelineInstance = useRef<Timeline | null>(null)
   const itemsDataSet = useRef<DataSet<DataItem> | null>(null)
 
+  // 使用 react-firebase-hooks 的 useCollection 取代 server action
+  const [epicSnapshot, epicLoading, epicError] = useCollection(
+    collection(firestore, 'workEpic')
+  )
+
+  // 將資料處理移至此 useEffect
   useEffect(() => {
-    getAllWorkSchedules().then(epicList => {
-      setEpics(epicList)
-      setUnplanned(
-        epicList.flatMap(e =>
-          (e.workLoads || [])
-            .filter(l => !l.plannedStartTime)
-            .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
-        )
+    if (!epicSnapshot) return
+    const epicList = epicSnapshot.docs.map(doc => ({
+      ...doc.data(),
+      epicId: doc.id
+    })) as WorkEpicEntity[]
+
+    setEpics(epicList)
+    setUnplanned(
+      epicList.flatMap(e =>
+        (e.workLoads || [])
+          .filter(l => !l.plannedStartTime)
+          .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
       )
-    })
-  }, [])
+    )
+  }, [epicSnapshot])
+
+  // 用戶端直接更新 Firestore 的函數
+  const updateWorkLoadTime = async (
+    epicId: string,
+    loadId: string,
+    plannedStartTime: string,
+    plannedEndTime: string | null,
+  ): Promise<void> => {
+    try {
+      if (!epicId || !loadId || !plannedStartTime) {
+        throw new Error('缺少必要參數')
+      }
+
+      const epicRef = doc(firestore, 'workEpic', epicId)
+      await runTransaction(firestore, async (transaction) => {
+        const epicDoc = await transaction.get(epicRef)
+        if (!epicDoc.exists()) return
+
+        const epicData = epicDoc.data()
+        if (!epicData || !Array.isArray(epicData.workLoads)) return
+
+        const workLoads = [...epicData.workLoads]
+        const index = workLoads.findIndex(wl => wl.loadId === loadId)
+        if (index !== -1) {
+          workLoads[index] = {
+            ...workLoads[index],
+            plannedStartTime,
+            plannedEndTime
+          }
+        }
+
+        transaction.update(epicRef, { workLoads })
+      })
+    } catch (error) {
+      console.error('更新工作負載時間失敗:', error)
+      throw error
+    }
+  }
 
   useEffect(() => {
     if (!timelineRef.current || !epics.length) return
@@ -119,7 +201,7 @@ const ClientWorkSchedulePage = () => {
       tl.destroy()
       window.removeEventListener('resize', handleResize)
     }
-  }, [epics, unplanned])
+  }, [epics, unplanned, updateWorkLoadTime])
 
   useEffect(() => {
     const ref = timelineRef.current
@@ -155,7 +237,7 @@ const ClientWorkSchedulePage = () => {
       ref.removeEventListener('dragover', handleDragOver)
       ref.removeEventListener('drop', handleDrop)
     }
-  }, [unplanned, epics])
+  }, [unplanned, epics, updateWorkLoadTime])
 
   const onDragStart = (e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad) => {
     const dragItem: DraggableItem = {
@@ -174,6 +256,16 @@ const ClientWorkSchedulePage = () => {
     <div className="min-h-screen w-full bg-black flex flex-col">
       <div className="flex-none h-[20vh]" />
       <div className="flex-none h-[60vh] w-full flex items-center justify-center">
+        {epicLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
+            <div className="text-white">資料載入中...</div>
+          </div>
+        )}
+        {epicError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
+            <div className="text-white">載入錯誤: {epicError.message}</div>
+          </div>
+        )}
         <div
           className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden"
           ref={timelineRef}
