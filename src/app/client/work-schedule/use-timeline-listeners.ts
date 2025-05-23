@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { UseTimelineListenersProps } from './timeline.types'
+import { UseTimelineListenersProps } from './types'
 
 /**
  * 事件對應表

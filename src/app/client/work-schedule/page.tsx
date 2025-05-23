@@ -8,7 +8,7 @@ import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataGroup, DataItem, DataSet, Timeline, TimelineItem, TimelineOptions } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 import { firestore } from './firebase.client'
-import { TimelineAddEventProps, TimelineMoveEventProps } from './timeline.types'
+import { TimelineAddEventProps, TimelineMoveEventProps } from './types'
 import { useTimelineListeners } from './use-timeline-listeners'
 import {
   updateWorkLoadTime,
