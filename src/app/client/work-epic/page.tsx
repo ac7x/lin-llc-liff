@@ -16,8 +16,7 @@ export default function WorkEpicPage() {
     }, []);
 
     const getEpicProgress = (epic: WorkEpicEntity) => {
-        let total = 0;
-        let completed = 0;
+        let total = 0, completed = 0;
         if (epic.workTasks) {
             epic.workTasks.forEach(task => {
                 total += task.targetQuantity;
@@ -32,7 +31,6 @@ export default function WorkEpicPage() {
         <>
             <main className="p-4">
                 <h1 className="text-2xl font-bold mb-4">工作標的列表</h1>
-
                 <table className="table-auto w-full border-collapse border border-gray-300">
                     <thead>
                         <tr>

@@ -23,9 +23,6 @@ interface DraggableItem {
   end: Date
 }
 
-/**
- * 工作排程主頁
- */
 const WorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
@@ -47,9 +44,7 @@ const WorkSchedulePage = () => {
   }, [])
 
   useEffect(() => {
-    if (!timelineRef.current || !epics.length) {
-      return
-    }
+    if (!timelineRef.current || !epics.length) return
     const groups = new DataSet<DataGroup>(
       epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
     )
@@ -81,10 +76,7 @@ const WorkSchedulePage = () => {
         try {
           const payload: { id: string } = JSON.parse(item.content as string)
           const wl = unplanned.find(w => w.loadId === payload.id)
-          if (!wl) {
-            cb(null)
-            return
-          }
+          if (!wl) { cb(null); return }
           const start = item.start ? new Date(item.start) : new Date()
           const end = item.end ? new Date(item.end) : addDays(start, 1)
           const obj: TimelineItem = {
@@ -98,9 +90,7 @@ const WorkSchedulePage = () => {
           cb(obj)
           updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
           setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
-        } catch {
-          cb(null)
-        }
+        } catch { cb(null) }
       }
     }
 
@@ -109,9 +99,7 @@ const WorkSchedulePage = () => {
 
     tl.on('move', async ({ item, start, end, group }) => {
       const d = items.get(item as string)
-      if (!d) {
-        return
-      }
+      if (!d) return
       const newStart = startOfDay(start)
       const duration = end ? Math.max(1, differenceInCalendarDays(end, start)) : 1
       const newEnd = addDays(newStart, duration)
@@ -135,22 +123,16 @@ const WorkSchedulePage = () => {
 
   useEffect(() => {
     const ref = timelineRef.current
-    if (!ref || !timelineInstance.current || !itemsDataSet.current) {
-      return
-    }
+    if (!ref || !timelineInstance.current || !itemsDataSet.current) return
     const handleDragOver = (e: DragEvent) => e.preventDefault()
     const handleDrop = (e: DragEvent) => {
       e.preventDefault()
       try {
         const payload: DraggableItem = JSON.parse(e.dataTransfer?.getData('text') || '{}')
         const point = timelineInstance.current!.getEventProperties(e)
-        if (!point.time) {
-          return
-        }
+        if (!point.time) return
         const wl = unplanned.find(w => w.loadId === payload.id)
-        if (!wl) {
-          return
-        }
+        if (!wl) return
         const groupId = payload.group || epics[0].epicId
         const startTime = startOfDay(point.time)
         const endTime = addDays(startTime, 1)
@@ -192,7 +174,6 @@ const WorkSchedulePage = () => {
     <div className="min-h-screen w-full bg-black flex flex-col">
       <div className="flex-none h-[20vh]" />
       <div className="flex-none h-[60vh] w-full flex items-center justify-center">
-        {/* 這裡重點調整：確保 timeline 撐滿寬度 */}
         <div
           className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden"
           ref={timelineRef}
