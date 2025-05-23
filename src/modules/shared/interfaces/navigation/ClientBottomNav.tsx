@@ -17,6 +17,7 @@ interface ClientBottomNavProps {
 
 const defaultNavItems: NavItem[] = [
   { href: '/client/work-schedule', icon: '📅', label: '工作行程', active: false },
+  { href: '/client/work-schedule-client', icon: '📅', label: '排程用戶端', active: false },
   { href: '/client/work-task', icon: '📝', label: '工作任務', active: false },
   { href: '/client/work-epic', icon: '📖', label: '工作史詩', active: false },
   { href: '/client/profile', icon: '🧑‍💼', label: '用戶', active: false }
