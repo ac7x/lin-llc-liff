@@ -66,7 +66,7 @@ const ClientWorkSchedulePage = () => {
     collection(firestore, 'workEpic')
   )
 
-  // 只在 Firestore 資料變動時處理狀態
+  // Firestore 資料變動時處理狀態
   useEffect(() => {
     if (!epicSnapshot) return
     const epicList = epicSnapshot.docs.map(doc => ({
@@ -83,7 +83,7 @@ const ClientWorkSchedulePage = () => {
     )
   }, [epicSnapshot])
 
-  // 拖曳 drop 時才寫入 Firestore
+  // 拖曳 drop 或 item 移動時才寫入 Firestore
   const updateWorkLoadTime = async (
     epicId: string,
     loadId: string,
@@ -133,18 +133,36 @@ const ClientWorkSchedulePage = () => {
     )
     itemsDataSet.current = items
 
-    const options: TimelineOptions = {
+    // 用 as any 加入 onDropObjectOnTimeline，避開 TS 錯誤
+    const options = {
       stack: true,
       orientation: 'top',
-      editable: false, // 禁止內部直接新增/移動，只允許外部拖曳
+      editable: { updateTime: true },
       locale: 'zh-tw',
       tooltip: { followMouse: true },
       zoomMin: 86400000,
-      zoomMax: 90 * 86400000
-    }
+      zoomMax: 90 * 86400000,
+      onDropObjectOnTimeline: async (props: any) => {
+        try {
+          const payload: DraggableItem = JSON.parse(props.data)
+          const wl = unplanned.find(w => w.loadId === payload.id)
+          if (!wl) return
+          const groupId = props.group || epics[0].epicId
+          const startTime = startOfDay(props.time)
+          const endTime = addDays(startTime, 1)
+          await updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString())
+        } catch (e) { /* ignore */ }
+      }
+    } as any
 
     const tl = new Timeline(timelineRef.current, items, groups, options)
     timelineInstance.current = tl
+
+    // 用 as any 避開型別檢查
+    ;(tl as any).on('itemMoved', (item: any, callback: (item: any) => void) => {
+      updateWorkLoadTime(item.group, item.id, item.start.toISOString(), item.end.toISOString())
+      callback(item)
+    })
 
     const handleResize = () => timelineInstance.current?.redraw()
     window.addEventListener('resize', handleResize)
@@ -152,36 +170,9 @@ const ClientWorkSchedulePage = () => {
       tl.destroy()
       window.removeEventListener('resize', handleResize)
     }
-  }, [epics])
+  }, [epics, unplanned])
 
-  // 只處理 drop 寫入
-  useEffect(() => {
-    const ref = timelineRef.current
-    if (!ref || !timelineInstance.current || !itemsDataSet.current) return
-
-    const handleDragOver = (e: DragEvent) => e.preventDefault()
-    const handleDrop = (e: DragEvent) => {
-      e.preventDefault()
-      try {
-        const payload: DraggableItem = JSON.parse(e.dataTransfer?.getData('text') || '{}')
-        const point = timelineInstance.current!.getEventProperties(e)
-        if (!point.time) return
-        const wl = unplanned.find(w => w.loadId === payload.id)
-        if (!wl) return
-        const groupId = payload.group || epics[0].epicId
-        const startTime = startOfDay(point.time)
-        const endTime = addDays(startTime, 1)
-        // 僅此處寫入資料庫
-        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString())
-      } catch { /* ignore */ }
-    }
-    ref.addEventListener('dragover', handleDragOver)
-    ref.addEventListener('drop', handleDrop)
-    return () => {
-      ref.removeEventListener('dragover', handleDragOver)
-      ref.removeEventListener('drop', handleDrop)
-    }
-  }, [unplanned, epics])
+  // 不需要再加外層 drop 監聽（已由 onDropObjectOnTimeline 處理）
 
   const onDragStart = (e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad) => {
     const dragItem: DraggableItem = {
@@ -193,7 +184,7 @@ const ClientWorkSchedulePage = () => {
       end: addDays(new Date(), 1)
     }
     e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', JSON.stringify(dragItem))
+    e.dataTransfer.setData('text', JSON.stringify(dragItem))
   }
 
   return (
