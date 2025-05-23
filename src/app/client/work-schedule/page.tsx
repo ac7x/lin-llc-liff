@@ -115,11 +115,17 @@ const WorkSchedulePage = () => {
       } catch (err) { console.error('新增工作負載失敗:', err) }
     },
     onMove: async (props: TimelineMoveEventProps) => {
-      const { item: itemId, start, end, group } = props
-      if (!itemsDataSet.current) return
+      const { item: itemId, start, end, group, callback } = props
+      if (!itemsDataSet.current) {
+        if (callback) callback(null)
+        return
+      }
 
       const item = itemsDataSet.current.get(itemId as string)
-      if (!item) return
+      if (!item) {
+        if (callback) callback(null)
+        return
+      }
 
       const newStart = startOfDay(start)
       const duration = end ? Math.max(1, differenceInCalendarDays(end, start)) : 1
@@ -132,6 +138,21 @@ const WorkSchedulePage = () => {
           newStart.toISOString(),
           newEnd.toISOString()
         )
+
+        // 確認移動並更新畫面上的項目
+        if (callback) {
+          // 使用類型轉換確保類型正確
+          const updatedItem: TimelineItem = {
+            id: item.id,
+            content: item.content as string,
+            start: newStart,
+            end: newEnd,
+            group: group || item.group,
+            type: item.type as any // 轉換為正確的 TimelineItemType
+          }
+          callback(updatedItem)
+        }
+
         if (updatedWorkLoad) {
           setEpics(prev =>
             prev.map(epic =>
@@ -141,7 +162,10 @@ const WorkSchedulePage = () => {
             )
           )
         }
-      } catch (err) { console.error('更新工作負載時間失敗:', err) }
+      } catch (err) {
+        console.error('更新工作負載時間失敗:', err)
+        if (callback) callback(null) // 發生錯誤時取消移動
+      }
     }
   })
 
