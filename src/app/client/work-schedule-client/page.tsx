@@ -94,13 +94,15 @@ const ClientWorkSchedulePage = () => {
       loadId: string,
       plannedStartTime: string,
       plannedEndTime: string | null,
-    ): Promise<void> => {
+    ): Promise<WorkLoadEntity | null> => {
       try {
         if (!epicId || !loadId || !plannedStartTime) {
           throw new Error('缺少必要參數')
         }
 
         const epicRef = doc(firestore, 'workEpic', epicId)
+        let updatedWorkLoad: WorkLoadEntity | null = null
+
         await runTransaction(firestore, async (transaction) => {
           const epicDoc = await transaction.get(epicRef)
           if (!epicDoc.exists()) return
@@ -116,10 +118,13 @@ const ClientWorkSchedulePage = () => {
               plannedStartTime,
               plannedEndTime
             }
+            updatedWorkLoad = workLoads[index]
           }
 
           transaction.update(epicRef, { workLoads })
         })
+
+        return updatedWorkLoad
       } catch (error) {
         console.error('更新工作負載時間失敗:', error)
         throw error
@@ -157,7 +162,7 @@ const ClientWorkSchedulePage = () => {
       tooltip: { followMouse: true },
       zoomMin: 24 * 60 * 60 * 1000,
       zoomMax: 90 * 24 * 60 * 60 * 1000,
-      onAdd: (item, cb) => {
+      onAdd: async (item, cb) => {
         try {
           const payload: { id: string } = JSON.parse(item.content as string)
           const wl = unplanned.find(w => w.loadId === payload.id)
@@ -173,8 +178,22 @@ const ClientWorkSchedulePage = () => {
             type: 'range'
           }
           cb(obj)
-          updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
-          setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+          const updatedWorkLoad = await updateWorkLoadTime(String(obj.group), String(wl.loadId), start.toISOString(), end.toISOString())
+          if (updatedWorkLoad) {
+            setEpics(prevEpics => {
+              return prevEpics.map(epic => {
+                if (epic.epicId !== updatedWorkLoad.epicIds[0]) return epic
+                return {
+                  ...epic,
+                  workLoads: (epic.workLoads || []).map(load => {
+                    if (load.loadId !== updatedWorkLoad.loadId) return load
+                    return updatedWorkLoad
+                  })
+                }
+              })
+            })
+            setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+          }
         } catch { cb(null) }
       }
     }
@@ -188,13 +207,33 @@ const ClientWorkSchedulePage = () => {
       const newStart = startOfDay(start)
       const duration = end ? Math.max(1, differenceInCalendarDays(end, start)) : 1
       const newEnd = addDays(newStart, duration)
-      await updateWorkLoadTime(
-        group || d.group,
-        d.id as string,
-        newStart.toISOString(),
-        newEnd.toISOString()
-      )
-      items.update({ id: d.id, start: newStart, end: newEnd })
+
+      try {
+        const updatedWorkLoad = await updateWorkLoadTime(
+          group || d.group,
+          d.id as string,
+          newStart.toISOString(),
+          newEnd.toISOString()
+        )
+
+        if (updatedWorkLoad) {
+          items.update({ id: d.id, start: newStart, end: newEnd })
+          setEpics(prevEpics => {
+            return prevEpics.map(epic => {
+              if (epic.epicId !== updatedWorkLoad.epicIds[0]) return epic
+              return {
+                ...epic,
+                workLoads: (epic.workLoads || []).map(load => {
+                  if (load.loadId !== updatedWorkLoad.loadId) return load
+                  return updatedWorkLoad
+                })
+              }
+            })
+          })
+        }
+      } catch (err) {
+        console.error('更新工作負載時間失敗:', err)
+      }
     })
 
     const handleResize = () => timelineInstance.current?.redraw()
@@ -221,16 +260,30 @@ const ClientWorkSchedulePage = () => {
         const groupId = payload.group || epics[0].epicId
         const startTime = startOfDay(point.time)
         const endTime = addDays(startTime, 1)
-        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString()).then(() => {
-          itemsDataSet.current?.add({
-            id: wl.loadId,
-            group: groupId,
-            content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
-            start: startTime,
-            end: endTime,
-            type: 'range'
-          })
-          setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+        updateWorkLoadTime(groupId, wl.loadId, startTime.toISOString(), endTime.toISOString()).then((updatedWorkLoad) => {
+          if (updatedWorkLoad) {
+            itemsDataSet.current?.add({
+              id: wl.loadId,
+              group: groupId,
+              content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
+              start: startTime,
+              end: endTime,
+              type: 'range'
+            })
+            setEpics(prevEpics => {
+              return prevEpics.map(epic => {
+                if (epic.epicId !== updatedWorkLoad.epicIds[0]) return epic
+                return {
+                  ...epic,
+                  workLoads: (epic.workLoads || []).map(load => {
+                    if (load.loadId !== updatedWorkLoad.loadId) return load
+                    return updatedWorkLoad
+                  })
+                }
+              })
+            })
+            setUnplanned(prev => prev.filter(x => x.loadId !== wl.loadId))
+          }
         })
       } catch { }
     }
