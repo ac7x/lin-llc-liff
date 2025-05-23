@@ -164,7 +164,7 @@ export const TimelineCore: React.FC<TimelineProps> = ({
   });
   
   // 選項設定
-  const { mergedOptions } = useTimelineOptions({
+  const { options: mergedOptions } = useTimelineOptions({
     initialOptions: { ...DEFAULT_TIMELINE_OPTIONS, ...options, editable }
   });
   

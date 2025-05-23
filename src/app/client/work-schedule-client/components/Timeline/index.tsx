@@ -2,6 +2,6 @@
  * Timeline 主要元件匯出
  */
 
-import Timeline from './TimelineCore';
+import TimelineCore from './TimelineCore';
 
-export default Timeline;
+export default TimelineCore;
