@@ -71,8 +71,8 @@ const WorkSchedulePage = () => {
         overrideItems: false  // 允許項目級別的設定覆蓋
       },
       // 自訂遊標吸附函數 - 讓項目按天對齊
-      snap: (date, scale, step) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      snap: (date, _scale, _step) => {
+        // vis-timeline需要這些參數，但我們只用date
         return startOfDay(date)
       },
       // 確保項目之間不會重疊
@@ -149,12 +149,19 @@ const WorkSchedulePage = () => {
         callback(obj)
 
         try {
-          // 嘗試更新資料庫
+          // 確保workLoad有epicIds屬性，且包含新的群組ID
+          const epicIds = [...(wl.epicIds || [])];
+          if (!epicIds.includes(String(obj.group))) {
+            epicIds.push(String(obj.group));
+          }
+
+          // 嘗試更新資料庫，並帶上正確的epicIds
           const updatedWorkLoad = await updateWorkLoadTime(
             String(obj.group),
             String(wl.loadId),
             start.toISOString(),
             end.toISOString(),
+            epicIds, // 添加epicIds參數
             3 // 重試3次
           )
 
@@ -227,12 +234,29 @@ const WorkSchedulePage = () => {
       }
 
       try {
+        // 查詢現有的epicIds並確保包含新舊群組
+        const oldEpicId = item.group as string;
+        const newEpicId = group || oldEpicId;
+
+        // 獲取現有的workload數據以提取epicIds
+        const oldWorkload = epics
+          .find(e => e.epicId === oldEpicId)?.workLoads
+          ?.find(w => w.loadId === item.id as string);
+
+        let epicIds = [...(oldWorkload?.epicIds || [])];
+
+        // 確保包含新的epicId
+        if (!epicIds.includes(newEpicId)) {
+          epicIds.push(newEpicId);
+        }
+
         // 再嘗試更新資料庫
         const updatedWorkLoad = await updateWorkLoadTime(
-          group || item.group,
-          item.id,
+          newEpicId,
+          item.id as string,
           newStart.toISOString(),
           newEnd.toISOString(),
+          epicIds,
           3 // 重試 3 次
         )
 

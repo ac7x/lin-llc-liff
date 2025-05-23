@@ -42,16 +42,23 @@ export const updateWorkLoadTime = async (
     loadId: string,
     plannedStartTime: string,
     plannedEndTime: string | null,
+    epicIds?: string[],
     retryCount = 3
 ): Promise<WorkLoadEntity | null> => {
     if (!epicId || !loadId || !plannedStartTime) {
         throw new Error('缺少必要參數')
     }
 
+    // 確保epicIds包含當前epicId
+    const finalEpicIds = epicIds ?
+        (epicIds.includes(epicId) ? epicIds : [...epicIds, epicId]) :
+        [epicId];
+
     // 準備要更新的資料
     const updateData = {
         plannedStartTime,
-        plannedEndTime
+        plannedEndTime,
+        epicIds: finalEpicIds // 確保同步epicIds欄位
     };
 
     // 1. 嘗試使用 Redis 更新，具有重試機制

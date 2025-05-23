@@ -98,13 +98,13 @@ class RedisClient {
             if (!epicIds.includes(epicId)) {
                 epicIds.push(epicId);
             }
-            
+
             const updatedWorkLoad = {
-                ...JSON.parse(JSON.stringify(oldWorkload)), 
+                ...JSON.parse(JSON.stringify(oldWorkload)),
                 ...update,
                 epicIds // 確保 epicIds 欄位正確
             };
-            
+
             const updatedWorkLoads = [...workLoads]
             updatedWorkLoads[loadIndex] = updatedWorkLoad
 
