@@ -48,17 +48,43 @@ async function updateUserProfile(auth: Auth, userId: string, profile: UserProfil
     }
 }
 
+// 修正版: 只有在 workMember 不存在時才 set，否則只 update 登入時間
 async function initializeUserData(userId: string): Promise<void> {
     const batch = firestoreAdmin.batch()
     const assetRef = firestoreAdmin.collection("workAsset").doc(userId)
     const memberRef = firestoreAdmin.collection("workMember").doc(userId)
-    batch.set(memberRef, {
-        memberId: userId, lastLoginAt: new Date().toISOString(), name: "未指定",
-        role: "未指定", skills: [], availability: "空閒", contactInfo: {},
-        status: "在職", isActive: true, lastActiveTime: new Date().toISOString()
-    }, { merge: true })
-    if (!(await assetRef.get()).exists) {
-        batch.set(assetRef, { userId, coin: 0, diamond: 0, updatedAt: new Date().toISOString() })
+
+    const memberDoc = await memberRef.get()
+    if (!memberDoc.exists) {
+        // 新用戶，寫入預設資料
+        batch.set(memberRef, {
+            memberId: userId,
+            lastLoginAt: new Date().toISOString(),
+            name: "未指定",
+            role: "未指定",
+            skills: [],
+            availability: "空閒",
+            contactInfo: {},
+            status: "在職",
+            isActive: true,
+            lastActiveTime: new Date().toISOString()
+        })
+    } else {
+        // 已存在的用戶，僅更新登入與活躍時間
+        batch.update(memberRef, {
+            lastLoginAt: new Date().toISOString(),
+            lastActiveTime: new Date().toISOString()
+        })
+    }
+
+    const assetDoc = await assetRef.get()
+    if (!assetDoc.exists) {
+        batch.set(assetRef, {
+            userId,
+            coin: 0,
+            diamond: 0,
+            updatedAt: new Date().toISOString()
+        })
     }
     await batch.commit()
 }
