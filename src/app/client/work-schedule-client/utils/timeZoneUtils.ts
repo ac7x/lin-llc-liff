@@ -21,7 +21,7 @@ export const useUTC = (date: Date | string | number): Moment => {
  * @returns 指定時區的 Moment 物件
  */
 export const useTimezone = (date: Date | string | number, timezone: string): Moment => {
-  return moment(date).tz(timezone);
+  return moment.tz(date, timezone);
 };
 
 /**
