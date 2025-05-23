@@ -1,41 +1,45 @@
 "use client";
 import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity } from '@/app/actions/workepic.action';
-import type { WorkFlowEntity } from "@/app/actions/workflow.action";
+import type { WorkFlowEntity } from '@/app/actions/workflow.action';
 import { WorkLoadEntity } from '@/app/actions/workload.action';
 import { WorkTaskEntity } from '@/app/actions/worktask.action';
-import { addWorkType, getAllWorkTypes, updateWorkType, WorkTypeEntity } from "@/app/actions/worktype.action";
+import { addWorkType, getAllWorkTypes, updateWorkType, WorkTypeEntity } from '@/app/actions/worktype.action';
 import type { WorkZoneEntity } from '@/app/actions/workzone.action';
 import { getAllWorkZones } from '@/app/actions/workzone.action';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 
 // 產生 0-9a-z 的 6 碼短碼
-function shortId(prefix: string = ""): string {
+function shortId(prefix: string = ''): string {
     return `${prefix}${Math.random().toString(36).slice(2, 8)}`;
 }
 
 // 時間轉 ISO 格式
-function toISO(date: any): string {
-    if (!date) return "";
+function toISO(date: string | number | Date | undefined | null): string {
+    if (!date) {
+        return '';
+    }
     try {
         const d = new Date(date);
-        if (isNaN(d.getTime())) return "";
+        if (isNaN(d.getTime())) {
+            return '';
+        }
         return d.toISOString();
     } catch {
-        return "";
+        return '';
     }
 }
 
 const WorkTemplatePage: React.FC = () => {
     const [workTypes, setWorkTypes] = useState<WorkTypeEntity[]>([]);
-    const [newWorkTypeTitle, setNewWorkTypeTitle] = useState<string>("");
-    const [selectedWorkTypeId, setSelectedWorkTypeId] = useState<string>("");
-    const [newStepName, setNewStepName] = useState<string>("");
+    const [newWorkTypeTitle, setNewWorkTypeTitle] = useState<string>('');
+    const [selectedWorkTypeId, setSelectedWorkTypeId] = useState<string>('');
+    const [newStepName, setNewStepName] = useState<string>('');
     const [newStepOrder, setNewStepOrder] = useState<number>(1);
-    const [newStepSkills, setNewStepSkills] = useState<string>("");
+    const [newStepSkills, setNewStepSkills] = useState<string>('');
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
-    const [selectedWorkEpicId, setSelectedWorkEpicId] = useState<string>("");
-    const [selectedWorkZoneId, setSelectedWorkZoneId] = useState<string>("");
+    const [selectedWorkEpicId, setSelectedWorkEpicId] = useState<string>('');
+    const [selectedWorkZoneId, setSelectedWorkZoneId] = useState<string>('');
     const [selectedWorkFlowIds, setSelectedWorkFlowIds] = useState<string[]>([]);
     const [flowQuantities, setFlowQuantities] = useState<Record<string, number>>({});
     const [workloadCounts, setWorkloadCounts] = useState<Record<string, number>>({});
@@ -55,27 +59,37 @@ const WorkTemplatePage: React.FC = () => {
 
     async function handleAddWorkType() {
         const title = newWorkTypeTitle.trim();
-        if (!title) return alert("請輸入標題！");
+        if (!title) {
+            alert('請輸入標題！');
+            return;
+        }
         const newWorkType: WorkTypeEntity = { typeId: shortId('wt-'), title, requiredSkills: [], flows: [] };
         await addWorkType(newWorkType);
         setWorkTypes(prev => [...prev, newWorkType]);
-        setNewWorkTypeTitle("");
+        setNewWorkTypeTitle('');
     }
 
     async function handleAddStep() {
-        if (!selectedWorkTypeId || !newStepName.trim()) return;
+        if (!selectedWorkTypeId || !newStepName.trim()) {
+            return;
+        }
         const workType = workTypes.find(t => t.typeId === selectedWorkTypeId);
-        if (!workType) return;
+        if (!workType) {
+            return;
+        }
         const steps = (workType.flows || []).flatMap(f => f.steps);
         const existingOrders = steps.map(s => s.order);
-        if (existingOrders.includes(newStepOrder)) return alert("順序重複");
+        if (existingOrders.includes(newStepOrder)) {
+            alert('順序重複');
+            return;
+        }
         const newFlow: WorkFlowEntity = {
             flowId: shortId('fl-'),
             workTypeId: selectedWorkTypeId,
             steps: [{
                 stepName: newStepName,
                 order: newStepOrder,
-                requiredSkills: newStepSkills.split(",").map(s => s.trim()).filter(Boolean)
+                requiredSkills: newStepSkills.split(',').map(s => s.trim()).filter(Boolean)
             }]
         };
         const updatedFlows = [...(workType.flows || []), newFlow];
@@ -83,8 +97,8 @@ const WorkTemplatePage: React.FC = () => {
         setWorkTypes(prev => prev.map(t =>
             t.typeId === selectedWorkTypeId ? { ...t, flows: updatedFlows } : t
         ));
-        setNewStepName("");
-        setNewStepSkills("");
+        setNewStepName('');
+        setNewStepSkills('');
         setNewStepOrder(newStepOrder + 1);
     }
 
@@ -95,19 +109,28 @@ const WorkTemplatePage: React.FC = () => {
         }
         const epic = workEpics.find(e => e.epicId === selectedWorkEpicId);
         const type = workTypes.find(t => t.typeId === selectedWorkTypeId);
-        if (!epic || !type || !type.flows) return;
+        if (!epic || !type || !type.flows) {
+            return;
+        }
         const flows = type.flows.filter(f => selectedWorkFlowIds.includes(f.flowId));
-        if (flows.length === 0) return;
+        if (flows.length === 0) {
+            return;
+        }
         const tasks: WorkTaskEntity[] = [];
         const loads: WorkLoadEntity[] = [];
-        flows.forEach((flow) => {
+        flows.forEach(flow => {
             const qty = flowQuantities[flow.flowId] || 1;
             const split = workloadCounts[flow.flowId] || 1;
-            const stepName = flow.steps[0]?.stepName || "";
+            const stepName = flow.steps[0]?.stepName || '';
             const taskId = shortId('tk-');
             tasks.push({
-                taskId, flowId: flow.flowId, targetQuantity: qty, unit: '單位',
-                completedQuantity: 0, status: '待分配', title: `${epic.title}-${type.title}-${stepName}`
+                taskId,
+                flowId: flow.flowId,
+                targetQuantity: qty,
+                unit: '單位',
+                completedQuantity: 0,
+                status: '待分配',
+                title: `${epic.title}-${type.title}-${stepName}`
             });
             for (let j = 0; j < split; j++) {
                 const loadId = shortId('ld-');
@@ -115,9 +138,9 @@ const WorkTemplatePage: React.FC = () => {
                     loadId,
                     taskId,
                     plannedQuantity: Math.floor(qty / split),
-                    unit: "單位",
-                    plannedStartTime: "", // 後續可於 UI 編輯時帶入
-                    plannedEndTime: "",
+                    unit: '單位',
+                    plannedStartTime: '',
+                    plannedEndTime: '',
                     actualQuantity: 0,
                     executor: [],
                     title: `${epic.title}-${type.title}-${stepName}-${j + 1}`,
@@ -129,7 +152,7 @@ const WorkTemplatePage: React.FC = () => {
         const fixedLoads = loads.map(l => ({
             ...l,
             plannedStartTime: toISO(l.plannedStartTime),
-            plannedEndTime: toISO(l.plannedEndTime),
+            plannedEndTime: toISO(l.plannedEndTime)
         }));
         await updateWorkEpic(selectedWorkEpicId, {
             workTypes: [...(epic.workTypes || []), type],
@@ -177,7 +200,7 @@ const WorkTemplatePage: React.FC = () => {
                     {filteredFlows.map(f =>
                         <li key={f.flowId}>
                             {f.steps.map(s => (
-                                <div key={s.stepName}>{s.order}. {s.stepName} [{s.requiredSkills.join(",")}]</div>
+                                <div key={s.stepName}>{s.order}. {s.stepName} [{s.requiredSkills.join(',')}]</div>
                             ))}
                         </li>
                     )}
@@ -187,7 +210,7 @@ const WorkTemplatePage: React.FC = () => {
                 <h2 className="font-bold mt-6 mb-2">加入工作標的</h2>
                 <select value={selectedWorkEpicId} onChange={e => {
                     setSelectedWorkEpicId(e.target.value);
-                    setSelectedWorkZoneId("");
+                    setSelectedWorkZoneId('');
                 }} className="border p-1 mb-2">
                     <option value="">選擇標的</option>{epicOptions}
                 </select>
@@ -214,10 +237,10 @@ const WorkTemplatePage: React.FC = () => {
                                     );
                                 }}
                             />
-                            <span>{f.steps[0]?.stepName || ""}</span>
+                            <span>{f.steps[0]?.stepName || ''}</span>
                             <input
                                 type="number"
-                                value={flowQuantities[f.flowId] || ""}
+                                value={flowQuantities[f.flowId] || ''}
                                 min={1}
                                 onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))}
                                 placeholder="數量"
