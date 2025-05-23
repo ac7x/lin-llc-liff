@@ -12,7 +12,7 @@ import { TimelineAdapter } from '../../infrastructure/adapter/TimelineAdapter';
  */
 export interface UseTimelineEventsProps {
     timelineAdapter: TimelineAdapter;
-    updateWorkTimeUseCase: UpdateWorkTimeUseCase;
+    updateWorkTimeAction: (id: string, startTime: Date, endTime: Date) => Promise<void>;
     onItemSelect?: (workItem: WorkItem | null) => void;
     onItemUpdate?: (workItem: WorkItem) => void;
     onItemAdd?: (workItem: WorkItem) => void;
