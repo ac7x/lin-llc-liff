@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from 'react'
 import { DataGroup, DataItem, DataSet, Timeline, TimelineItem, TimelineOptions } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 
-type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
+type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
 
 interface DraggableItem {
   id: string
@@ -23,6 +23,9 @@ interface DraggableItem {
   end: Date
 }
 
+/**
+ * 工作排程主頁
+ */
 const WorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
@@ -189,9 +192,11 @@ const WorkSchedulePage = () => {
     <div className="min-h-screen w-full bg-black flex flex-col">
       <div className="flex-none h-[20vh]" />
       <div className="flex-none h-[60vh] w-full flex items-center justify-center">
+        {/* 這裡重點調整：確保 timeline 撐滿寬度 */}
         <div
-          className="w-full h-full max-w-[96vw] rounded-2xl bg-white border border-gray-300 shadow overflow-hidden"
+          className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden"
           ref={timelineRef}
+          style={{ minWidth: '100vw' }}
         />
       </div>
       <div className="flex-none h-[20vh] w-full bg-black px-4 py-2 overflow-y-auto">
