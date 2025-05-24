@@ -32,7 +32,7 @@ const navItems = [
 ];
 
 /**
- * 管理後台底部導覽列
+ * 管理後台底部導覽列（Tailwind 自適應深淺模式）
  */
 export function ManagementBottomNav() {
     const [open, setOpen] = useState<number | null>(null);
@@ -58,90 +58,44 @@ export function ManagementBottomNav() {
 
     return (
         <nav
-            style={{
-                position: 'fixed',
-                bottom: 0,
-                left: 0,
-                width: '100%',
-                background: 'white',
-                borderTop: '1px solid #e5e7eb',
-                height: '4rem',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 50,
-            }}
+            className="fixed bottom-0 left-0 w-full h-16 flex justify-center items-center border-t
+                       bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700 z-50"
         >
             {navItems.map((item, idx) => (
                 <div
                     key={item.label}
-                    style={{
-                        position: 'relative',
-                        flex: 1,
-                        display: 'flex',
-                        justifyContent: 'center',
-                    }}
+                    className="relative flex-1 flex justify-center"
                 >
                     <button
                         onClick={() => setOpen(open === idx ? null : idx)}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#00B900',
-                            fontWeight: 600,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            padding: '0.5rem 1.5rem',
-                            borderRadius: '0.75rem',
-                            textDecoration: 'none',
-                            fontSize: '1.25rem',
-                            minWidth: 76,
-                            cursor: 'pointer',
-                            transition: 'background 0.2s',
-                        }}
+                        className="bg-none border-none font-semibold flex flex-col items-center justify-center
+                                   px-6 py-2 rounded-lg text-lg min-w-[76px] cursor-pointer
+                                   text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-gray-800
+                                   transition-colors duration-200"
+                        type="button"
                     >
-                        <span style={{ fontSize: '1.5rem' }}>{item.icon}</span>
-                        <span style={{ fontSize: '0.85rem' }}>{item.label}</span>
+                        <span className="text-2xl">{item.icon}</span>
+                        <span className="text-sm">{item.label}</span>
                     </button>
                     {open === idx && (
                         <div
                             ref={(el) => {
                                 popoverRefs.current[idx] = el;
                             }}
-                            style={{
-                                position: 'absolute',
-                                bottom: 'calc(100% + 8px)',
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                background: 'white',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: 10,
-                                boxShadow: '0 4px 24px 0 rgba(0,0,0,0.08)',
-                                padding: '0.5rem 0',
-                                minWidth: 120,
-                                zIndex: 100,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                            }}
+                            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2
+                                       rounded-xl p-2 min-w-[120px] flex flex-col items-center
+                                       shadow-lg z-100
+                                       bg-white border border-gray-300 text-gray-900
+                                       dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
                         >
                             {item.popover.map(link => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    style={{
-                                        color: '#222',
-                                        padding: '0.5rem 1.5rem',
-                                        width: '100%',
-                                        textAlign: 'center',
-                                        borderRadius: 8,
-                                        textDecoration: 'none',
-                                        fontSize: 15,
-                                        transition: 'background 0.2s',
-                                    }}
                                     onClick={() => setOpen(null)}
+                                    className="block w-full text-center rounded-lg px-6 py-2 text-base no-underline
+                                               transition-colors duration-200
+                                               hover:bg-gray-100 dark:hover:bg-gray-700"
                                 >
                                     {link.label}
                                 </Link>
