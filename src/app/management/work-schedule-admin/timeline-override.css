@@ -1,0 +1,13 @@
+/* timeline-override.css */
+.react-calendar-timeline .rct-header-root {
+  background-color: #991b1b !important; /* Tailwind bg-red-800 */
+}
+.react-calendar-timeline .rct-dateHeader {
+  background-color: #dc2626 !important; /* Tailwind bg-red-600 */
+  color: #fff !important;
+  border-color: #fff !important;
+}
+.react-calendar-timeline .rct-calendar-header {
+  background-color: #ef4444 !important; /* Tailwind bg-red-500 */
+  color: #fff !important;
+}
