@@ -224,7 +224,7 @@ const WorkScheduleAdminPage: React.FC = () => {
 									bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2.5
 									hover:bg-yellow-100 transition-all hover:shadow-md
 									flex flex-col justify-between gap-2
-									w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)]
+									flex-auto min-w-[180px] max-w-full
 								"
 								title={`來自 ${wl.epicTitle}`}
 							>
