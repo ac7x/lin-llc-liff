@@ -73,12 +73,16 @@ export function ManagementBottomNav() {
                                    text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-gray-800
                                    transition-colors duration-200"
                         type="button"
+                        aria-haspopup="true"
+                        aria-expanded={open === idx}
+                        aria-controls={`popover-${idx}`}
                     >
                         <span className="text-2xl">{item.icon}</span>
                         <span className="text-sm">{item.label}</span>
                     </button>
                     {open === idx && (
                         <div
+                            id={`popover-${idx}`}
                             ref={(el) => {
                                 popoverRefs.current[idx] = el;
                             }}
@@ -87,6 +91,8 @@ export function ManagementBottomNav() {
                                        shadow-lg z-100
                                        bg-white border border-gray-300 text-gray-900
                                        dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
+                            role="menu"
+                            aria-label={`${item.label} 選單`}
                         >
                             {item.popover.map(link => (
                                 <Link
@@ -96,6 +102,7 @@ export function ManagementBottomNav() {
                                     className="block w-full text-center rounded-lg px-6 py-2 text-base no-underline
                                                transition-colors duration-200
                                                hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    role="menuitem"
                                 >
                                     {link.label}
                                 </Link>
