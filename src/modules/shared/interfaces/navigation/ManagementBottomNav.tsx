@@ -34,37 +34,57 @@ const navItems = [
     },
 ];
 
+/**
+ * 管理後台底部導覽列
+ */
 export function ManagementBottomNav() {
     const [open, setOpen] = useState<number | null>(null);
-    const popoverRef = useRef<HTMLDivElement | null>(null);
+    const popoverRefs = useRef<Array<HTMLDivElement | null>>([]);
 
     useEffect(() => {
         const handle = (e: MouseEvent) => {
             if (
-                popoverRef.current &&
-                !popoverRef.current.contains(e.target as Node)
-            ) setOpen(null);
+                open !== null &&
+                popoverRefs.current[open] &&
+                !popoverRefs.current[open]?.contains(e.target as Node)
+            ) {
+                setOpen(null);
+            }
         };
-        if (open !== null) document.addEventListener('mousedown', handle);
-        return () => document.removeEventListener('mousedown', handle);
+        if (open !== null) {
+            document.addEventListener('mousedown', handle);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handle);
+        };
     }, [open]);
 
     return (
-        <nav style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            width: '100%',
-            background: 'white',
-            borderTop: '1px solid #e5e7eb',
-            height: '4rem',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 50,
-        }}>
+        <nav
+            style={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                width: '100%',
+                background: 'white',
+                borderTop: '1px solid #e5e7eb',
+                height: '4rem',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 50,
+            }}
+        >
             {navItems.map((item, idx) => (
-                <div key={item.href} style={{ position: 'relative', flex: 1, display: 'flex', justifyContent: 'center' }}>
+                <div
+                    key={item.href}
+                    style={{
+                        position: 'relative',
+                        flex: 1,
+                        display: 'flex',
+                        justifyContent: 'center',
+                    }}
+                >
                     <button
                         onClick={() => setOpen(open === idx ? null : idx)}
                         style={{
@@ -90,10 +110,12 @@ export function ManagementBottomNav() {
                     </button>
                     {open === idx && (
                         <div
-                            ref={popoverRef}
+                            ref={(el) => {
+                                popoverRefs.current[idx] = el;
+                            }}
                             style={{
                                 position: 'absolute',
-                                bottom: '3.5rem',
+                                bottom: 'calc(100% + 8px)',
                                 left: '50%',
                                 transform: 'translateX(-50%)',
                                 background: 'white',
