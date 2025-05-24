@@ -248,8 +248,7 @@ const WorkScheduleAdminPage: React.FC = () => {
 								key={wl.loadId}
 								className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-base shadow-sm
 									hover:bg-yellow-100 transition-colors flex flex-col justify-between
-									min-w-[220px] flex-1"
-								style={{ maxWidth: 320 }}
+									basis-[250px] grow-0 shrink-1"
 								title={`來自 ${wl.epicTitle}`}
 							>
 								<div className="font-medium text-gray-700">{wl.title || '(無標題)'}</div>
