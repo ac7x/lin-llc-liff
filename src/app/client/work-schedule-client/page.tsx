@@ -146,12 +146,12 @@ const ClientWorkSchedulePage = () => {
 					style={{ minWidth: '100vw', height: '100%' }}
 				/>
 			</div>
-			<div className="flex-none min-h-[25vh] w-full px-4 py-4 bg-blue-50/80 rounded-t-3xl shadow-inner">
-				<div className="w-full h-full flex flex-col">
+			<div className="flex-none min-h-[25vh] w-full bg-blue-50/80 rounded-t-3xl shadow-inner">
+				<div className="w-full h-full flex flex-col p-4 max-w-[100vw] mx-auto">
 					<h2 className="text-lg font-bold text-center text-blue-800 mb-4 tracking-wide">
 						未排班工作
 					</h2>
-					<div className="flex flex-wrap gap-3 overflow-y-auto pb-16">
+					<div className="flex flex-wrap gap-3 overflow-y-auto pb-16 px-0.5">
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400 text-center w-full">（無未排班工作）</div>
 						) : unplanned.map(wl => (
