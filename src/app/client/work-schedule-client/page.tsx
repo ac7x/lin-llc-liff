@@ -46,6 +46,8 @@ const ClientWorkSchedulePage = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 	const timelineRef = useRef<HTMLDivElement>(null)
+	const timelineInstance = useRef<Timeline | null>(null)
+	const intervalRef = useRef<NodeJS.Timeout | null>(null)
 	const [epicSnapshot, epicLoading] = useCollection(collection(firestore, 'workEpic'))
 
 	useEffect(() => {
@@ -74,7 +76,6 @@ const ClientWorkSchedulePage = () => {
 					}))
 			)
 		)
-		// 設定初始視窗為今天到一週後
 		const today = new Date()
 		const weekLater = addDays(today, 7)
 		const tl = new Timeline(timelineRef.current, items, groups, {
@@ -103,11 +104,10 @@ const ClientWorkSchedulePage = () => {
 					],
 					days: ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'],
 					daysShort: ['日', '一', '二', '三', '四', '五', '六'],
-					// 其他可根據需求補充
 				}
 			},
-			zoomMin: 24 * 60 * 60 * 1000, // 最小1日
-			zoomMax: 30 * 24 * 60 * 60 * 1000, // 最大30日
+			zoomMin: 7 * 24 * 60 * 60 * 1000, // 一週
+			zoomMax: 30 * 24 * 60 * 60 * 1000,
 			timeAxis: { scale: 'day', step: 1 },
 			format: {
 				minorLabels: {
@@ -126,10 +126,20 @@ const ClientWorkSchedulePage = () => {
 			start: today,
 			end: weekLater
 		})
-		setTimeout(() => {
-			tl.setCurrentTime(today)
-		}, 0)
-		return () => { tl.destroy() }
+		timelineInstance.current = tl
+
+		// 一開始就顯示紅線
+		tl.setCurrentTime(today)
+		// 設定定時器，每分鐘刷新紅線
+		intervalRef.current = setInterval(() => {
+			const now = new Date()
+			tl.setCurrentTime(now)
+		}, 60 * 1000)
+
+		return () => {
+			tl.destroy()
+			if (intervalRef.current) clearInterval(intervalRef.current)
+		}
 	}, [epics])
 
 	return (
