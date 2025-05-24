@@ -42,13 +42,13 @@ export function ClientBottomNav({ items = defaultNavItems }: ClientBottomNavProp
         paddingBottom: 'env(safe-area-inset-bottom)'
       }}
     >
-      <div className="flex h-full mx-auto justify-between items-center overflow-x-visible w-full">
+      <div className="flex h-full mx-auto justify-center items-center overflow-x-visible w-full">
         {navItems.map((item, index) => (
           <Link
             key={index}
             href={item.href}
             className={`
-              flex-1 min-w-0 inline-flex flex-col items-center justify-center
+              flex-1 min-w-0 inline-flex flex-col items-center justify-center h-full
               px-2 sm:px-5 max-w-[120px]
               ${item.active
                 ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'

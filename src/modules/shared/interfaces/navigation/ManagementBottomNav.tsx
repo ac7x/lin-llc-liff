@@ -75,7 +75,7 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                 paddingBottom: 'env(safe-area-inset-bottom)'
             }}
         >
-            <div className="flex h-full mx-auto justify-between items-end overflow-x-visible w-full">
+            <div className="flex h-full mx-auto justify-center items-center overflow-x-visible w-full">
                 {navItems.map((item, index) => {
                     if (item.label === '成員管理') {
                         return (
@@ -97,14 +97,14 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                                         setShowMemberPopover(v => !v);
                                     }}
                                     className={`
-											flex w-full min-w-0 flex-col items-center justify-center
-											px-2 sm:px-5 max-w-[120px]
-											${item.active
+                        flex w-full min-w-0 flex-col items-center justify-center h-full
+                        px-2 sm:px-5 max-w-[120px]
+                        ${item.active
                                             ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'
                                             : 'text-gray-500 hover:text-[#00B900]'
                                         }
-											transition-colors duration-150
-										`}
+                        transition-colors duration-150
+                    `}
                                     style={{ minWidth: '76px' }}
                                 >
                                     <div className="text-xl sm:text-2xl">👤</div>
@@ -136,14 +136,14 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                                         setShowWorkPopover(v => !v);
                                     }}
                                     className={`
-											flex w-full min-w-0 flex-col items-center justify-center
-											px-2 sm:px-5 max-w-[120px]
-											${item.active
+                        flex w-full min-w-0 flex-col items-center justify-center h-full
+                        px-2 sm:px-5 max-w-[120px]
+                        ${item.active
                                             ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'
                                             : 'text-gray-500 hover:text-[#00B900]'
                                         }
-											transition-colors duration-150
-										`}
+                        transition-colors duration-150
+                    `}
                                     style={{ minWidth: '76px' }}
                                 >
                                     <div className="text-xl sm:text-2xl">🗂️</div>
@@ -175,14 +175,14 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                                         setShowSchedulePopover(v => !v);
                                     }}
                                     className={`
-											flex w-full min-w-0 flex-col items-center justify-center
-											px-2 sm:px-5 max-w-[120px]
-											${item.active
+                        flex w-full min-w-0 flex-col items-center justify-center h-full
+                        px-2 sm:px-5 max-w-[120px]
+                        ${item.active
                                             ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'
                                             : 'text-gray-500 hover:text-[#00B900]'
                                         }
-											transition-colors duration-150
-										`}
+                        transition-colors duration-150
+                    `}
                                     style={{ minWidth: '76px' }}
                                 >
                                     <div className="text-xl sm:text-2xl">📆</div>
