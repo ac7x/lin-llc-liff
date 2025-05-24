@@ -1,98 +1,161 @@
-'use client'
+'use client';
 
-import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
-import { useEffect, useRef, useState, useTransition } from 'react'
-import { DataSet, Timeline, TimelineOptions } from 'vis-timeline/standalone'
-import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
-import { getAllEpics, LooseWorkLoad, unplanWorkLoad, updateWorkLoad, WorkEpicEntity } from './work-schedule-admin.action'
+import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav';
+import { useEffect, useRef, useState, useTransition } from 'react';
+import { DataSet, Timeline, TimelineOptions } from 'vis-timeline/standalone';
+import 'vis-timeline/styles/vis-timeline-graph2d.min.css';
+import {
+	getAllEpics,
+	unplanWorkLoad,
+	updateWorkLoad,
+	WorkEpicEntity,
+	WorkLoadEntity,
+} from './work-schedule-admin.action';
+
+interface VisItem {
+	id: string;
+	group: string;
+	type: 'range';
+	content: string;
+	start: Date;
+	end?: Date;
+}
+
+interface VisGroup {
+	id: string;
+	content: string;
+}
 
 export default function WorkScheduleAdminPage() {
-	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
-	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
-	const [loading, setLoading] = useState(true)
-	const [, startTransition] = useTransition()
-	const timelineRef = useRef<HTMLDivElement>(null)
+	const [epics, setEpics] = useState<WorkEpicEntity[]>([]);
+	const [unplanned, setUnplanned] = useState<(WorkLoadEntity & { epicId: string; epicTitle: string })[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [, startTransition] = useTransition();
+	const timelineRef = useRef<HTMLDivElement>(null);
+	const loadToEpicMap = useRef<Record<string, string>>({}); // loadId => epicId
 
-	// 首次載入資料
+	// 初始化與資料拉取
 	useEffect(() => {
-		setLoading(true)
+		setLoading(true);
 		getAllEpics().then(({ epics, unplanned }) => {
-			setEpics(epics)
-			setUnplanned(unplanned)
-			setLoading(false)
-		})
-	}, [])
+			setEpics(epics);
+			setUnplanned(unplanned);
 
-	// vis-timeline 初始化與事件
+			// 建立 loadId -> epicId 對照表
+			const map: Record<string, string> = {};
+			epics.forEach((epic) =>
+				(epic.workLoads || []).forEach((wl) => {
+					map[wl.loadId] = epic.epicId;
+				})
+			);
+			loadToEpicMap.current = map;
+			setLoading(false);
+		});
+	}, []);
+
+	// 監控 epics 變動，初始化 vis-timeline
 	useEffect(() => {
-		if (!timelineRef.current || !epics.length) return
+		if (!timelineRef.current || epics.length === 0) return;
 
-		const groups = new DataSet(
-			epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
-		)
-		const items = new DataSet(
-			epics.flatMap(e =>
-				(e.workLoads || [])
-					.filter(l => l.plannedStartTime && l.plannedStartTime !== '')
-					.map(l => ({
-						id: l.loadId,
-						group: e.epicId,
-						type: 'range',
-						content: `<div><div>${l.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(l.executor) ? l.executor.join(', ') : l.executor || '(無執行者)'}</div></div>`,
-						start: new Date(l.plannedStartTime),
-						end: l.plannedEndTime && l.plannedEndTime !== '' ? new Date(l.plannedEndTime) : undefined,
-					}))
-			)
-		)
+		// Groups
+		const groups: VisGroup[] = epics.map((epic) => ({
+			id: epic.epicId,
+			content: `<b>${epic.title}</b>`,
+		}));
 
-		const tl = new Timeline(timelineRef.current, items, groups, {
+		// Items
+		const items: VisItem[] = epics.flatMap((epic) =>
+			(epic.workLoads || [])
+				.filter((wl) => wl.plannedStartTime && wl.plannedStartTime !== '')
+				.map((wl) => ({
+					id: wl.loadId,
+					group: epic.epicId,
+					type: 'range',
+					content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
+					start: new Date(wl.plannedStartTime),
+					end: wl.plannedEndTime && wl.plannedEndTime !== '' ? new Date(wl.plannedEndTime) : undefined,
+				}))
+		);
+
+		const visGroups = new DataSet(groups);
+		const visItems = new DataSet(items);
+
+		const timeline = new Timeline(timelineRef.current, visItems, visGroups, {
 			stack: true,
 			orientation: 'top',
 			editable: { updateTime: true, updateGroup: true, remove: true },
 			locale: 'zh-tw',
 			zoomMin: 24 * 60 * 60 * 1000,
 			zoomMax: 90 * 24 * 60 * 60 * 1000,
-		} as TimelineOptions)
+		} as TimelineOptions);
 
-		tl.on('change', async (event: any) => {
+		// 變更（移動/改時間/換分組）同步 Firestore
+		timeline.on('change', async (event: any) => {
 			for (const itemId of event.items) {
-				const itemData = event.data[itemId]
-				if (!itemData) continue
-				await updateWorkLoad(itemData.group, itemId, itemData.start, itemData.end ?? null)
-			}
-			// 重新拉資料
-			startTransition(() => {
-				setLoading(true)
-				getAllEpics().then(({ epics, unplanned }) => {
-					setEpics(epics)
-					setUnplanned(unplanned)
-					setLoading(false)
-				})
-			})
-		})
+				const itemData = event.data[itemId];
+				if (!itemData) continue;
 
-		tl.on('remove', async (event: any) => {
+				const fromEpicId = loadToEpicMap.current[itemId];
+				const toEpicId = itemData.group;
+				await updateWorkLoad(
+					fromEpicId,
+					itemId,
+					toEpicId,
+					itemData.start,
+					itemData.end ?? null
+				);
+			}
+
+			// 變更後刷新資料
+			startTransition(() => {
+				setLoading(true);
+				getAllEpics().then(({ epics, unplanned }) => {
+					setEpics(epics);
+					setUnplanned(unplanned);
+
+					const map: Record<string, string> = {};
+					epics.forEach((epic) =>
+						(epic.workLoads || []).forEach((wl) => {
+							map[wl.loadId] = epic.epicId;
+						})
+					);
+					loadToEpicMap.current = map;
+					setLoading(false);
+				});
+			});
+		});
+
+		// 移除（unplan）
+		timeline.on('remove', async (event: any) => {
 			for (const itemId of event.items) {
-				await unplanWorkLoad(itemId)
+				await unplanWorkLoad(itemId);
 			}
 			startTransition(() => {
-				setLoading(true)
+				setLoading(true);
 				getAllEpics().then(({ epics, unplanned }) => {
-					setEpics(epics)
-					setUnplanned(unplanned)
-					setLoading(false)
-				})
-			})
-		})
+					setEpics(epics);
+					setUnplanned(unplanned);
 
-		return () => { tl.destroy() }
+					const map: Record<string, string> = {};
+					epics.forEach((epic) =>
+						(epic.workLoads || []).forEach((wl) => {
+							map[wl.loadId] = epic.epicId;
+						})
+					);
+					loadToEpicMap.current = map;
+					setLoading(false);
+				});
+			});
+		});
+
+		return () => timeline.destroy();
 		// eslint-disable-next-line
-	}, [epics.length])
+	}, [epics.length]);
 
 	return (
 		<div className="min-h-screen w-full bg-black flex flex-col">
 			<div className="flex-none h-[20vh]" />
-			<div className="flex-none h-[60vh] w-full flex items-center justify-center">
+			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
 				{loading && (
 					<div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
 						<div className="text-white">資料載入中...</div>
@@ -110,22 +173,26 @@ export default function WorkScheduleAdminPage() {
 					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400">（無）</div>
-						) : unplanned.map(wl => (
-							<div
-								key={wl.loadId}
-								className="bg-yellow-50 border rounded px-3 py-2 text-sm"
-								title={`來自 ${wl.epicTitle}`}
-							>
-								<div>{wl.title || '(無標題)'}</div>
-								<div className="text-xs text-gray-400">
-									{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
+						) : (
+							unplanned.map((wl) => (
+								<div
+									key={wl.loadId}
+									className="bg-yellow-50 border rounded px-3 py-2 text-sm"
+									title={`來自 ${wl.epicTitle}`}
+								>
+									<div>{wl.title || '(無標題)'}</div>
+									<div className="text-xs text-gray-400">
+										{Array.isArray(wl.executor)
+											? wl.executor.join(', ')
+											: wl.executor || '(無執行者)'}
+									</div>
 								</div>
-							</div>
-						))}
+							))
+						)}
 					</div>
 				</div>
 			</div>
 			<ClientBottomNav />
 		</div>
-	)
+	);
 }
