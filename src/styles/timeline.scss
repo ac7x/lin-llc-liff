@@ -1,9 +1,9 @@
 $item-color: white !default;
-$item-background: #06C755 !default; // LINE 綠色
-$item-border: 1px solid #05b34c !default; // 調整綠色邊框
+$item-background: #8B8C98 !default; // Future Dusk 主色
+$item-border: 1px solid #767783 !default; // Future Dusk 深色邊框
 $item-selected-color: white !default;
-$item-selected-background: #8B8C98 !default; // Future Dusk 主色
-$item-selected-border: 1px solid #767783 !default; // 深一點的 Future Dusk
+$item-selected-background: #06C755 !default; // LINE 綠色作為強調色
+$item-selected-border: 1px solid #05b34c !default; // LINE 綠色深色邊框
 
 $row-background-even: transparent !default;
 $row-background-odd: rgba(139, 140, 152, 0.05) !default; // Future Dusk 淡色
@@ -12,7 +12,7 @@ $border-color: #e9e9ec !default; // Future Dusk 淺色系
 $border-width: 1px;
 $thick-border-width: 2px;
 $sidebar-color: #ffffff !default;
-$sidebar-background-color: #06C755 !default; // LINE 綠色
+$sidebar-background-color: #8B8C98 !default; // Future Dusk 主色
 $list-item-padding: 0 4px;
 $weekend: rgba(139, 140, 152, 0.08) !default; // Future Dusk 週末背景
 
