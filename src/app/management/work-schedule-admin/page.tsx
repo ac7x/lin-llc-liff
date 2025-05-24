@@ -12,7 +12,7 @@ import {
 	subDays
 } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Timeline from 'react-calendar-timeline'
 import './timeline.scss'
 import {
@@ -67,12 +67,16 @@ const tailwindPalette = [
 const WorkScheduleAdminPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
+	const [epicLoading, setEpicLoading] = useState(false)
+	const timelineRef = useRef<HTMLDivElement>(null)
 
 	const fetchEpics = async () => {
+		setEpicLoading(true)
 		const docs = await getAllWorkEpics()
 		const { epics, unplanned } = parseEpicSnapshot(docs as WorkEpicEntity[])
 		setEpics(epics)
 		setUnplanned(unplanned)
+		setEpicLoading(false)
 	}
 	useEffect(() => {
 		fetchEpics()
@@ -179,10 +183,18 @@ const WorkScheduleAdminPage: React.FC = () => {
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
 	return (
+		// 📌 頁面主容器
 		<div className="min-h-screen w-full bg-black flex flex-col">
-			<div className="flex-none h-[20vh]" />
-			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
-				<div className="w-full h-full rounded-2xl border border-gray-300 shadow overflow-hidden bg-black" style={{ minWidth: '100vw', height: 400 }}>
+			{/* 📌 上方 Vis Timeline 區 */}
+			<div className="flex-none h-[70vh] w-full flex items-center justify-center relative">
+				{epicLoading && (
+					// 📌 資料載入中遮罩
+					<div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-10">
+						<div className="text-white text-lg font-bold">載入中…</div>
+					</div>
+				)}
+				{/* 📌 Vis Timeline 畫布容器 */}
+				<div ref={timelineRef} className="w-full h-full rounded-2xl border border-gray-300 shadow overflow-hidden bg-black" style={{ minWidth: '100vw', height: '100%' }}>
 					<Timeline
 						groups={groups}
 						items={items}
@@ -204,7 +216,6 @@ const WorkScheduleAdminPage: React.FC = () => {
 						)}
 						itemRenderer={({ item, getItemProps, getResizeProps }) => {
 							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-							// 日期格式本地化
 							const dateStr = `${format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
 							return (
 								<div
@@ -223,13 +234,16 @@ const WorkScheduleAdminPage: React.FC = () => {
 					/>
 				</div>
 			</div>
-			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2">
+			{/* 📌 下方未排班區塊 */}
+			<div className="flex-none h-[30vh] w-full bg-black px-4 py-2">
 				<div className="w-full h-full flex flex-col">
 					<h2 className="text-lg font-bold text-center text-white mb-2 tracking-wide">未排班工作</h2>
+					{/* 📌 卡片容器 */}
 					<div className="flex flex-wrap gap-4 overflow-auto max-h-full w-full">
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400 text-center w-full">（無）</div>
 						) : unplanned.map(wl => (
+							// 📌 單一未排班工作卡片
 							<div
 								key={wl.loadId}
 								className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-base shadow-sm
