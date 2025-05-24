@@ -146,7 +146,7 @@ const ClientWorkSchedulePage = () => {
 					style={{ minWidth: '100vw', height: '100%' }}
 				/>
 			</div>
-			<div className="flex-none h-[30vh] w-full px-4 py-4 bg-blue-50 rounded-t-3xl shadow-inner">
+			<div className="flex-none h-[30vh] w-full px-4 py-4 bg-blue-50 rounded-t-3xl shadow-inner min-w-[100vw]">
 				<div className="w-full h-full flex flex-col">
 					<h2 className="text-lg font-bold text-center text-blue-800 mb-2 tracking-wide">未排班工作</h2>
 					<div className="flex flex-wrap gap-4 overflow-auto max-h-full w-full">
@@ -156,10 +156,10 @@ const ClientWorkSchedulePage = () => {
 							<div
 								key={wl.loadId}
 								className="
-                  bg-white border border-blue-200 rounded-xl px-4 py-3 text-base shadow-sm
-                  hover:bg-blue-100 transition-colors flex flex-col justify-between
-                  min-w-[220px] flex-1
-                "
+                        bg-white border border-blue-200 rounded-xl px-4 py-3 text-base shadow-sm
+                        hover:bg-blue-100 transition-colors flex flex-col justify-between
+                        min-w-[220px] flex-1
+                    "
 								style={{ maxWidth: 320 }}
 								title={`來自 ${wl.epicTitle}`}
 							>

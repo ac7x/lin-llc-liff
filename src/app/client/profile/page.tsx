@@ -32,30 +32,37 @@ export default function UserProfilePage() {
 
   return (
     <>
-      <main className="py-8 px-4 min-h-screen">
-        <div className="space-y-6 max-w-md mx-auto">
+      <main className="py-6 px-2 sm:py-8 sm:px-4 min-h-screen bg-gray-950">
+        <div className="space-y-6 max-w-full sm:max-w-md mx-auto">
           {lineProfile && (
-            <div className="bg-gray-800 rounded-2xl p-6 shadow-lg flex flex-col gap-4">
-              <div className="flex items-center gap-4">
+            <div className="bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-lg flex flex-col gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 {lineProfile.pictureUrl &&
-                  <Image src={lineProfile.pictureUrl} alt="個人頭像" width={80} height={80} className="w-20 h-20 rounded-full border-2 border-gray-600 shadow" />}
+                  <Image
+                    src={lineProfile.pictureUrl}
+                    alt="個人頭像"
+                    width={80}
+                    height={80}
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-gray-600 shadow"
+                  />
+                }
                 <div>
-                  <h3 className="font-semibold text-lg">{lineProfile.displayName}</h3>
+                  <h3 className="font-semibold text-base sm:text-lg">{lineProfile.displayName}</h3>
                   <p className="text-xs text-gray-400 break-all">{lineProfile.userId}</p>
                 </div>
               </div>
             </div>
           )}
           {userAssets && (
-            <div className="bg-gray-800 rounded-2xl p-6 shadow-lg flex flex-col gap-4">
-              <h3 className="font-semibold text-lg mb-2">我的資產</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col items-center justify-center p-4 bg-yellow-900/20 rounded-xl shadow-inner">
-                  <span className="text-2xl font-bold text-yellow-300">{userAssets.coin}</span>
+            <div className="bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-lg flex flex-col gap-4">
+              <h3 className="font-semibold text-base sm:text-lg mb-2">我的資產</h3>
+              <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-yellow-900/20 rounded-xl shadow-inner">
+                  <span className="text-xl sm:text-2xl font-bold text-yellow-300">{userAssets.coin}</span>
                   <span className="text-xs text-yellow-200 mt-1">金幣</span>
                 </div>
-                <div className="flex flex-col items-center justify-center p-4 bg-blue-900/20 rounded-xl shadow-inner">
-                  <span className="text-2xl font-bold text-blue-300">{userAssets.diamond}</span>
+                <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-blue-900/20 rounded-xl shadow-inner">
+                  <span className="text-xl sm:text-2xl font-bold text-blue-300">{userAssets.diamond}</span>
                   <span className="text-xs text-blue-200 mt-1">鑽石</span>
                 </div>
               </div>
@@ -63,8 +70,8 @@ export default function UserProfilePage() {
           )}
           {actionMessage && <div className="text-center text-sm text-amber-400">{actionMessage}</div>}
           {isLoggedIn
-            ? <button onClick={logout} className="w-full mt-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-white font-semibold">登出</button>
-            : <button onClick={login} className="w-full mt-4 py-2 rounded bg-blue-700 hover:bg-blue-600 text-white font-semibold">登入</button>
+            ? <button onClick={logout} className="w-full mt-4 py-2 rounded bg-gray-700 hover:bg-gray-600 text-white font-semibold text-base sm:text-lg">登出</button>
+            : <button onClick={login} className="w-full mt-4 py-2 rounded bg-blue-700 hover:bg-blue-600 text-white font-semibold text-base sm:text-lg">登入</button>
           }
         </div>
       </main>
