@@ -151,9 +151,9 @@ const ClientWorkSchedulePage = () => {
 					<h2 className="text-lg font-bold text-center text-blue-800 mb-4 tracking-wide">
 						未排班工作
 					</h2>
-					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-y-auto pb-16">
+					<div className="flex flex-wrap gap-3 overflow-y-auto pb-16">
 						{unplanned.length === 0 ? (
-							<div className="text-gray-400 text-center col-span-full">（無未排班工作）</div>
+							<div className="text-gray-400 text-center w-full">（無未排班工作）</div>
 						) : unplanned.map(wl => (
 							<div
 								key={wl.loadId}
@@ -161,6 +161,7 @@ const ClientWorkSchedulePage = () => {
 									bg-white/90 border border-blue-200 rounded-xl px-3 py-2.5
 									hover:bg-blue-50 transition-all hover:shadow-md
 									flex flex-col justify-between gap-2
+									w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)]
 								"
 								title={`來自 ${wl.epicTitle}`}
 							>
