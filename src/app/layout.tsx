@@ -1,7 +1,7 @@
 import { LiffProvider } from "@/modules/line/liff/interfaces/Liff";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "../styles/globals.scss";
+import "../styles/globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
