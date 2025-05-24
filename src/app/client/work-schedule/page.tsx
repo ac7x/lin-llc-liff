@@ -195,34 +195,36 @@ const ClientWorkSchedulePage: React.FC = () => {
 	return (
 		<div className="min-h-screen w-full bg-black flex flex-col">
 			<div className="flex-none h-[20vh]" />
-			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
+			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative p-0 m-0">
 				{epicLoading && (
 					<div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
 						<div className="text-white">資料載入中...</div>
 					</div>
 				)}
-				<div className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
-					<Timeline
-						groups={groups}
-						items={items}
-						defaultTimeStart={moment().startOf('day').subtract(7, 'days')}
-						defaultTimeEnd={moment().endOf('day').add(14, 'days')}
-						canMove canResize="both" canChangeGroup stackItems
-						onItemMove={handleItemMove}
-						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
-						onItemDoubleClick={handleItemRemove}
-						itemRenderer={({ item, getItemProps, getResizeProps }) => {
-							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-							const color = groupColorMap[item.group] || "#fbbf24"
-							return (
-								<div {...getItemProps({ style: { background: color, color: "#222" } })}>
-									<div {...leftResizeProps} />
-									<span>{item.title}</span>
-									<div {...rightResizeProps} />
-								</div>
-							)
-						}}
-					/>
+				<div className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden flex items-center justify-center" style={{ minWidth: '100vw', height: '100%' }}>
+					<div className="w-full h-full flex items-center justify-center">
+						<Timeline
+							groups={groups}
+							items={items}
+							defaultTimeStart={moment().startOf('day').subtract(7, 'days')}
+							defaultTimeEnd={moment().endOf('day').add(14, 'days')}
+							canMove canResize="both" canChangeGroup stackItems
+							onItemMove={handleItemMove}
+							onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
+							onItemDoubleClick={handleItemRemove}
+							itemRenderer={({ item, getItemProps, getResizeProps }) => {
+								const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+								const color = groupColorMap[item.group] || "#fbbf24"
+								return (
+									<div {...getItemProps({ style: { background: color, color: "#222" } })}>
+										<div {...leftResizeProps} />
+										<span>{item.title}</span>
+										<div {...rightResizeProps} />
+									</div>
+								)
+							}}
+						/>
+					</div>
 				</div>
 			</div>
 			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2 overflow-y-auto">
