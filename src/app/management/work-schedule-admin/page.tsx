@@ -15,6 +15,7 @@ import { zhTW } from 'date-fns/locale'
 import React, { useEffect, useMemo, useState } from 'react'
 import Timeline from 'react-calendar-timeline'
 import 'react-calendar-timeline/style.css'
+import './timeline-override.css'
 import {
 	getAllWorkEpics,
 	updateWorkEpicWorkLoads
