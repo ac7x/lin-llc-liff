@@ -1,12 +1,11 @@
 "use client"
 
-import { addWorkEpic, getAllWorkEpics } from "@/app/actions/workepic.action"
 import { getAllWorkLoads } from "@/app/actions/workload.action"
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { useEffect, useRef, useState } from "react"
 import { DataSet, Timeline, TimelineOptions } from "vis-timeline/standalone"
 import "vis-timeline/styles/vis-timeline-graph2d.min.css"
-import { addWorkLoadToEpic } from "./work-schedule-admin.action"
+import { addWorkEpic, addWorkLoadToEpic, getAllWorkEpics } from "./work-schedule-admin.action"
 
 // 型別定義
 type Group = {

@@ -52,3 +52,6 @@ export async function addWorkLoadToEpic(epicId: string, load: WorkLoadEntity): P
     transaction.update(epicRef, { workLoads })
   })
 }
+
+// 重新導出 workepic.action.ts 的 addWorkEpic, getAllWorkEpics
+export { addWorkEpic, getAllWorkEpics } from '@/app/actions/workepic.action';
