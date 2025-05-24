@@ -176,22 +176,33 @@ const ClientWorkScheduleAdminPage: React.FC = () => {
 	const defaultTimeStart = subDays(startOfDay(now), 7)
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
+	// 分組渲染（加上紅底白字）
+	const groupRenderer = ({ group }) => (
+		<div className="bg-red-500 text-white px-2 py-1 rounded">
+			{group.title}
+		</div>
+	)
+
 	return (
 		<div className="min-h-screen w-full bg-black flex flex-col">
 			<div className="flex-none h-[20vh]" />
 			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
-				<div className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
+				<div className="w-full h-full rounded-2xl border border-gray-300 shadow overflow-hidden bg-black" style={{ minWidth: '100vw', height: 400 }}>
 					<Timeline
 						groups={groups}
 						items={items}
 						defaultTimeStart={defaultTimeStart}
 						defaultTimeEnd={defaultTimeEnd}
-						canMove canResize="both" canChangeGroup stackItems
+						canMove
+						canResize="both"
+						canChangeGroup
+						stackItems
 						minZoom={24 * 60 * 60 * 1000} // 1日
 						maxZoom={30 * 24 * 60 * 60 * 1000} // 30日
 						onItemMove={handleItemMove}
 						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
 						onItemDoubleClick={handleItemRemove}
+						groupRenderer={groupRenderer}
 						itemRenderer={({ item, getItemProps, getResizeProps }) => {
 							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
 							const color = groupColorMap[item.group] || '#fbbf24'
@@ -221,9 +232,9 @@ const ClientWorkScheduleAdminPage: React.FC = () => {
 				</div>
 			</div>
 			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2 overflow-y-auto">
-				<div className="max-w-7xl mx-auto h-full flex flex-col">
+				<div className="w-full h-full flex flex-col">
 					<h2 className="text-lg font-bold text-center text-white mb-2">未排班工作</h2>
-					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
+					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full w-full">
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400">（無）</div>
 						) : unplanned.map(wl => (
