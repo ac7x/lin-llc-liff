@@ -146,8 +146,7 @@ export default function WorkScheduleAdminPage() {
 	return (
 		<div
 			style={{
-				width: '100%',
-				maxWidth: '100vw',
+				width: '100vw',
 				margin: '0 auto',
 				height: '70vh',
 				overflowX: 'hidden',
