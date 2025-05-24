@@ -82,14 +82,18 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                             <div key={index} className="relative flex-1 min-w-0 flex flex-col items-center justify-end h-full">
                                 {showMemberPopover && (
                                     <div
-                                        className="fixed left-1/2 transform -translate-x-1/2 bg-[var(--background,white)] border rounded-lg shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-[9999]"
+                                        className="fixed left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 border rounded-lg shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-[9999]"
                                         style={{
                                             minWidth: 'max-content',
                                             bottom: 'calc(env(safe-area-inset-bottom) + 4rem)'
                                         }}
                                     >
-                                        <span className="text-2xl" title="技能管理">🛠️</span>
-                                        <span className="text-2xl" title="成員列表">👥</span>
+                                        <Link href="/management/skills" className="hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                                            <span className="text-2xl cursor-pointer" title="技能管理">🛠️</span>
+                                        </Link>
+                                        <Link href="/management/members" className="hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                                            <span className="text-2xl cursor-pointer" title="成員列表">👥</span>
+                                        </Link>
                                     </div>
                                 )}
                                 <a
@@ -123,15 +127,21 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                             <div key={index} className="relative flex-1 min-w-0 flex flex-col items-center justify-end h-full">
                                 {showWorkPopover && (
                                     <div
-                                        className="fixed left-1/2 transform -translate-x-1/2 bg-[var(--background,white)] border rounded-lg shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-[9999]"
+                                        className="fixed left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 border rounded-lg shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-[9999]"
                                         style={{
                                             minWidth: 'max-content',
                                             bottom: 'calc(env(safe-area-inset-bottom) + 4rem)'
                                         }}
                                     >
-                                        <span className="text-2xl" title="工作任務">📝</span>
-                                        <span className="text-2xl" title="工作史詩">📖</span>
-                                        <span className="text-2xl" title="工作範本">📂</span>
+                                        <Link href="/management/tasks" className="hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                                            <span className="text-2xl cursor-pointer" title="工作任務">📝</span>
+                                        </Link>
+                                        <Link href="/management/epics" className="hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                                            <span className="text-2xl cursor-pointer" title="工作史詩">📖</span>
+                                        </Link>
+                                        <Link href="/management/templates" className="hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                                            <span className="text-2xl cursor-pointer" title="工作範本">📂</span>
+                                        </Link>
                                     </div>
                                 )}
                                 <a
@@ -165,15 +175,21 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                             <div key={index} className="relative flex-1 min-w-0 flex flex-col items-center justify-end h-full">
                                 {showSchedulePopover && (
                                     <div
-                                        className="fixed left-1/2 transform -translate-x-1/2 bg-[var(--background,white)] border rounded-lg shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-[9999]"
+                                        className="fixed left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 border rounded-lg shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-[9999]"
                                         style={{
                                             minWidth: 'max-content',
                                             bottom: 'calc(env(safe-area-inset-bottom) + 4rem)'
                                         }}
                                     >
-                                        <span className="text-2xl" title="排程客戶">📅</span>
-                                        <span className="text-2xl" title="排程後端">📅</span>
-                                        <span className="text-2xl" title="儀表板">📊</span>
+                                        <Link href="/management/schedule/client" className="hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                                            <span className="text-2xl cursor-pointer" title="排程客戶">📅</span>
+                                        </Link>
+                                        <Link href="/management/schedule/backend" className="hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                                            <span className="text-2xl cursor-pointer" title="排程後端">📅</span>
+                                        </Link>
+                                        <Link href="/management/dashboard" className="hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-lg transition-colors">
+                                            <span className="text-2xl cursor-pointer" title="儀表板">📊</span>
+                                        </Link>
                                     </div>
                                 )}
                                 <a
