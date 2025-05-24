@@ -29,8 +29,8 @@ type WorkMember = {
 export default function AdminWorkSkillPage() {
   const skillsRef = collection(firestore, "workSkill");
   const membersRef = collection(firestore, "workMember");
-  const [skillsSnap, loadingSkills, errorSkills] = useCollection(skillsRef);
-  const [membersSnap, loadingMembers] = useCollection(membersRef);
+  const [skillsSnap, , errorSkills] = useCollection(skillsRef);
+  const [membersSnap] = useCollection(membersRef);
 
   const [form, setForm] = useState<Partial<WorkSkill>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -206,7 +206,6 @@ export default function AdminWorkSkillPage() {
           ))}
         </tbody>
       </table>
-      {(loadingSkills || loadingMembers) && <div>載入中...</div>}
       {errorSkills && <div>讀取錯誤: {String(errorSkills)}</div>}
       <ManagementBottomNav />
     </div>

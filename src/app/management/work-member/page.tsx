@@ -1,9 +1,9 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
 import { LiffContext } from "@/modules/line/liff/interfaces/Liff";
 import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/clientApp";
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
-import { collection, deleteDoc, doc, query, updateDoc, getDocs } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDocs, query, updateDoc } from "firebase/firestore";
+import { useContext, useEffect, useState } from "react";
 import { useCollection } from "react-firebase-hooks/firestore";
 
 export interface WorkMember {
@@ -37,7 +37,7 @@ type UpdatedFields = {
 export default function WorkMemberPage() {
   const { isLoggedIn, firebaseLogin } = useContext(LiffContext);
   const workMemberCol = collection(firestore, "workMember");
-  const [snapshot, loading, error] = useCollection(query(workMemberCol));
+  const [snapshot, , error] = useCollection(query(workMemberCol));
   const [filter, setFilter] = useState({ role: "", status: "" });
   const [sortKey, setSortKey] = useState<"name" | "role">("name");
   const [editingMember, setEditingMember] = useState<string | null>(null);
@@ -98,7 +98,6 @@ export default function WorkMemberPage() {
             </select>
           </label>
         </div>
-        {loading && <div>載入中...</div>}
         {error && <div className="text-red-600">錯誤：{error.message}</div>}
 
         <div className="flex flex-row flex-wrap gap-4 justify-start items-stretch">
@@ -107,17 +106,17 @@ export default function WorkMemberPage() {
               {editingMember === member.memberId ? (
                 <div className="flex flex-col gap-2">
                   <input type="text" value={updatedFields.name ?? member.name}
-                    onChange={e => setUpdatedFields(prev => ({ ...prev, name: e.target.value }))} placeholder="姓名"/>
+                    onChange={e => setUpdatedFields(prev => ({ ...prev, name: e.target.value }))} placeholder="姓名" />
                   <input type="text" value={updatedFields.role ?? member.role}
-                    onChange={e => setUpdatedFields(prev => ({ ...prev, role: e.target.value }))} placeholder="角色"/>
+                    onChange={e => setUpdatedFields(prev => ({ ...prev, role: e.target.value }))} placeholder="角色" />
                   <input type="text" value={updatedFields.skills ?? member.skills.map(skillId => skillsMap[skillId] || skillId).join(", ")}
-                    onChange={e => setUpdatedFields(prev => ({ ...prev, skills: e.target.value }))} placeholder="技能(逗號分隔)"/>
+                    onChange={e => setUpdatedFields(prev => ({ ...prev, skills: e.target.value }))} placeholder="技能(逗號分隔)" />
                   <input type="text" value={updatedFields.email ?? member.contactInfo.email ?? ""}
-                    onChange={e => setUpdatedFields(prev => ({ ...prev, email: e.target.value }))} placeholder="Email"/>
+                    onChange={e => setUpdatedFields(prev => ({ ...prev, email: e.target.value }))} placeholder="Email" />
                   <input type="text" value={updatedFields.phone ?? member.contactInfo.phone ?? ""}
-                    onChange={e => setUpdatedFields(prev => ({ ...prev, phone: e.target.value }))} placeholder="電話"/>
+                    onChange={e => setUpdatedFields(prev => ({ ...prev, phone: e.target.value }))} placeholder="電話" />
                   <input type="text" value={updatedFields.lineId ?? member.contactInfo.lineId ?? ""}
-                    onChange={e => setUpdatedFields(prev => ({ ...prev, lineId: e.target.value }))} placeholder="LineId"/>
+                    onChange={e => setUpdatedFields(prev => ({ ...prev, lineId: e.target.value }))} placeholder="LineId" />
                   <select value={updatedFields.availability ?? member.availability}
                     onChange={e => setUpdatedFields(prev => ({ ...prev, availability: e.target.value as WorkMember["availability"] }))}>
                     <option value="空閒">空閒</option>

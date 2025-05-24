@@ -46,7 +46,7 @@ const ClientWorkSchedulePage = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 	const timelineRef = useRef<HTMLDivElement>(null)
-	const [epicSnapshot, epicLoading] = useCollection(collection(firestore, 'workEpic'))
+	const [epicSnapshot] = useCollection(collection(firestore, 'workEpic'))
 
 	useEffect(() => {
 		if (!epicSnapshot) return
@@ -135,11 +135,6 @@ const ClientWorkSchedulePage = () => {
 	return (
 		<div className="min-h-screen w-full bg-gradient-to-b from-blue-100 via-white to-blue-50 flex flex-col">
 			<div className="flex-none h-[70vh] w-full flex items-center justify-center">
-				{epicLoading && (
-					<div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10 rounded-2xl">
-						<div className="text-white">資料載入中...</div>
-					</div>
-				)}
 				<div
 					className="w-full h-full rounded-2xl bg-white border border-gray-200 shadow-md overflow-hidden"
 					ref={timelineRef}

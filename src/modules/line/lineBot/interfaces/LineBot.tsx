@@ -47,7 +47,7 @@ export function LineBotStatus() {
                 className="bg-lime-600 hover:bg-lime-700 text-white px-3 py-1 rounded"
                 disabled={loading}
             >
-                {loading ? "查詢中..." : "檢查 Bot 狀態"}
+                檢查 Bot 狀態
             </button>
             <div className="mt-2 text-sm">
                 狀態：<span className="font-mono">{status}</span>
