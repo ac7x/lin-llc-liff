@@ -10,11 +10,14 @@ import {
 	QueryDocumentSnapshot,
 	updateDoc,
 } from "firebase/firestore";
-import moment from 'moment';
 import React, { useEffect, useMemo, useState } from "react";
 import Timeline from "react-calendar-timeline";
 import 'react-calendar-timeline/style.css';
 import { useCollection } from "react-firebase-hooks/firestore";
+
+// === date-fns imports ===
+import { addDays, differenceInMilliseconds, endOfDay, format, isValid, parseISO, startOfDay, subDays } from 'date-fns';
+import { zhTW } from 'date-fns/locale';
 
 // Firebase config
 const firebaseConfig = {
@@ -84,15 +87,19 @@ const ClientWorkSchedulePage: React.FC = () => {
 		epics.flatMap(e =>
 			(e.workLoads || [])
 				.filter(l => l.plannedStartTime && l.plannedStartTime !== "")
-				.map(l => ({
-					id: l.loadId,
-					group: e.epicId,
-					title: getWorkloadContent(l),
-					start_time: moment(l.plannedStartTime),
-					end_time: l.plannedEndTime && l.plannedEndTime !== ""
-						? moment(l.plannedEndTime)
-						: moment(l.plannedStartTime).add(1, "day"),
-				}))
+				.map(l => {
+					const start = parseISO(l.plannedStartTime)
+					const end = l.plannedEndTime && l.plannedEndTime !== ""
+						? parseISO(l.plannedEndTime)
+						: addDays(start, 1)
+					return {
+						id: l.loadId,
+						group: e.epicId,
+						title: getWorkloadContent(l),
+						start_time: start,
+						end_time: end,
+					}
+				})
 		)
 		, [epics])
 
@@ -109,9 +116,9 @@ const ClientWorkSchedulePage: React.FC = () => {
 		const newEpic = epics.find(e => e.epicId === newGroupId)
 		if (!newEpic) return
 
-		const newStart = moment(dragTime)
-		const duration = moment(item.end_time).diff(moment(item.start_time), 'milliseconds')
-		const newEnd = newStart.clone().add(duration, 'milliseconds')
+		const newStart = new Date(dragTime)
+		const duration = differenceInMilliseconds(item.end_time, item.start_time)
+		const newEnd = new Date(newStart.getTime() + duration)
 
 		if (oldEpic.epicId !== newEpic.epicId) {
 			const updatedOldWorkLoads = (oldEpic.workLoads || []).filter(wl => wl.loadId !== itemId)
@@ -143,15 +150,15 @@ const ClientWorkSchedulePage: React.FC = () => {
 		if (wlIdx === -1) return
 
 		const wl = (epic.workLoads || [])[wlIdx]
-		let newStart = moment(wl.plannedStartTime)
-		let newEnd = moment(wl.plannedEndTime && wl.plannedEndTime !== "" ? wl.plannedEndTime : undefined)
-		if (edge === 'left') newStart = moment(time)
-		if (edge === 'right') newEnd = moment(time)
+		let newStart = parseISO(wl.plannedStartTime)
+		let newEnd = wl.plannedEndTime && wl.plannedEndTime !== "" ? parseISO(wl.plannedEndTime) : undefined
+		if (edge === 'left') newStart = new Date(time)
+		if (edge === 'right') newEnd = new Date(time)
 		const newWorkLoads = [...(epic.workLoads || [])]
 		newWorkLoads[wlIdx] = {
 			...wl,
 			plannedStartTime: newStart.toISOString(),
-			plannedEndTime: newEnd.isValid() ? newEnd.toISOString() : "",
+			plannedEndTime: newEnd && isValid(newEnd) ? newEnd.toISOString() : "",
 		}
 		await updateDoc(doc(firestore, "workEpic", epic.epicId), { workLoads: newWorkLoads })
 	}
@@ -169,6 +176,11 @@ const ClientWorkSchedulePage: React.FC = () => {
 		await updateDoc(doc(firestore, "workEpic", epic.epicId), { workLoads: newWorkLoads })
 	}
 
+	// === 設定預設時間區間（date-fns 取代 moment） ===
+	const now = new Date()
+	const defaultTimeStart = subDays(startOfDay(now), 7)
+	const defaultTimeEnd = addDays(endOfDay(now), 14)
+
 	return (
 		<div className="min-h-screen w-full bg-black flex flex-col">
 			<div className="flex-none h-[20vh]" />
@@ -182,18 +194,21 @@ const ClientWorkSchedulePage: React.FC = () => {
 					<Timeline
 						groups={groups}
 						items={items}
-						defaultTimeStart={moment().startOf('day').subtract(7, 'days')}
-						defaultTimeEnd={moment().endOf('day').add(14, 'days')}
+						defaultTimeStart={defaultTimeStart}
+						defaultTimeEnd={defaultTimeEnd}
 						canMove canResize="both" canChangeGroup stackItems
 						onItemMove={handleItemMove}
 						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
 						onItemDoubleClick={handleItemRemove}
 						itemRenderer={({ item, getItemProps, getResizeProps }) => {
 							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+							// 顯示日期格式為繁體中文
+							const dateStr = `${format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
 							return (
 								<div {...getItemProps({ style: { background: "#fbbf24", color: "#222" } })}>
 									<div {...leftResizeProps} />
 									<span>{item.title}</span>
+									<div className="text-xs text-gray-700">{dateStr}</div>
 									<div {...rightResizeProps} />
 								</div>
 							)

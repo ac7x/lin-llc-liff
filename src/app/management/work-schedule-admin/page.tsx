@@ -1,7 +1,16 @@
 'use client'
 
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav'
-import moment from 'moment'
+import {
+	addDays,
+	differenceInMilliseconds,
+	endOfDay,
+	format,
+	isValid,
+	parseISO,
+	startOfDay
+} from 'date-fns'
+import { zhTW } from 'date-fns/locale'
 import React, { useEffect, useMemo, useState } from 'react'
 import Timeline from 'react-calendar-timeline'
 import 'react-calendar-timeline/style.css'
@@ -77,15 +86,19 @@ const ClientWorkSchedulePage: React.FC = () => {
 		epics.flatMap(e =>
 			(e.workLoads || [])
 				.filter(l => l.plannedStartTime && l.plannedStartTime !== '')
-				.map(l => ({
-					id: l.loadId,
-					group: e.epicId,
-					title: getWorkloadContent(l),
-					start_time: moment(l.plannedStartTime),
-					end_time: l.plannedEndTime && l.plannedEndTime !== ''
-						? moment(l.plannedEndTime)
-						: moment(l.plannedStartTime).add(1, 'day'),
-				}))
+				.map(l => {
+					const start = parseISO(l.plannedStartTime)
+					const end = l.plannedEndTime && l.plannedEndTime !== ''
+						? parseISO(l.plannedEndTime)
+						: addDays(parseISO(l.plannedStartTime), 1)
+					return {
+						id: l.loadId,
+						group: e.epicId,
+						title: getWorkloadContent(l),
+						start_time: start,
+						end_time: end,
+					}
+				})
 		), [epics]
 	)
 
@@ -99,9 +112,9 @@ const ClientWorkSchedulePage: React.FC = () => {
 		const newGroupId = groups[newGroupOrder].id
 		const newEpic = epics.find(e => e.epicId === newGroupId)
 		if (!newEpic) return
-		const newStart = moment(dragTime)
-		const duration = moment(item.end_time).diff(moment(item.start_time), 'milliseconds')
-		const newEnd = newStart.clone().add(duration, 'milliseconds')
+		const newStart = new Date(dragTime)
+		const duration = differenceInMilliseconds(item.end_time, item.start_time)
+		const newEnd = new Date(newStart.getTime() + duration)
 		if (oldEpic.epicId !== newEpic.epicId) {
 			const updatedOldWorkLoads = (oldEpic.workLoads || []).filter(wl => wl.loadId !== itemId)
 			await updateWorkEpicWorkLoads(oldEpic.epicId, updatedOldWorkLoads)
@@ -131,15 +144,15 @@ const ClientWorkSchedulePage: React.FC = () => {
 		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
 		if (wlIdx === -1) return
 		const wl = (epic.workLoads || [])[wlIdx]
-		let newStart = moment(wl.plannedStartTime)
-		let newEnd = moment(wl.plannedEndTime && wl.plannedEndTime !== '' ? wl.plannedEndTime : undefined)
-		if (edge === 'left') newStart = moment(time)
-		if (edge === 'right') newEnd = moment(time)
+		let newStart = parseISO(wl.plannedStartTime)
+		let newEnd = wl.plannedEndTime && wl.plannedEndTime !== '' ? parseISO(wl.plannedEndTime) : undefined
+		if (edge === 'left') newStart = new Date(time)
+		if (edge === 'right') newEnd = new Date(time)
 		const newWorkLoads = [...(epic.workLoads || [])]
 		newWorkLoads[wlIdx] = {
 			...wl,
 			plannedStartTime: newStart.toISOString(),
-			plannedEndTime: newEnd.isValid() ? newEnd.toISOString() : '',
+			plannedEndTime: newEnd && isValid(newEnd) ? newEnd.toISOString() : '',
 		}
 		await updateWorkEpicWorkLoads(epic.epicId, newWorkLoads)
 		await fetchEpics()
@@ -164,8 +177,8 @@ const ClientWorkSchedulePage: React.FC = () => {
 					<Timeline
 						groups={groups}
 						items={items}
-						defaultTimeStart={moment().startOf('day').subtract(7, 'days')}
-						defaultTimeEnd={moment().endOf('day').add(14, 'days')}
+						defaultTimeStart={startOfDay(addDays(new Date(), -7))}
+						defaultTimeEnd={endOfDay(addDays(new Date(), 14))}
 						canMove canResize='both' canChangeGroup stackItems
 						onItemMove={handleItemMove}
 						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
@@ -176,7 +189,16 @@ const ClientWorkSchedulePage: React.FC = () => {
 							return (
 								<div {...getItemProps({ style: { background: color, color: '#222', borderRadius: 4 } })}>
 									<div {...leftResizeProps} />
-									<span>{item.title}</span>
+									<span>
+										{item.title}
+										{/* 範例：顯示起訖時間（繁體中文） */}
+										<br />
+										<small style={{ color: '#555' }}>
+											{format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}
+											{' ~ '}
+											{format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}
+										</small>
+									</span>
 									<div {...rightResizeProps} />
 								</div>
 							)
