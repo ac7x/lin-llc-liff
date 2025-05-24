@@ -1,7 +1,6 @@
 'use client'
 
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
-import { addDays } from "date-fns"
 import { initializeApp } from "firebase/app"
 import {
 	collection,
@@ -11,10 +10,11 @@ import {
 	QueryDocumentSnapshot,
 	updateDoc,
 } from "firebase/firestore"
-import React, { useEffect, useRef, useState } from "react"
+import moment from 'moment'
+import React, { useEffect, useMemo, useState } from "react"
+import Timeline from "react-calendar-timeline"
+import 'react-calendar-timeline/style.css'
 import { useCollection } from "react-firebase-hooks/firestore"
-import { DataSet, Timeline, TimelineOptions } from "vis-timeline/standalone"
-import "vis-timeline/styles/vis-timeline-graph2d.min.css"
 
 // Firebase config
 const firebaseConfig = {
@@ -26,7 +26,6 @@ const firebaseConfig = {
 	appId: "1:734381604026:web:a07a50fe85c6c5acd25683",
 	measurementId: "G-KBMLTJL6KK"
 }
-
 const app = initializeApp(firebaseConfig)
 const firestore = getFirestore(app)
 
@@ -60,26 +59,14 @@ function parseEpicSnapshot(
 }
 
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, "title" | "executor">) =>
-	`<div><div>${wl.title || "(無標題)"}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "(無執行者)"}</div></div>`
-
-// vis-timeline 的 change 事件型別
-interface TimelineChangeEventProps {
-	items: string[]
-	data: Record<string, {
-		id: string
-		group: string
-		start: Date
-		end?: Date
-		[key: string]: unknown
-	}>
-}
+	`${wl.title || "(無標題)"} | ${Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "(無執行者)"}`
 
 const ClientWorkSchedulePage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
-	const timelineRef = useRef<HTMLDivElement>(null)
 	const [epicSnapshot, epicLoading] = useCollection(collection(firestore, "workEpic"))
 
+	// 1. 取得 Firestore 的排班資料
 	useEffect(() => {
 		if (!epicSnapshot) return
 		const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs)
@@ -87,120 +74,132 @@ const ClientWorkSchedulePage: React.FC = () => {
 		setUnplanned(unplanned)
 	}, [epicSnapshot])
 
-	useEffect(() => {
-		if (!timelineRef.current || !epics.length) return
+	// 2. 將 Firestore 資料轉為 Timeline groups/items 格式
+	const groups = useMemo(() => epics.map(e => ({
+		id: e.epicId,
+		title: e.title
+	})), [epics])
 
-		const groups = new DataSet(
-			epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
+	const items = useMemo(() =>
+		epics.flatMap(e =>
+			(e.workLoads || [])
+				.filter(l => l.plannedStartTime && l.plannedStartTime !== "")
+				.map(l => ({
+					id: l.loadId,
+					group: e.epicId,
+					title: getWorkloadContent(l),
+					start_time: moment(l.plannedStartTime),
+					end_time: l.plannedEndTime && l.plannedEndTime !== ""
+						? moment(l.plannedEndTime)
+						: moment(l.plannedStartTime).add(1, "day"),
+				}))
 		)
-		const items = new DataSet(
-			epics.flatMap(e =>
-				(e.workLoads || [])
-					.filter(l => l.plannedStartTime && l.plannedStartTime !== "")
-					.map(l => ({
-						id: l.loadId,
-						group: e.epicId,
-						type: "range",
-						content: getWorkloadContent(l),
-						start: new Date(l.plannedStartTime),
-						end:
-							l.plannedEndTime && l.plannedEndTime !== ""
-								? new Date(l.plannedEndTime)
-								: addDays(new Date(l.plannedStartTime), 1),
-					}))
-			)
-		)
+		, [epics])
 
-		const tl = new Timeline(timelineRef.current, items, groups, {
-			stack: true,
-			orientation: "top",
-			editable: { updateTime: true, updateGroup: true, remove: true }, // 支援刪除
-			locale: "zh-tw",
-			zoomMin: 24 * 60 * 60 * 1000,
-			zoomMax: 90 * 24 * 60 * 60 * 1000,
-		} as TimelineOptions)
+	// 3. 操作：移動/改時間/改 group
+	const handleItemMove = async (itemId: string, dragTime: number, newGroupOrder: number) => {
+		const item = items.find(i => i.id === itemId)
+		if (!item) return
+		const oldEpic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+		if (!oldEpic) return
+		const wlIdx = (oldEpic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+		if (wlIdx === -1) return
 
-		// 處理移動、長度調整、分組變更
-		tl.on("change", async (event: TimelineChangeEventProps) => {
-			for (const itemId of event.items) {
-				const itemData = event.data[itemId]
-				if (!itemData) continue
+		const newGroupId = groups[newGroupOrder].id
+		const newEpic = epics.find(e => e.epicId === newGroupId)
+		if (!newEpic) return
 
-				const epicId = itemData.group
-				const epic = epics.find(e => e.epicId === epicId)
-				if (!epic) continue
+		const newStart = moment(dragTime)
+		const duration = moment(item.end_time).diff(moment(item.start_time), 'milliseconds')
+		const newEnd = newStart.clone().add(duration, 'milliseconds')
 
-				const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
-				if (wlIdx === -1) continue
-
-				// 檢查是否換分組
-				const currentEpicId = epics.find(e =>
-					(e.workLoads || []).some(wl => wl.loadId === itemId)
-				)?.epicId
-
-				if (currentEpicId && currentEpicId !== epicId) {
-					// 1. 從舊epic移除
-					const oldEpic = epics.find(e => e.epicId === currentEpicId)
-					if (oldEpic) {
-						const updatedOldWorkLoads = (oldEpic.workLoads || []).filter(wl => wl.loadId !== itemId)
-						await updateDoc(doc(firestore, "workEpic", currentEpicId), { workLoads: updatedOldWorkLoads })
-					}
-					// 2. 加到新epic底下
-					const newWorkLoad: WorkLoadEntity = {
-						...((epic.workLoads || [])[wlIdx]),
-						plannedStartTime: itemData.start.toISOString(),
-						plannedEndTime: itemData.end ? itemData.end.toISOString() : "",
-					}
-					const updatedNewWorkLoads = [...(epic.workLoads || []), newWorkLoad]
-					await updateDoc(doc(firestore, "workEpic", epicId), { workLoads: updatedNewWorkLoads })
-				} else {
-					// 沒換分組，只是修改時間
-					const newWorkLoads = [...(epic.workLoads || [])]
-					newWorkLoads[wlIdx] = {
-						...newWorkLoads[wlIdx],
-						plannedStartTime: itemData.start.toISOString(),
-						plannedEndTime: itemData.end ? itemData.end.toISOString() : "",
-					}
-					await updateDoc(doc(firestore, "workEpic", epicId), { workLoads: newWorkLoads })
-				}
+		if (oldEpic.epicId !== newEpic.epicId) {
+			const updatedOldWorkLoads = (oldEpic.workLoads || []).filter(wl => wl.loadId !== itemId)
+			await updateDoc(doc(firestore, "workEpic", oldEpic.epicId), { workLoads: updatedOldWorkLoads })
+			const oldWorkload = (oldEpic.workLoads || [])[wlIdx]
+			const newWorkLoad: WorkLoadEntity = {
+				...oldWorkload,
+				plannedStartTime: newStart.toISOString(),
+				plannedEndTime: newEnd.toISOString(),
 			}
-		})
-
-		// 支援刪除（回到未排班）
-		tl.on("remove", async function (event: { items: string[] }) {
-			for (const itemId of event.items) {
-				// 找到這個 item 是哪個 epic 下的哪個 workload
-				const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
-				if (!epic) continue
-				const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
-				if (wlIdx === -1) continue
-
-				const newWorkLoads = [...(epic.workLoads || [])]
-				const updateWL = { ...newWorkLoads[wlIdx], plannedStartTime: "", plannedEndTime: "" }
-				newWorkLoads[wlIdx] = updateWL
-				await updateDoc(doc(firestore, "workEpic", epic.epicId), { workLoads: newWorkLoads })
+			const updatedNewWorkLoads = [...(newEpic.workLoads || []), newWorkLoad]
+			await updateDoc(doc(firestore, "workEpic", newEpic.epicId), { workLoads: updatedNewWorkLoads })
+		} else {
+			const newWorkLoads = [...(oldEpic.workLoads || [])]
+			newWorkLoads[wlIdx] = {
+				...newWorkLoads[wlIdx],
+				plannedStartTime: newStart.toISOString(),
+				plannedEndTime: newEnd.toISOString(),
 			}
-		})
-
-		return () => {
-			tl.destroy()
+			await updateDoc(doc(firestore, "workEpic", oldEpic.epicId), { workLoads: newWorkLoads })
 		}
-	}, [epics])
+	}
+
+	// 4. 調整區段長度
+	const handleItemResize = async (itemId: string, time: number, edge: 'left' | 'right') => {
+		const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+		if (!epic) return
+		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+		if (wlIdx === -1) return
+
+		const wl = (epic.workLoads || [])[wlIdx]
+		let newStart = moment(wl.plannedStartTime)
+		let newEnd = moment(wl.plannedEndTime && wl.plannedEndTime !== "" ? wl.plannedEndTime : undefined)
+		if (edge === 'left') newStart = moment(time)
+		if (edge === 'right') newEnd = moment(time)
+		const newWorkLoads = [...(epic.workLoads || [])]
+		newWorkLoads[wlIdx] = {
+			...wl,
+			plannedStartTime: newStart.toISOString(),
+			plannedEndTime: newEnd.isValid() ? newEnd.toISOString() : "",
+		}
+		await updateDoc(doc(firestore, "workEpic", epic.epicId), { workLoads: newWorkLoads })
+	}
+
+	// 5. 刪除（丟回未排班區）
+	const handleItemRemove = async (itemId: string) => {
+		const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+		if (!epic) return
+		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+		if (wlIdx === -1) return
+
+		const newWorkLoads = [...(epic.workLoads || [])]
+		const updateWL = { ...newWorkLoads[wlIdx], plannedStartTime: "", plannedEndTime: "" }
+		newWorkLoads[wlIdx] = updateWL
+		await updateDoc(doc(firestore, "workEpic", epic.epicId), { workLoads: newWorkLoads })
+	}
 
 	return (
 		<div className="min-h-screen w-full bg-black flex flex-col">
 			<div className="flex-none h-[20vh]" />
-			<div className="flex-none h-[60vh] w-full flex items-center justify-center">
+			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
 				{epicLoading && (
 					<div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
 						<div className="text-white">資料載入中...</div>
 					</div>
 				)}
-				<div
-					className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden"
-					ref={timelineRef}
-					style={{ minWidth: '100vw' }}
-				/>
+				<div className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
+					<Timeline
+						groups={groups}
+						items={items}
+						defaultTimeStart={moment().startOf('day').subtract(7, 'days')}
+						defaultTimeEnd={moment().endOf('day').add(14, 'days')}
+						canMove canResize="both" canChangeGroup stackItems
+						onItemMove={handleItemMove}
+						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
+						onItemDoubleClick={handleItemRemove}
+						itemRenderer={({ item, getItemProps, getResizeProps }) => {
+							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+							return (
+								<div {...getItemProps({ style: { background: "#fbbf24", color: "#222" } })}>
+									<div {...leftResizeProps} />
+									<span>{item.title}</span>
+									<div {...rightResizeProps} />
+								</div>
+							)
+						}}
+					/>
+				</div>
 			</div>
 			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2 overflow-y-auto">
 				<div className="max-w-7xl mx-auto h-full flex flex-col">
