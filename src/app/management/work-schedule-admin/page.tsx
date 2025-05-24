@@ -187,13 +187,16 @@ const ClientWorkScheduleAdminPage: React.FC = () => {
 						defaultTimeStart={defaultTimeStart}
 						defaultTimeEnd={defaultTimeEnd}
 						canMove canResize="both" canChangeGroup stackItems
+						minZoom={24 * 60 * 60 * 1000} // 1日
+						maxZoom={30 * 24 * 60 * 60 * 1000} // 30日
 						onItemMove={handleItemMove}
 						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
 						onItemDoubleClick={handleItemRemove}
-						className="!bg-gray-900 !text-white" // 套用 TailwindCSS 背景與文字色
+						className="!bg-gray-900 !text-white"
 						itemRenderer={({ item, getItemProps, getResizeProps }) => {
 							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
 							const color = groupColorMap[item.group] || '#fbbf24'
+							// 日期格式已本地化
 							const dateStr = `${format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
 							return (
 								<div
@@ -205,7 +208,7 @@ const ClientWorkScheduleAdminPage: React.FC = () => {
 											padding: '8px 12px',
 											minHeight: 38
 										},
-										className: 'text-black bg-opacity-90' // 讓 item 文字與背景也可用 Tailwind
+										className: 'text-black bg-opacity-90'
 									})}
 								>
 									<div {...leftResizeProps} />
