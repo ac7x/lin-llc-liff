@@ -6,7 +6,7 @@ import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBo
 
 export default function HomePage() {
   return (
-    <main className="p-4">
+    <main className="p-4 text-center">
       <LineBotStatus />
       <LinePayChargeBox />
       <ClientBottomNav />
