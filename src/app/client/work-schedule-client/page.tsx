@@ -146,25 +146,28 @@ const ClientWorkSchedulePage = () => {
 					style={{ minWidth: '100vw', height: '100%' }}
 				/>
 			</div>
-			<div className="flex-none h-[30vh] w-full px-4 py-4 bg-blue-50 rounded-t-3xl shadow-inner">
+			<div className="flex-none min-h-[25vh] w-full px-4 py-4 bg-blue-50/80 rounded-t-3xl shadow-inner">
 				<div className="w-full h-full flex flex-col">
-					<h2 className="text-lg font-bold text-center text-blue-800 mb-2 tracking-wide">未排班工作</h2>
-					<div className="flex flex-wrap justify-center gap-4 overflow-auto max-h-full w-full">
+					<h2 className="text-lg font-bold text-center text-blue-800 mb-4 tracking-wide">
+						未排班工作
+					</h2>
+					<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 overflow-y-auto pb-16">
 						{unplanned.length === 0 ? (
-							<div className="text-gray-400 text-center w-full">（無）</div>
+							<div className="text-gray-400 text-center col-span-full">（無未排班工作）</div>
 						) : unplanned.map(wl => (
 							<div
 								key={wl.loadId}
 								className="
-									bg-white border border-blue-200 rounded-xl px-4 py-3 text-base shadow-sm
-									hover:bg-blue-100 transition-colors flex flex-col justify-between
-									min-w-[220px]
+									bg-white/90 border border-blue-200 rounded-xl px-3 py-2.5
+									hover:bg-blue-50 transition-all hover:shadow-md
+									flex flex-col justify-between gap-2
 								"
-								style={{ maxWidth: 320 }}
 								title={`來自 ${wl.epicTitle}`}
 							>
-								<div className="font-medium text-gray-700">{wl.title || '(無標題)'}</div>
-								<div className="text-xs text-blue-500 mt-1">
+								<div className="font-medium text-gray-700 text-sm line-clamp-2">
+									{wl.title || '(無標題)'}
+								</div>
+								<div className="text-xs text-blue-600">
 									{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
 								</div>
 							</div>
