@@ -113,7 +113,7 @@ const ClientWorkSchedulePage: React.FC = () => {
 		const tl = new Timeline(timelineRef.current, items, groups, {
 			stack: true,
 			orientation: "top",
-			editable: { updateTime: true, updateGroup: true },
+			editable: { updateTime: true, updateGroup: true, remove: true }, // 支援刪除
 			locale: "zh-tw",
 			zoomMin: 24 * 60 * 60 * 1000,
 			zoomMax: 90 * 24 * 60 * 60 * 1000,
@@ -162,6 +162,22 @@ const ClientWorkSchedulePage: React.FC = () => {
 					}
 					await updateDoc(doc(firestore, "workEpic", epicId), { workLoads: newWorkLoads })
 				}
+			}
+		})
+
+		// 支援刪除（回到未排班）
+		tl.on("remove", async function (event: { items: string[] }) {
+			for (const itemId of event.items) {
+				// 找到這個 item 是哪個 epic 下的哪個 workload
+				const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+				if (!epic) continue
+				const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+				if (wlIdx === -1) continue
+
+				const newWorkLoads = [...(epic.workLoads || [])]
+				const updateWL = { ...newWorkLoads[wlIdx], plannedStartTime: "", plannedEndTime: "" }
+				newWorkLoads[wlIdx] = updateWL
+				await updateDoc(doc(firestore, "workEpic", epic.epicId), { workLoads: newWorkLoads })
 			}
 		})
 
