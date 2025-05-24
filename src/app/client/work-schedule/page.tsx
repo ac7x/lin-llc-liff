@@ -1,5 +1,6 @@
 'use client'
 
+import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays } from "date-fns"
 import { initializeApp } from "firebase/app"
 import {
@@ -222,6 +223,7 @@ const ClientWorkSchedulePage: React.FC = () => {
 					</div>
 				</div>
 			</div>
+			<ClientBottomNav />
 		</div>
 	)
 }
