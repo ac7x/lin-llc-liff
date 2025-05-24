@@ -8,7 +8,8 @@ import {
 	format,
 	isValid,
 	parseISO,
-	startOfDay
+	startOfDay,
+	subDays
 } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -55,7 +56,7 @@ const groupColors = [
 	'#f472b6', '#fdba74', '#6ee7b7', '#facc15', '#818cf8'
 ]
 
-const ClientWorkSchedulePage: React.FC = () => {
+const ClientWorkScheduleAdminPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 
@@ -90,7 +91,7 @@ const ClientWorkSchedulePage: React.FC = () => {
 					const start = parseISO(l.plannedStartTime)
 					const end = l.plannedEndTime && l.plannedEndTime !== ''
 						? parseISO(l.plannedEndTime)
-						: addDays(parseISO(l.plannedStartTime), 1)
+						: addDays(start, 1)
 					return {
 						id: l.loadId,
 						group: e.epicId,
@@ -170,35 +171,34 @@ const ClientWorkSchedulePage: React.FC = () => {
 		await fetchEpics()
 	}
 
+	// 時間區間與 work-schedule 同步，讓預設畫面一致
+	const now = new Date()
+	const defaultTimeStart = subDays(startOfDay(now), 7)
+	const defaultTimeEnd = addDays(endOfDay(now), 14)
+
 	return (
-		<div style={{ minHeight: '100vh', background: '#f9f9f9', color: '#222', display: 'flex', flexDirection: 'column' }}>
-			<div style={{ flex: '1 0 auto', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, margin: 0 }}>
-				<div style={{ width: '100vw', height: '70vh', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, boxShadow: '0 1px 4px #0001', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+		<div className="min-h-screen w-full bg-black flex flex-col">
+			<div className="flex-none h-[20vh]" />
+			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
+				<div className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
 					<Timeline
 						groups={groups}
 						items={items}
-						defaultTimeStart={startOfDay(addDays(new Date(), -7))}
-						defaultTimeEnd={endOfDay(addDays(new Date(), 14))}
-						canMove canResize='both' canChangeGroup stackItems
+						defaultTimeStart={defaultTimeStart}
+						defaultTimeEnd={defaultTimeEnd}
+						canMove canResize="both" canChangeGroup stackItems
 						onItemMove={handleItemMove}
 						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
 						onItemDoubleClick={handleItemRemove}
 						itemRenderer={({ item, getItemProps, getResizeProps }) => {
 							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
 							const color = groupColorMap[item.group] || '#fbbf24'
+							const dateStr = `${format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
 							return (
-								<div {...getItemProps({ style: { background: color, color: '#222', borderRadius: 4 } })}>
+								<div {...getItemProps({ style: { background: color, color: '#222', borderRadius: 6, padding: '8px 12px', minHeight: 38 } })}>
 									<div {...leftResizeProps} />
-									<span>
-										{item.title}
-										{/* 範例：顯示起訖時間（繁體中文） */}
-										<br />
-										<small style={{ color: '#555' }}>
-											{format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}
-											{' ~ '}
-											{format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}
-										</small>
-									</span>
+									<span>{item.title}</span>
+									<div className="text-xs text-gray-700">{dateStr}</div>
 									<div {...rightResizeProps} />
 								</div>
 							)
@@ -206,20 +206,20 @@ const ClientWorkSchedulePage: React.FC = () => {
 					/>
 				</div>
 			</div>
-			<div style={{ flex: 'none', width: '100%', background: '#f9f9f9', padding: 12, overflowY: 'auto' }}>
-				<div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', flexDirection: 'column' }}>
-					<h2 style={{ fontWeight: 700, fontSize: 18, textAlign: 'center', marginBottom: 8 }}>未排班工作</h2>
-					<div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxHeight: 120, overflow: 'auto' }}>
+			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2 overflow-y-auto">
+				<div className="max-w-7xl mx-auto h-full flex flex-col">
+					<h2 className="text-lg font-bold text-center text-white mb-2">未排班工作</h2>
+					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
 						{unplanned.length === 0 ? (
-							<div style={{ color: '#aaa' }}>（無）</div>
+							<div className="text-gray-400">（無）</div>
 						) : unplanned.map(wl => (
 							<div
 								key={wl.loadId}
-								style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 4, padding: '4px 10px', fontSize: 13 }}
+								className="bg-yellow-50 border rounded px-3 py-2 text-sm"
 								title={`來自 ${wl.epicTitle}`}
 							>
 								<div>{wl.title || '(無標題)'}</div>
-								<div style={{ fontSize: 11, color: '#999' }}>
+								<div className="text-xs text-gray-400">
 									{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
 								</div>
 							</div>
@@ -232,4 +232,4 @@ const ClientWorkSchedulePage: React.FC = () => {
 	)
 }
 
-export default ClientWorkSchedulePage
+export default ClientWorkScheduleAdminPage
