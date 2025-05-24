@@ -204,59 +204,14 @@ const WorkScheduleManagementPage: React.FC = () => {
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
 	return (
-		<div className="min-h-screen w-full bg-black flex flex-col">
+		<div className="min-h-screen w-full bg-white dark:bg-black dark:text-white flex flex-col">
 			<div className="flex-none h-[20vh]" />
 			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
-				<div className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
+				<div className="w-full h-full rounded-2xl border border-gray-300 dark:border-gray-600 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400, backgroundColor: 'var(--bg-color)' }}>
 					<Timeline
 						groups={groups}
 						items={items}
 						defaultTimeStart={defaultTimeStart}
 						defaultTimeEnd={defaultTimeEnd}
 						canMove canResize="both" canChangeGroup stackItems
-						onItemMove={handleItemMove}
-						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
-						onItemDoubleClick={handleItemRemove}
-						itemRenderer={({ item, getItemProps, getResizeProps }) => {
-							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-							// 顯示日期格式為繁體中文
-							const dateStr = `${format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
-							return (
-								<div {...getItemProps({ style: { background: '#fbbf24', color: '#222' } })}>
-									<div {...leftResizeProps} />
-									<span>{item.title}</span>
-									<div className="text-xs text-gray-700">{dateStr}</div>
-									<div {...rightResizeProps} />
-								</div>
-							)
-						}}
-					/>
-				</div>
-			</div>
-			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2 overflow-y-auto">
-				<div className="max-w-7xl mx-auto h-full flex flex-col">
-					<h2 className="text-lg font-bold text-center text-white mb-2">未排班工作</h2>
-					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
-						{unplanned.length === 0 ? (
-							<div className="text-gray-400">（無）</div>
-						) : unplanned.map(wl => (
-							<div
-								key={wl.loadId}
-								className="bg-yellow-50 border rounded px-3 py-2 text-sm"
-								title={`來自 ${wl.epicTitle}`}
-							>
-								<div>{wl.title || '(無標題)'}</div>
-								<div className="text-xs text-gray-400">
-									{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-			</div>
-			<ManagementBottomNav />
-		</div>
-	)
-}
-
-export default WorkScheduleManagementPage
+						onItemMove={
