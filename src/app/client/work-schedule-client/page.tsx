@@ -79,6 +79,30 @@ const ClientWorkSchedulePage = () => {
 			orientation: 'top',
 			editable: false,
 			locale: 'zh-tw',
+			locales: {
+				'zh-tw': {
+					current: '當前',
+					year: '年',
+					month: '月',
+					week: '週',
+					day: '日',
+					hour: '時',
+					minute: '分',
+					second: '秒',
+					millisecond: '毫秒',
+					months: [
+						'一月', '二月', '三月', '四月', '五月', '六月',
+						'七月', '八月', '九月', '十月', '十一月', '十二月'
+					],
+					monthsShort: [
+						'1月', '2月', '3月', '4月', '5月', '6月',
+						'7月', '8月', '9月', '10月', '11月', '12月'
+					],
+					days: ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'],
+					daysShort: ['日', '一', '二', '三', '四', '五', '六'],
+					// 其他可根據需求補充
+				}
+			},
 			zoomMin: 24 * 60 * 60 * 1000, // 1日
 			zoomMax: 30 * 24 * 60 * 60 * 1000, // 30日
 			timeAxis: { scale: 'day', step: 1 },
