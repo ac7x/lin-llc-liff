@@ -33,6 +33,7 @@
     "react-firebase-hooks": "^5.1.1",
     "react-hook-form": "^7.56.4",
     "redis": "^4.6.7",
+    "sass": "^1.89.0",
     "swr": "^2.3.3",
     "vis-timeline": "^7.7.4"
   },
