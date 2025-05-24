@@ -1,7 +1,7 @@
 "use server";
 
 import { firestoreAdmin } from '@/modules/shared/infrastructure/persistence/firebase-admin/adminApp';
-import { FieldValue } from 'firebase-admin/firestore'; // 修正這裡
+import { FieldValue } from 'firebase-admin/firestore';
 
 export interface TestWorkLoadEntity {
   loadId: string;
@@ -119,11 +119,12 @@ export async function deleteTestWorkLoad(loadId: string): Promise<void> {
   for (const doc of snapshot.docs) {
     const data = doc.data();
     if (!data) continue;
-    let workLoads: TestWorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : [];
+    const workLoads: TestWorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : [];
     const idx = workLoads.findIndex(wl => wl.loadId === loadId);
     if (idx !== -1) {
-      workLoads.splice(idx, 1);
-      await firestoreAdmin.collection('testEpics').doc(doc.id).update({ workLoads });
+      const newWorkLoads = [...workLoads];
+      newWorkLoads.splice(idx, 1);
+      await firestoreAdmin.collection('testEpics').doc(doc.id).update({ workLoads: newWorkLoads });
       break;
     }
   }
