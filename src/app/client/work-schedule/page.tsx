@@ -193,14 +193,9 @@ const ClientWorkSchedulePage: React.FC = () => {
 	}
 
 	return (
-		<div className="min-h-screen w-full bg-black flex flex-col">
+		<div className="min-h-screen w-full bg-background text-foreground flex flex-col">
 			<div className="flex-none h-[20vh]" />
 			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative p-0 m-0">
-				{epicLoading && (
-					<div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
-						<div className="text-white">資料載入中...</div>
-					</div>
-				)}
 				<div className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden flex items-center justify-center" style={{ minWidth: '100vw', height: '100%' }}>
 					<div className="w-full h-full flex items-center justify-center">
 						<Timeline
@@ -227,9 +222,9 @@ const ClientWorkSchedulePage: React.FC = () => {
 					</div>
 				</div>
 			</div>
-			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2 overflow-y-auto">
+			<div className="flex-none h-[20vh] w-full bg-background px-4 py-2 overflow-y-auto">
 				<div className="max-w-7xl mx-auto h-full flex flex-col">
-					<h2 className="text-lg font-bold text-center text-white mb-2">未排班工作</h2>
+					<h2 className="text-lg font-bold text-center text-foreground mb-2">未排班工作</h2>
 					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400">（無）</div>
