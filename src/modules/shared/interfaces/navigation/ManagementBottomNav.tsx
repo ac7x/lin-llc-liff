@@ -82,8 +82,11 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                             <div key={index} className="relative flex-1 min-w-0 flex flex-col items-center justify-end h-full">
                                 {showMemberPopover && (
                                     <div
-                                        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 bg-white border rounded shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-50"
-                                        style={{ minWidth: 'max-content' }}
+                                        className="fixed left-1/2 transform -translate-x-1/2 bg-[var(--background,white)] border rounded-lg shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-[9999]"
+                                        style={{
+                                            minWidth: 'max-content',
+                                            bottom: 'calc(env(safe-area-inset-bottom) + 4rem)'
+                                        }}
                                     >
                                         <span className="text-2xl" title="技能管理">🛠️</span>
                                         <span className="text-2xl" title="成員列表">👥</span>
@@ -120,8 +123,11 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                             <div key={index} className="relative flex-1 min-w-0 flex flex-col items-center justify-end h-full">
                                 {showWorkPopover && (
                                     <div
-                                        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 bg-white border rounded shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-50"
-                                        style={{ minWidth: 'max-content' }}
+                                        className="fixed left-1/2 transform -translate-x-1/2 bg-[var(--background,white)] border rounded-lg shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-[9999]"
+                                        style={{
+                                            minWidth: 'max-content',
+                                            bottom: 'calc(env(safe-area-inset-bottom) + 4rem)'
+                                        }}
                                     >
                                         <span className="text-2xl" title="工作任務">📝</span>
                                         <span className="text-2xl" title="工作史詩">📖</span>
@@ -159,8 +165,11 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                             <div key={index} className="relative flex-1 min-w-0 flex flex-col items-center justify-end h-full">
                                 {showSchedulePopover && (
                                     <div
-                                        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 bg-white border rounded shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-50"
-                                        style={{ minWidth: 'max-content' }}
+                                        className="fixed left-1/2 transform -translate-x-1/2 bg-[var(--background,white)] border rounded-lg shadow-lg px-4 py-2 flex flex-row items-center justify-center gap-4 z-[9999]"
+                                        style={{
+                                            minWidth: 'max-content',
+                                            bottom: 'calc(env(safe-area-inset-bottom) + 4rem)'
+                                        }}
                                     >
                                         <span className="text-2xl" title="排程客戶">📅</span>
                                         <span className="text-2xl" title="排程後端">📅</span>
