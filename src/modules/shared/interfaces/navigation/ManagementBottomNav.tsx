@@ -34,7 +34,7 @@ const navItems = [
     },
 ];
 
-export default function ManagementBottomNav() {
+export function ManagementBottomNav() {
     const [open, setOpen] = useState<number | null>(null);
     const popoverRef = useRef<HTMLDivElement | null>(null);
 
@@ -151,3 +151,5 @@ export default function ManagementBottomNav() {
         </nav>
     );
 }
+
+export default ManagementBottomNav;
