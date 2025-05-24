@@ -143,9 +143,29 @@ export default function WorkScheduleAdminPage() {
 	}, [epics.length]);
 
 	return (
-		<div style={{ width: '100vw', height: '70vh' }}>
-			{loading && <div>Loading...</div>}
-			<div ref={timelineRef} style={{ width: '100%', height: '100%' }} />
+		<div
+			style={{
+				width: '100%',
+				maxWidth: '100vw',
+				margin: '0 auto',
+				height: '70vh',
+				overflowX: 'hidden',
+				background: 'black', // 電影屏風格
+				borderRadius: '32px',
+				boxShadow: '0 0 40px rgba(0,0,0,0.5)',
+				padding: '16px 0',
+			}}
+		>
+			{loading && <div style={{ color: 'white', textAlign: 'center' }}>Loading...</div>}
+			<div
+				ref={timelineRef}
+				style={{
+					width: '100%',
+					height: '100%',
+					overflowX: 'auto',
+					background: 'black',
+				}}
+			/>
 		</div>
 	);
 }
