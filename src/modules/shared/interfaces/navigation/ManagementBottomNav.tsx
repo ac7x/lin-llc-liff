@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 const navItems = [
     {
-        href: '/management/schedule-module',
+        href: '/management/',
         icon: '📆',
         label: '日程',
         popover: [
@@ -14,7 +14,7 @@ const navItems = [
         ],
     },
     {
-        href: '/management/work-module',
+        href: '/management/',
         icon: '🗂️',
         label: '工作模組',
         popover: [
@@ -24,7 +24,7 @@ const navItems = [
         ],
     },
     {
-        href: '/management/member-management',
+        href: '/management/',
         icon: '👤',
         label: '成員管理',
         popover: [
