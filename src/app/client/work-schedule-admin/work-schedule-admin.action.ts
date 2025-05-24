@@ -1,6 +1,7 @@
 // src/app/client/work-schedule-admin/work-schedule-admin.action.ts
+"use server";
 
-import admin from 'firebase-admin'
+import admin from 'firebase-admin';
 
 /**
  * TestWorkLoadEntity 工作負載資料結構
