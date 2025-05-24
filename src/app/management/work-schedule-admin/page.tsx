@@ -1,7 +1,7 @@
 'use client'
 
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav'
-import '@/styles/globals.scss'
+import '@/styles/timeline.scss'
 import {
 	addDays,
 	differenceInMilliseconds,

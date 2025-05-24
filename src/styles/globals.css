@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+/* 建議在 HTML <head> 加入
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+*/
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --base-font-size: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+html {
+  font-size: clamp(14px, 1.2vw + 1em, 20px);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
+  font-size: 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
+  font-weight: bold;
+  line-height: 1.2;
+}
+
+p,
+ul,
+ol,
+li,
+div {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 100%;
+  padding: 1rem;
+  margin: 0 auto;
+}
+
+img,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
