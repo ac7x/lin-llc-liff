@@ -1,5 +1,6 @@
 'use client';
 
+import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { DataSet, Timeline, TimelineOptions } from 'vis-timeline/standalone';
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css';
@@ -166,6 +167,7 @@ export default function WorkScheduleAdminPage() {
 					background: 'black',
 				}}
 			/>
+			<ClientBottomNav />
 		</div>
 	);
 }
