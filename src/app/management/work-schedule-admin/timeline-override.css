@@ -1,15 +1,17 @@
 /* timeline-override.css */
 
-/* Timeline 背景與外框 */
+/* 1. Timeline 外框與主體 */
 .react-calendar-timeline {
   background-color: #1a202c !important; /* 深色背景 */
   color: #f9fafb !important;            /* 主字體色 */
   border-radius: 8px;
   border: 1px solid #374151;
   font-family: 'Inter', 'Noto Sans TC', Arial, sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.16);
+  overflow: hidden;
 }
 
-/* Header 區 */
+/* 2. Header 區 */
 .react-calendar-timeline .rct-header-root,
 .react-calendar-timeline .rct-calendar-header {
   background-color: #991b1b !important; /* Tailwind bg-red-800 */
@@ -21,25 +23,52 @@
   background-color: #dc2626 !important; /* Tailwind bg-red-600 */
   color: #fff !important;
   border-color: #fff !important;
+  font-weight: 600;
+  font-size: 0.92rem;
 }
 
+.react-calendar-timeline .rct-dateHeader-primary {
+  background: #991b1b !important; /* primary header 深紅 */
+  border-right: 1px solid #fff !important;
+}
+
+.react-calendar-timeline .rct-dateHeader-secondary {
+  background: #dc2626 !important;
+  border-right: 1px solid #fff !important;
+}
+
+/* 3. SideBar (分組列表) */
 .react-calendar-timeline .rct-sidebar {
   background-color: #1e293b !important; /* Tailwind bg-slate-800 */
   color: #f9fafb !important;
+  border-right: 1px solid #374151 !important;
+  min-width: 120px;
 }
 
 .react-calendar-timeline .rct-sidebar .rct-sidebar-row {
+  background: #333 !important;
+  color: #fff !important;
+  font-weight: bold;
   border-bottom: 1px solid #374151 !important;
+  padding: 8px 10px;
 }
 
-/* Group 樣式（左側分組） */
+/* 4. Group 樣式 */
 .react-calendar-timeline .rct-sidebar-row {
   background: #333 !important;
   color: #fff !important;
   font-weight: bold;
 }
 
-/* Item（事件區塊） */
+.react-calendar-timeline .rct-sidebar-row.rct-sidebar-row-odd {
+  background: #23272f !important;
+}
+
+.react-calendar-timeline .rct-sidebar-row.rct-sidebar-row-even {
+  background: #242834 !important;
+}
+
+/* 5. Items (事件區塊) */
 .react-calendar-timeline .rct-item {
   background: #2563eb !important;      /* Tailwind bg-blue-600 */
   color: #fff !important;
@@ -49,50 +78,101 @@
   opacity: 0.95;
   font-weight: 600;
   transition: background 0.2s, color 0.2s, opacity 0.2s;
+  outline: none !important;
 }
 
 .react-calendar-timeline .rct-item.selected,
+.react-calendar-timeline .rct-item:focus,
 .react-calendar-timeline .rct-item:hover {
   background: #f59e42 !important; /* 橘色高亮 */
   color: #222 !important;
   opacity: 1;
   z-index: 10;
+  outline: 2px solid #f59e42 !important;
 }
 
-/* Resize 句柄 */
+.react-calendar-timeline .rct-item .rct-item-content {
+  padding: 0 2px;
+  white-space: pre-line;
+}
+
+/* 6. Disabled/不可拖曳的 Item */
+.react-calendar-timeline .rct-item.rct-item--disabled {
+  background: #6b7280 !important; /* Tailwind gray-500 */
+  color: #cbd5e1 !important;
+  opacity: 0.7 !important;
+  pointer-events: none;
+}
+
+/* 7. Resize 句柄 */
 .react-calendar-timeline .rct-item .rct-item-resize-handle {
   background: #fff !important;
   opacity: 0.8;
   width: 6px !important;
+  border-radius: 3px;
+  z-index: 15;
 }
 
-/* Cursor for resizing */
 .react-calendar-timeline .rct-item .rct-item-resize-handle-left {
   cursor: w-resize;
+  left: -2px;
 }
 .react-calendar-timeline .rct-item .rct-item-resize-handle-right {
   cursor: e-resize;
+  right: -2px;
 }
 
-/* 當前時間線 */
+/* 8. 當前時間線/Now marker */
 .react-calendar-timeline .rct-cursor-line {
   background: #fbbf24 !important;  /* Tailwind bg-yellow-400 */
   width: 3px !important;
   z-index: 20;
 }
 
-/* 選擇時間區塊 */
+/* 9. 選擇時間區塊(拖曳選取) */
 .react-calendar-timeline .rct-selection {
-  background: rgba(59, 130, 246, 0.2) !important; /* bg-blue-500/20 */
+  background: rgba(59, 130, 246, 0.15) !important; /* bg-blue-500/15 */
   border: 1px dashed #2563eb !important;
+  border-radius: 5px;
 }
 
-/* 陰影與滑鼠互動 */
+/* 10. 刻度線/網格線 */
 .react-calendar-timeline .rct-vertical-lines .rct-vl {
   border-left: 1px solid #374151 !important;
 }
 
-/* 滾動條美化 */
+.react-calendar-timeline .rct-horizontal-lines .rct-hl-odd {
+  background: #23272f !important;
+}
+.react-calendar-timeline .rct-horizontal-lines .rct-hl-even {
+  background: #242834 !important;
+}
+
+/* 11. Tooltip (如有) */
+.react-calendar-timeline .rct-tooltip {
+  background: #192132 !important;
+  color: #fff !important;
+  border-radius: 5px;
+  box-shadow: 0 3px 16px rgba(0,0,0,0.25);
+  font-size: 0.95em;
+  z-index: 1000;
+  padding: 6px 10px;
+}
+
+/* 12. Sticky header (當橫向捲動時) */
+.react-calendar-timeline .rct-header-root.rct-header-root--sticky {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  border-bottom: 2px solid #991b1b !important;
+  z-index: 30;
+}
+
+/* 13. 項目拖曳時的外觀 */
+.react-calendar-timeline .rct-dragged {
+  opacity: 0.7 !important;
+  border: 2px dashed #f59e42 !important;
+}
+
+/* 14. 滾動條美化 */
 .react-calendar-timeline ::-webkit-scrollbar {
   width: 8px;
   background: #1a202c;
@@ -100,4 +180,28 @@
 .react-calendar-timeline ::-webkit-scrollbar-thumb {
   background: #374151;
   border-radius: 4px;
+}
+.react-calendar-timeline ::-webkit-scrollbar-corner {
+  background: #1a202c;
+}
+
+/* 15. 其他特殊狀態 */
+.react-calendar-timeline .rct-calendar-header .rct-calendar-header-title {
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+.react-calendar-timeline .rct-sidebar .rct-sidebar-row.rct-sidebar-row-selected {
+  background: #991b1b !important;
+  color: #fff !important;
+}
+
+/* 16. 小型螢幕響應式 */
+@media (max-width: 600px) {
+  .react-calendar-timeline {
+    font-size: 13px;
+  }
+  .react-calendar-timeline .rct-sidebar {
+    min-width: 60px;
+  }
 }
