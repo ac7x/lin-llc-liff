@@ -1,5 +1,8 @@
-"features": {
-  "ghcr.io/devcontainers/features/node:1": {
-    "version": "lts"
-  }
+{
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+  "postCreateCommand": "npm install"
 }
