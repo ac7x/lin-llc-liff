@@ -1,6 +1,7 @@
 'use client'
 
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav'
+import '@/styles/globals.scss'
 import {
 	addDays,
 	differenceInMilliseconds,
@@ -14,7 +15,6 @@ import {
 import { zhTW } from 'date-fns/locale'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Timeline from 'react-calendar-timeline'
-import './timeline.scss'
 import {
 	getAllWorkEpics,
 	updateWorkEpicWorkLoads
