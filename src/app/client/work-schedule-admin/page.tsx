@@ -26,6 +26,15 @@ interface VisGroup {
 	content: string;
 }
 
+interface TimelineChangeEvent {
+	items: string[];
+	data: Record<string, VisItem>;
+}
+
+interface TimelineRemoveEvent {
+	items: string[];
+}
+
 export default function WorkScheduleAdminPage() {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([]);
 	const [unplanned, setUnplanned] = useState<(WorkLoadEntity & { epicId: string; epicTitle: string })[]>([]);
@@ -43,8 +52,8 @@ export default function WorkScheduleAdminPage() {
 
 			// 建立 loadId -> epicId 對照表
 			const map: Record<string, string> = {};
-			epics.forEach((epic) =>
-				(epic.workLoads || []).forEach((wl) => {
+			epics.forEach(epic =>
+				(epic.workLoads || []).forEach(wl => {
 					map[wl.loadId] = epic.epicId;
 				})
 			);
@@ -55,19 +64,19 @@ export default function WorkScheduleAdminPage() {
 
 	// 監控 epics 變動，初始化 vis-timeline
 	useEffect(() => {
-		if (!timelineRef.current || epics.length === 0) return;
+		if (!timelineRef.current || epics.length === 0) {
+			return;
+		}
 
-		// Groups
-		const groups: VisGroup[] = epics.map((epic) => ({
+		const groups: VisGroup[] = epics.map(epic => ({
 			id: epic.epicId,
 			content: `<b>${epic.title}</b>`,
 		}));
 
-		// Items
-		const items: VisItem[] = epics.flatMap((epic) =>
+		const items: VisItem[] = epics.flatMap(epic =>
 			(epic.workLoads || [])
-				.filter((wl) => wl.plannedStartTime && wl.plannedStartTime !== '')
-				.map((wl) => ({
+				.filter(wl => wl.plannedStartTime && wl.plannedStartTime !== '')
+				.map(wl => ({
 					id: wl.loadId,
 					group: epic.epicId,
 					type: 'range',
@@ -77,8 +86,8 @@ export default function WorkScheduleAdminPage() {
 				}))
 		);
 
-		const visGroups = new DataSet(groups);
-		const visItems = new DataSet(items);
+		const visGroups = new DataSet<VisGroup>(groups);
+		const visItems = new DataSet<VisItem>(items);
 
 		const timeline = new Timeline(timelineRef.current, visItems, visGroups, {
 			stack: true,
@@ -90,10 +99,12 @@ export default function WorkScheduleAdminPage() {
 		} as TimelineOptions);
 
 		// 變更（移動/改時間/換分組）同步 Firestore
-		timeline.on('change', async (event: any) => {
+		timeline.on('change', async (event: TimelineChangeEvent) => {
 			for (const itemId of event.items) {
 				const itemData = event.data[itemId];
-				if (!itemData) continue;
+				if (!itemData) {
+					continue;
+				}
 
 				const fromEpicId = loadToEpicMap.current[itemId];
 				const toEpicId = itemData.group;
@@ -101,8 +112,8 @@ export default function WorkScheduleAdminPage() {
 					fromEpicId,
 					itemId,
 					toEpicId,
-					itemData.start,
-					itemData.end ?? null
+					itemData.start.toISOString(),
+					itemData.end ? itemData.end.toISOString() : null
 				);
 			}
 
@@ -114,8 +125,8 @@ export default function WorkScheduleAdminPage() {
 					setUnplanned(unplanned);
 
 					const map: Record<string, string> = {};
-					epics.forEach((epic) =>
-						(epic.workLoads || []).forEach((wl) => {
+					epics.forEach(epic =>
+						(epic.workLoads || []).forEach(wl => {
 							map[wl.loadId] = epic.epicId;
 						})
 					);
@@ -126,7 +137,7 @@ export default function WorkScheduleAdminPage() {
 		});
 
 		// 移除（unplan）
-		timeline.on('remove', async (event: any) => {
+		timeline.on('remove', async (event: TimelineRemoveEvent) => {
 			for (const itemId of event.items) {
 				await unplanWorkLoad(itemId);
 			}
@@ -137,8 +148,8 @@ export default function WorkScheduleAdminPage() {
 					setUnplanned(unplanned);
 
 					const map: Record<string, string> = {};
-					epics.forEach((epic) =>
-						(epic.workLoads || []).forEach((wl) => {
+					epics.forEach(epic =>
+						(epic.workLoads || []).forEach(wl => {
 							map[wl.loadId] = epic.epicId;
 						})
 					);
@@ -174,7 +185,7 @@ export default function WorkScheduleAdminPage() {
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400">（無）</div>
 						) : (
-							unplanned.map((wl) => (
+							unplanned.map(wl => (
 								<div
 									key={wl.loadId}
 									className="bg-yellow-50 border rounded px-3 py-2 text-sm"
