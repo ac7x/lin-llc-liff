@@ -1,14 +1,16 @@
-"use client";
-import { firestore } from "@/modules/shared/infrastructure/persistence/firebase/clientApp";
+'use client';
+import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import {
   addDoc,
   arrayUnion,
   collection,
-  deleteDoc, doc, updateDoc,
-} from "firebase/firestore";
-import React, { useState } from "react";
-import { useCollection } from "react-firebase-hooks/firestore";
+  deleteDoc,
+  doc,
+  updateDoc,
+} from 'firebase/firestore';
+import React, { useState } from 'react';
+import { useCollection } from 'react-firebase-hooks/firestore';
 
 // 型別
 type WorkSkill = {
@@ -27,8 +29,8 @@ type WorkMember = {
 };
 
 export default function AdminWorkSkillPage() {
-  const skillsRef = collection(firestore, "workSkill");
-  const membersRef = collection(firestore, "workMember");
+  const skillsRef = collection(firestore, 'workSkill');
+  const membersRef = collection(firestore, 'workMember');
   const [skillsSnap, , errorSkills] = useCollection(skillsRef);
   const [membersSnap] = useCollection(membersRef);
 
@@ -39,14 +41,10 @@ export default function AdminWorkSkillPage() {
 
   // --- 工具函式用類型斷言解決 unknown 問題 ---
   function findDocIdBySkillID(skillID: string) {
-    return skillsSnap?.docs.find(
-      (d) => (d.data() as WorkSkill).skillID === skillID
-    )?.id;
+    return skillsSnap?.docs.find((d) => (d.data() as WorkSkill).skillID === skillID)?.id;
   }
   function findDocIdByMemberId(memberId: string) {
-    return membersSnap?.docs.find(
-      (d) => (d.data() as WorkMember).memberId === memberId
-    )?.id;
+    return membersSnap?.docs.find((d) => (d.data() as WorkMember).memberId === memberId)?.id;
   }
 
   // 新增/編輯
@@ -55,9 +53,9 @@ export default function AdminWorkSkillPage() {
     const skillID = form.skillID || `skill-${Date.now()}`;
     const data: WorkSkill = {
       skillID,
-      name: form.name || "",
-      description: form.description || "",
-      category: form.category || "",
+      name: form.name || '',
+      description: form.description || '',
+      category: form.category || '',
       level: Number(form.level) || 1,
       isMandatory: !!form.isMandatory,
     };
@@ -74,7 +72,7 @@ export default function AdminWorkSkillPage() {
   // 刪除
   async function handleDelete(skillID: string) {
     const docId = findDocIdBySkillID(skillID);
-    if (docId && window.confirm("確定刪除？")) await deleteDoc(doc(skillsRef, docId));
+    if (docId && window.confirm('確定刪除？')) await deleteDoc(doc(skillsRef, docId));
   }
 
   // 加入用戶
@@ -83,6 +81,7 @@ export default function AdminWorkSkillPage() {
       memberIds.map((memberId) => {
         const docId = findDocIdByMemberId(memberId);
         if (docId) return updateDoc(doc(membersRef, docId), { skills: arrayUnion(skillID) });
+        return Promise.resolve();
       })
     );
     setShowAddUser(null);
@@ -94,23 +93,23 @@ export default function AdminWorkSkillPage() {
   const members: WorkMember[] = membersSnap?.docs.map((d) => d.data() as WorkMember) ?? [];
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="p-8 max-w-3xl mx-auto text-gray-900 bg-white dark:bg-gray-900 dark:text-gray-100 min-h-screen">
       <h1 className="text-2xl font-bold mb-4">技能表 (client+firebase hook)</h1>
       <form onSubmit={handleSubmit} className="mb-4 flex gap-2 flex-wrap">
         <input
           name="name"
           placeholder="技能名稱"
-          value={form.name || ""}
+          value={form.name || ''}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-          className="border p-2 rounded"
+          className="border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           required
         />
         <input
           name="category"
           placeholder="類別"
-          value={form.category || ""}
+          value={form.category || ''}
           onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-          className="border p-2 rounded"
+          className="border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
         <input
           name="level"
@@ -121,28 +120,32 @@ export default function AdminWorkSkillPage() {
           onChange={(e) =>
             setForm((f) => ({
               ...f,
-              level: e.target.value === "" ? undefined : Number(e.target.value),
+              level: e.target.value === '' ? undefined : Number(e.target.value),
             }))
           }
-          className="border p-2 rounded"
+          className="border border-gray-300 dark:border-gray-600 p-2 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
-        <label>
+        <label className="flex items-center space-x-2">
           <input
             type="checkbox"
             checked={!!form.isMandatory}
             onChange={(e) => setForm((f) => ({ ...f, isMandatory: e.target.checked }))}
+            className="dark:bg-gray-700"
           />
-          必須
+          <span>必須</span>
         </label>
         <input
           name="description"
           placeholder="說明"
-          value={form.description || ""}
+          value={form.description || ''}
           onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-          className="border p-2 rounded"
+          className="border border-gray-300 dark:border-gray-600 p-2 rounded flex-grow bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
-        <button type="submit" className="bg-primary text-white px-4 py-2 rounded">
-          {editingId ? "儲存" : "新增"}
+        <button
+          type="submit"
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors duration-200"
+        >
+          {editingId ? '儲存' : '新增'}
         </button>
         {editingId && (
           <button
@@ -151,41 +154,59 @@ export default function AdminWorkSkillPage() {
               setForm({});
               setEditingId(null);
             }}
+            className="px-4 py-2 rounded border border-gray-400 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
           >
             取消
           </button>
         )}
       </form>
-      <table className="w-full border-collapse mb-8">
+      <table className="w-full border-collapse mb-8 text-left">
         <thead>
-          <tr className="bg-gray-100">
-            <th>名稱</th>
-            <th>類別</th>
-            <th>等級</th>
-            <th>必須</th>
-            <th>說明</th>
-            <th>操作</th>
+          <tr className="bg-gray-100 dark:bg-gray-700">
+            <th className="border border-gray-300 dark:border-gray-600 px-2 py-1">名稱</th>
+            <th className="border border-gray-300 dark:border-gray-600 px-2 py-1">類別</th>
+            <th className="border border-gray-300 dark:border-gray-600 px-2 py-1">等級</th>
+            <th className="border border-gray-300 dark:border-gray-600 px-2 py-1">必須</th>
+            <th className="border border-gray-300 dark:border-gray-600 px-2 py-1">說明</th>
+            <th className="border border-gray-300 dark:border-gray-600 px-2 py-1">操作</th>
           </tr>
         </thead>
         <tbody>
           {skills.map((skill) => (
-            <tr key={skill.skillID}>
-              <td>{skill.name}</td>
-              <td>{skill.category}</td>
-              <td>{skill.level}</td>
-              <td>{skill.isMandatory ? "是" : "否"}</td>
-              <td>{skill.description}</td>
-              <td>
-                <button onClick={() => { setForm(skill); setEditingId(skill.skillID); }}>編輯</button>
-                <button onClick={() => handleDelete(skill.skillID)}>刪除</button>
-                <button onClick={() => setShowAddUser(skill.skillID)}>加入用戶</button>
+            <tr key={skill.skillID} className="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800">
+              <td className="border border-gray-300 dark:border-gray-600 px-2 py-1">{skill.name}</td>
+              <td className="border border-gray-300 dark:border-gray-600 px-2 py-1">{skill.category}</td>
+              <td className="border border-gray-300 dark:border-gray-600 px-2 py-1">{skill.level}</td>
+              <td className="border border-gray-300 dark:border-gray-600 px-2 py-1">{skill.isMandatory ? '是' : '否'}</td>
+              <td className="border border-gray-300 dark:border-gray-600 px-2 py-1">{skill.description}</td>
+              <td className="border border-gray-300 dark:border-gray-600 px-2 py-1 space-x-2">
+                <button
+                  onClick={() => {
+                    setForm(skill);
+                    setEditingId(skill.skillID);
+                  }}
+                  className="text-blue-600 hover:underline"
+                >
+                  編輯
+                </button>
+                <button onClick={() => handleDelete(skill.skillID)} className="text-red-600 hover:underline">
+                  刪除
+                </button>
+                <button
+                  onClick={() => setShowAddUser(skill.skillID)}
+                  className="text-green-600 hover:underline"
+                >
+                  加入用戶
+                </button>
                 {showAddUser === skill.skillID && (
-                  <div className="bg-white border rounded p-2 mt-2">
+                  <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded p-2 mt-2">
                     <select
                       multiple
                       value={selectedMembers}
-                      onChange={e => setSelectedMembers(Array.from(e.target.selectedOptions).map(o => o.value))}
-                      className="border p-1 rounded w-full"
+                      onChange={(e) =>
+                        setSelectedMembers(Array.from(e.target.selectedOptions).map((o) => o.value))
+                      }
+                      className="border border-gray-300 dark:border-gray-600 p-1 rounded w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     >
                       {members.map((m) => (
                         <option key={m.memberId} value={m.memberId}>
@@ -194,10 +215,18 @@ export default function AdminWorkSkillPage() {
                       ))}
                     </select>
                     <div className="flex gap-2 mt-2">
-                      <button onClick={() => handleAddSkillToMembers(skill.skillID, selectedMembers)}>
+                      <button
+                        onClick={() => handleAddSkillToMembers(skill.skillID, selectedMembers)}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded transition-colors duration-200"
+                      >
                         確定
                       </button>
-                      <button onClick={() => setShowAddUser(null)}>取消</button>
+                      <button
+                        onClick={() => setShowAddUser(null)}
+                        className="border border-gray-400 dark:border-gray-600 px-4 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+                      >
+                        取消
+                      </button>
                     </div>
                   </div>
                 )}
@@ -206,7 +235,7 @@ export default function AdminWorkSkillPage() {
           ))}
         </tbody>
       </table>
-      {errorSkills && <div>讀取錯誤: {String(errorSkills)}</div>}
+      {errorSkills && <div className="text-red-600">讀取錯誤: {String(errorSkills)}</div>}
       <ManagementBottomNav />
     </div>
   );
