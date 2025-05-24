@@ -75,11 +75,11 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                 paddingBottom: 'env(safe-area-inset-bottom)'
             }}
         >
-            <div className="flex h-full mx-auto justify-center overflow-x-auto">
+            <div className="flex h-full mx-auto justify-between items-center overflow-x-auto w-full">
                 {navItems.map((item, index) => {
                     if (item.label === '成員管理') {
                         return (
-                            <div key={index} className="relative flex-1 min-w-0">
+                            <div key={index} className="relative flex-1 min-w-0 flex flex-col items-center">
                                 <a
                                     href="#"
                                     ref={memberBtnRef}
@@ -116,7 +116,7 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                     }
                     if (item.label === '工作模組') {
                         return (
-                            <div key={index} className="relative flex-1 min-w-0">
+                            <div key={index} className="relative flex-1 min-w-0 flex flex-col items-center">
                                 <a
                                     href="#"
                                     ref={workBtnRef}
@@ -154,7 +154,7 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                     }
                     if (item.label === '日程') {
                         return (
-                            <div key={index} className="relative flex-1 min-w-0">
+                            <div key={index} className="relative flex-1 min-w-0 flex flex-col items-center">
                                 <a
                                     href="#"
                                     ref={scheduleBtnRef}
