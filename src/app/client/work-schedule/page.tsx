@@ -61,6 +61,20 @@ function parseEpicSnapshot(
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, "title" | "executor">) =>
 	`${wl.title || "(無標題)"} | ${Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "(無執行者)"}`
 
+// 定義顏色映射，可依需求擴充
+const groupColors = [
+	"#fbbf24", // amber
+	"#60a5fa", // blue
+	"#34d399", // green
+	"#f87171", // red
+	"#a78bfa", // purple
+	"#f472b6", // pink
+	"#fdba74", // orange
+	"#6ee7b7", // teal
+	"#facc15", // yellow
+	"#818cf8"  // indigo
+]
+
 const ClientWorkSchedulePage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
@@ -79,6 +93,15 @@ const ClientWorkSchedulePage: React.FC = () => {
 		id: e.epicId,
 		title: e.title
 	})), [epics])
+
+	// groupId => color 的對應表
+	const groupColorMap = useMemo(() => {
+		const map: Record<string, string> = {}
+		groups.forEach((group, idx) => {
+			map[group.id] = groupColors[idx % groupColors.length]
+		})
+		return map
+	}, [groups])
 
 	const items = useMemo(() =>
 		epics.flatMap(e =>
@@ -190,8 +213,9 @@ const ClientWorkSchedulePage: React.FC = () => {
 						onItemDoubleClick={handleItemRemove}
 						itemRenderer={({ item, getItemProps, getResizeProps }) => {
 							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+							const color = groupColorMap[item.group] || "#fbbf24"
 							return (
-								<div {...getItemProps({ style: { background: "#fbbf24", color: "#222" } })}>
+								<div {...getItemProps({ style: { background: color, color: "#222" } })}>
 									<div {...leftResizeProps} />
 									<span>{item.title}</span>
 									<div {...rightResizeProps} />

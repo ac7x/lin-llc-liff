@@ -5,6 +5,7 @@ import { DataSet } from 'vis-data/peer'
 import { Timeline } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 
+import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { getAllTestEpics, TestWorkEpicEntity } from './work-schedule-admin.action'
 
 const WorkScheduleAdminPage = () => {
@@ -68,10 +69,11 @@ const WorkScheduleAdminPage = () => {
 	return (
 		<div>
 			{loading && <div>Loading...</div>}
-			<div style={{ marginTop: 24, height: 400 }}>
+			<div style={{ height: 600, width: '100%' }}>
 				<h3>電影屏</h3>
 				<div ref={timelineRef} style={{ width: '100%', height: 350, background: '#fff' }} />
 			</div>
+			<ClientBottomNav />
 		</div>
 	)
 }
