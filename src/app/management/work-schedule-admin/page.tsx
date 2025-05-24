@@ -1,33 +1,14 @@
 'use client'
 
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
-import { initializeApp } from "firebase/app"
-import {
-	collection,
-	doc,
-	DocumentData,
-	getFirestore,
-	QueryDocumentSnapshot,
-	updateDoc,
-} from "firebase/firestore"
 import moment from 'moment'
 import React, { useEffect, useMemo, useState } from "react"
 import Timeline from "react-calendar-timeline"
 import 'react-calendar-timeline/style.css'
-import { useCollection } from "react-firebase-hooks/firestore"
-
-// Firebase config
-const firebaseConfig = {
-	apiKey: "AIzaSyDsJP6_bjWLQ0SQiarhe3UIApnqx60vCqg",
-	authDomain: "lin-llc-liff.firebaseapp.com",
-	projectId: "lin-llc-liff",
-	storageBucket: "lin-llc-liff.firebasestorage.app",
-	messagingSenderId: "734381604026",
-	appId: "1:734381604026:web:a07a50fe85c6c5acd25683",
-	measurementId: "G-KBMLTJL6KK"
-}
-const app = initializeApp(firebaseConfig)
-const firestore = getFirestore(app)
+import {
+	getAllWorkEpics,
+	updateWorkEpicWorkLoads
+} from './work-schedule-admin.action'
 
 interface WorkLoadEntity {
 	loadId: string
@@ -44,11 +25,11 @@ interface WorkEpicEntity {
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
 
-function parseEpicSnapshot(
-	docs: QueryDocumentSnapshot<DocumentData, DocumentData>[]
-): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
+const parseEpicSnapshot = (
+	docs: WorkEpicEntity[]
+): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } => {
 	const epics: WorkEpicEntity[] = docs.map(
-		doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity)
+		doc => ({ ...doc, epicId: doc.epicId } as WorkEpicEntity)
 	)
 	const unplanned: LooseWorkLoad[] = epics.flatMap(e =>
 		(e.workLoads || [])
@@ -78,15 +59,17 @@ const groupColors = [
 const ClientWorkSchedulePage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
-	const [epicSnapshot] = useCollection(collection(firestore, "workEpic"))
 
-	// 1. 取得 Firestore 的排班資料
-	useEffect(() => {
-		if (!epicSnapshot) return
-		const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs)
+	// 1. 取得 Firestore 的排班資料（改為 server action）
+	const fetchEpics = async () => {
+		const docs = await getAllWorkEpics()
+		const { epics, unplanned } = parseEpicSnapshot(docs as WorkEpicEntity[])
 		setEpics(epics)
 		setUnplanned(unplanned)
-	}, [epicSnapshot])
+	}
+	useEffect(() => {
+		fetchEpics()
+	}, [])
 
 	// 2. 將 Firestore 資料轉為 Timeline groups/items 格式
 	const groups = useMemo(() => epics.map(e => ({
@@ -138,7 +121,7 @@ const ClientWorkSchedulePage: React.FC = () => {
 
 		if (oldEpic.epicId !== newEpic.epicId) {
 			const updatedOldWorkLoads = (oldEpic.workLoads || []).filter(wl => wl.loadId !== itemId)
-			await updateDoc(doc(firestore, "workEpic", oldEpic.epicId), { workLoads: updatedOldWorkLoads })
+			await updateWorkEpicWorkLoads(oldEpic.epicId, updatedOldWorkLoads)
 			const oldWorkload = (oldEpic.workLoads || [])[wlIdx]
 			const newWorkLoad: WorkLoadEntity = {
 				...oldWorkload,
@@ -146,7 +129,7 @@ const ClientWorkSchedulePage: React.FC = () => {
 				plannedEndTime: newEnd.toISOString(),
 			}
 			const updatedNewWorkLoads = [...(newEpic.workLoads || []), newWorkLoad]
-			await updateDoc(doc(firestore, "workEpic", newEpic.epicId), { workLoads: updatedNewWorkLoads })
+			await updateWorkEpicWorkLoads(newEpic.epicId, updatedNewWorkLoads)
 		} else {
 			const newWorkLoads = [...(oldEpic.workLoads || [])]
 			newWorkLoads[wlIdx] = {
@@ -154,8 +137,9 @@ const ClientWorkSchedulePage: React.FC = () => {
 				plannedStartTime: newStart.toISOString(),
 				plannedEndTime: newEnd.toISOString(),
 			}
-			await updateDoc(doc(firestore, "workEpic", oldEpic.epicId), { workLoads: newWorkLoads })
+			await updateWorkEpicWorkLoads(oldEpic.epicId, newWorkLoads)
 		}
+		await fetchEpics()
 	}
 
 	// 4. 調整區段長度
@@ -176,7 +160,8 @@ const ClientWorkSchedulePage: React.FC = () => {
 			plannedStartTime: newStart.toISOString(),
 			plannedEndTime: newEnd.isValid() ? newEnd.toISOString() : "",
 		}
-		await updateDoc(doc(firestore, "workEpic", epic.epicId), { workLoads: newWorkLoads })
+		await updateWorkEpicWorkLoads(epic.epicId, newWorkLoads)
+		await fetchEpics()
 	}
 
 	// 5. 刪除（丟回未排班區）
@@ -189,7 +174,8 @@ const ClientWorkSchedulePage: React.FC = () => {
 		const newWorkLoads = [...(epic.workLoads || [])]
 		const updateWL = { ...newWorkLoads[wlIdx], plannedStartTime: "", plannedEndTime: "" }
 		newWorkLoads[wlIdx] = updateWL
-		await updateDoc(doc(firestore, "workEpic", epic.epicId), { workLoads: newWorkLoads })
+		await updateWorkEpicWorkLoads(epic.epicId, newWorkLoads)
+		await fetchEpics()
 	}
 
 	return (
