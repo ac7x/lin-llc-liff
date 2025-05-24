@@ -74,6 +74,9 @@ const ClientWorkSchedulePage = () => {
 					}))
 			)
 		)
+		// 設定初始視窗為今天到一週後
+		const today = new Date()
+		const weekLater = addDays(today, 7)
 		const tl = new Timeline(timelineRef.current, items, groups, {
 			stack: true,
 			orientation: 'top',
@@ -103,8 +106,8 @@ const ClientWorkSchedulePage = () => {
 					// 其他可根據需求補充
 				}
 			},
-			zoomMin: 24 * 60 * 60 * 1000, // 1日
-			zoomMax: 30 * 24 * 60 * 60 * 1000, // 30日
+			zoomMin: 24 * 60 * 60 * 1000, // 最小1日
+			zoomMax: 30 * 24 * 60 * 60 * 1000, // 最大30日
 			timeAxis: { scale: 'day', step: 1 },
 			format: {
 				minorLabels: {
@@ -119,7 +122,9 @@ const ClientWorkSchedulePage = () => {
 					month: 'YYYY/MM',
 					year: 'YYYY'
 				}
-			}
+			},
+			start: today,
+			end: weekLater
 		})
 		return () => { tl.destroy() }
 	}, [epics])
