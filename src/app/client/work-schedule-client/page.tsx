@@ -133,37 +133,37 @@ const ClientWorkSchedulePage = () => {
 	}, [epics])
 
 	return (
-		<div className="min-h-screen w-full bg-gradient-to-b from-blue-100 via-white to-blue-50 flex flex-col">
+		<div className="min-h-screen w-full bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col transition-colors duration-300">
 			<div className="flex-none h-[70vh] w-full flex items-center justify-center">
 				<div
-					className="w-full h-full rounded-2xl bg-white border border-gray-200 shadow-md overflow-hidden"
+					className="w-full h-full rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-md overflow-hidden transition-colors duration-300"
 					ref={timelineRef}
 					style={{ minWidth: '100vw', height: '100%' }}
 				/>
 			</div>
-			<div className="flex-none min-h-[25vh] w-full bg-blue-50/80 rounded-t-3xl shadow-inner">
+			<div className="flex-none min-h-[25vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300">
 				<div className="w-full h-full flex flex-col p-4 max-w-[100vw] mx-auto">
-					<h2 className="text-lg font-bold text-center text-blue-800 mb-4 tracking-wide">
+					<h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors duration-300">
 						未排班工作
 					</h2>
 					<div className="flex flex-wrap gap-3 overflow-y-auto pb-16 px-0.5">
 						{unplanned.length === 0 ? (
-							<div className="text-gray-400 text-center w-full">（無未排班工作）</div>
+							<div className="text-gray-400 dark:text-gray-500 text-center w-full transition-colors duration-300">（無未排班工作）</div>
 						) : unplanned.map(wl => (
 							<div
 								key={wl.loadId}
 								className="
-									bg-white/90 border border-blue-200 rounded-xl px-3 py-2.5
-									hover:bg-blue-50 transition-all hover:shadow-md
+									bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5
+									hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-300 hover:shadow-md
 									flex flex-col justify-between gap-2
 									flex-auto min-w-[180px] max-w-full
 								"
 								title={`來自 ${wl.epicTitle}`}
 							>
-								<div className="font-medium text-gray-700 text-sm line-clamp-2">
+								<div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors duration-300">
 									{wl.title || '(無標題)'}
 								</div>
-								<div className="text-xs text-blue-600">
+								<div className="text-xs text-blue-600 dark:text-blue-400 transition-colors duration-300">
 									{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
 								</div>
 							</div>
