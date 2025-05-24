@@ -51,9 +51,17 @@ const parseEpicSnapshot = (
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) =>
 	`${wl.title || '(無標題)'} | ${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}`
 
-const groupColors = [
-	'#fbbf24', '#60a5fa', '#34d399', '#f87171', '#a78bfa',
-	'#f472b6', '#fdba74', '#6ee7b7', '#facc15', '#818cf8'
+const tailwindPalette = [
+	'bg-blue-500',    // 0
+	'bg-green-500',   // 1
+	'bg-yellow-500',  // 2
+	'bg-red-500',     // 3
+	'bg-purple-500',  // 4
+	'bg-pink-500',    // 5
+	'bg-orange-400',  // 6
+	'bg-teal-500',    // 7
+	'bg-indigo-500',  // 8
+	'bg-cyan-500',    // 9
 ]
 
 const WorkScheduleAdminPage: React.FC = () => {
@@ -70,21 +78,14 @@ const WorkScheduleAdminPage: React.FC = () => {
 		fetchEpics()
 	}, [])
 
-	const groups = useMemo(() => epics.map(e => ({
+	const groups = useMemo(() => epics.map((e, idx) => ({
 		id: e.epicId,
-		title: e.title
+		title: e.title,
+		colorClass: tailwindPalette[idx % tailwindPalette.length]
 	})), [epics])
 
-	const groupColorMap = useMemo(() => {
-		const map: Record<string, string> = {}
-		groups.forEach((group, idx) => {
-			map[group.id] = groupColors[idx % groupColors.length]
-		})
-		return map
-	}, [groups])
-
 	const items = useMemo(() =>
-		epics.flatMap(e =>
+		epics.flatMap((e, idx) =>
 			(e.workLoads || [])
 				.filter(l => l.plannedStartTime && l.plannedStartTime !== '')
 				.map(l => {
@@ -98,6 +99,7 @@ const WorkScheduleAdminPage: React.FC = () => {
 						title: getWorkloadContent(l),
 						start_time: start,
 						end_time: end,
+						colorClass: tailwindPalette[idx % tailwindPalette.length]
 					}
 				})
 		), [epics]
@@ -171,17 +173,10 @@ const WorkScheduleAdminPage: React.FC = () => {
 		await fetchEpics()
 	}
 
-	// 時間區間與 work-schedule 同步，讓預設畫面一致
+	// 同步預設畫面區間
 	const now = new Date()
 	const defaultTimeStart = subDays(startOfDay(now), 7)
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
-
-	// 分組渲染（加上紅底白字）- 修正型別
-	const groupRenderer = ({ group }: { group: { id: string; title: string } }) => (
-		<div className="bg-red-500 text-white px-2 py-1 rounded">
-			{group.title}
-		</div>
-	)
 
 	return (
 		<div className="min-h-screen w-full bg-black flex flex-col">
@@ -202,28 +197,25 @@ const WorkScheduleAdminPage: React.FC = () => {
 						onItemMove={handleItemMove}
 						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
 						onItemDoubleClick={handleItemRemove}
-						groupRenderer={groupRenderer}
+						groupRenderer={({ group }) => (
+							<div className={`px-2 py-1 rounded text-white font-bold ${group.colorClass}`}>
+								{group.title}
+							</div>
+						)}
 						itemRenderer={({ item, getItemProps, getResizeProps }) => {
 							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-							const color = groupColorMap[item.group] || '#fbbf24'
-							// 日期格式已本地化
+							// 日期格式本地化
 							const dateStr = `${format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
 							return (
 								<div
 									{...getItemProps({
-										style: {
-											background: color,
-											color: '#222',
-											borderRadius: 6,
-											padding: '8px 12px',
-											minHeight: 38
-										},
-										className: 'text-black bg-opacity-90'
+										className: `rounded-lg px-3 py-2 shadow text-white font-bold ${item.colorClass} bg-opacity-90 hover:opacity-90 transition-colors`,
+										style: { minHeight: 38 }
 									})}
 								>
 									<div {...leftResizeProps} />
-									<span className="font-bold">{item.title}</span>
-									<div className="text-xs text-gray-700">{dateStr}</div>
+									<span>{item.title}</span>
+									<div className="text-xs text-white/80 font-normal">{dateStr}</div>
 									<div {...rightResizeProps} />
 								</div>
 							)
