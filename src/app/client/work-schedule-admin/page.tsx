@@ -1,9 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-// 直接從 vis-data 引用 DataSet
 import { DataSet } from 'vis-data/peer'
-// Timeline 還是從 vis-timeline 引用
 import { Timeline } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 
