@@ -13,6 +13,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react'
 import Timeline from 'react-calendar-timeline'
 import 'react-calendar-timeline/style.css'
+import '@/styles/timeline.scss'
 import { useCollection } from 'react-firebase-hooks/firestore'
 
 // === date-fns imports ===
