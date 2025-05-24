@@ -25,6 +25,7 @@ const defaultFinanceNavItems: NavItem[] = [
 export function FinanceBottomNav({ items = defaultFinanceNavItems }: FinanceBottomNavProps) {
     const pathname = usePathname();
 
+    // 設 NavItem 如果沒有提供
     const navItems = (items && items.length > 0 ? items : defaultFinanceNavItems).map(item => ({
         ...item,
         active: pathname === item.href
@@ -33,10 +34,10 @@ export function FinanceBottomNav({ items = defaultFinanceNavItems }: FinanceBott
     return (
         <nav
             className="
-				fixed bottom-0 left-0 z-50 w-full
-				h-16 bg-[var(--background,white)] border-t border-gray-200 font-sans
-				px-safe pb-safe
-			"
+                fixed bottom-0 left-0 z-50 w-full
+                h-16 bg-[var(--background,white)] border-t border-gray-200 font-sans
+                px-safe pb-safe
+            "
             style={{
                 paddingBottom: 'env(safe-area-inset-bottom)'
             }}
@@ -47,14 +48,14 @@ export function FinanceBottomNav({ items = defaultFinanceNavItems }: FinanceBott
                         key={index}
                         href={item.href}
                         className={`
-							flex-1 min-w-0 inline-flex flex-col items-center justify-center
-							px-2 sm:px-5 max-w-[120px]
-							${item.active
+                            flex-1 min-w-0 inline-flex flex-col items-center justify-center
+                            px-2 sm:px-5 max-w-[120px]
+                            ${item.active
                                 ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'
                                 : 'text-gray-500 hover:text-[#00B900]'
                             }
-							transition-colors duration-150
-						`}
+                            transition-colors duration-150
+                        `}
                         style={{ minWidth: '76px' }}
                     >
                         <div className="text-xl sm:text-2xl">{item.icon}</div>

@@ -35,7 +35,6 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
         active: pathname === item.href
     }));
 
-    // 點擊外部時關閉 popover
     useEffect(() => {
         const handleClick = (e: MouseEvent) => {
             if (
@@ -89,14 +88,14 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                                         setShowMemberPopover(v => !v);
                                     }}
                                     className={`
-										flex-1 min-w-0 inline-flex flex-col items-center justify-center
-										px-2 sm:px-5 max-w-[120px]
-										${item.active
+                                        flex-1 min-w-0 inline-flex flex-col items-center justify-center
+                                        px-2 sm:px-5 max-w-[120px]
+                                        ${item.active
                                             ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'
                                             : 'text-gray-500 hover:text-[#00B900]'
                                         }
-										transition-colors duration-150
-									`}
+                                        transition-colors duration-150
+                                    `}
                                     style={{ minWidth: '76px' }}
                                 >
                                     <div className="text-xl sm:text-2xl">👤</div>
@@ -126,14 +125,14 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                                         setShowWorkPopover(v => !v);
                                     }}
                                     className={`
-										flex-1 min-w-0 inline-flex flex-col items-center justify-center
-										px-2 sm:px-5 max-w-[120px]
-										${item.active
+                                        flex-1 min-w-0 inline-flex flex-col items-center justify-center
+                                        px-2 sm:px-5 max-w-[120px]
+                                        ${item.active
                                             ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'
                                             : 'text-gray-500 hover:text-[#00B900]'
                                         }
-										transition-colors duration-150
-									`}
+                                        transition-colors duration-150
+                                    `}
                                     style={{ minWidth: '76px' }}
                                 >
                                     <div className="text-xl sm:text-2xl">🗂️</div>
@@ -164,14 +163,14 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                                         setShowSchedulePopover(v => !v);
                                     }}
                                     className={`
-										flex-1 min-w-0 inline-flex flex-col items-center justify-center
-										px-2 sm:px-5 max-w-[120px]
-										${item.active
+                                        flex-1 min-w-0 inline-flex flex-col items-center justify-center
+                                        px-2 sm:px-5 max-w-[120px]
+                                        ${item.active
                                             ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'
                                             : 'text-gray-500 hover:text-[#00B900]'
                                         }
-										transition-colors duration-150
-									`}
+                                        transition-colors duration-150
+                                    `}
                                     style={{ minWidth: '76px' }}
                                 >
                                     <div className="text-xl sm:text-2xl">📆</div>
@@ -196,14 +195,14 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                             key={index}
                             href={item.href}
                             className={`
-								flex-1 min-w-0 inline-flex flex-col items-center justify-center
-								px-2 sm:px-5 max-w-[120px]
-								${item.active
+                                flex-1 min-w-0 inline-flex flex-col items-center justify-center
+                                px-2 sm:px-5 max-w-[120px]
+                                ${item.active
                                     ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'
                                     : 'text-gray-500 hover:text-[#00B900]'
                                 }
-								transition-colors duration-150
-							`}
+                                transition-colors duration-150
+                            `}
                             style={{ minWidth: '76px' }}
                         >
                             <div className="text-xl sm:text-2xl">{item.icon}</div>
