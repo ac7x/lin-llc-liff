@@ -1,54 +1,86 @@
-"use server";
+'use server'
 
-import type { WorkLoadEntity } from '@/app/actions/workload.action';
+import admin from 'firebase-admin'
 
-// --- Firebase Admin 客戶端（單例）實現開始 ---
-import admin from 'firebase-admin';
+export interface WorkLoadEntity {
+  loadId: string
+  title: string
+  executor: string[]
+  plannedStartTime: string
+  plannedEndTime: string
+}
+export interface WorkEpicEntity {
+  epicId: string
+  title: string
+  workLoads?: WorkLoadEntity[]
+}
+export type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
 
-/**
- * Firebase Admin 客戶端（單例）
- * 初始化 Firebase Admin SDK 並提供 Firestore 操作
- */
 class FirebaseAdminClient {
-  private static instance: FirebaseAdminClient;
-  private firestore: admin.firestore.Firestore;
+  private static instance: FirebaseAdminClient
+  private firestore: admin.firestore.Firestore
 
   private constructor() {
     if (!admin.apps.length) {
-      admin.initializeApp();
+      admin.initializeApp()
     }
-    this.firestore = admin.firestore();
+    this.firestore = admin.firestore()
   }
-
-  /**
-   * 取得單例實例
-   */
   static getInstance(): FirebaseAdminClient {
-    return this.instance ?? (this.instance = new FirebaseAdminClient());
+    return this.instance ?? (this.instance = new FirebaseAdminClient())
   }
-
-  /**
-   * 取得 Firestore 實例
-   */
   getFirestore(): admin.firestore.Firestore {
-    return this.firestore;
+    return this.firestore
   }
 }
 
-const firebaseAdminClient = FirebaseAdminClient.getInstance();
-const firestoreAdmin = firebaseAdminClient.getFirestore();
-// --- Firebase Admin 客戶端（單例）實現結束 ---
+const firestoreAdmin = FirebaseAdminClient.getInstance().getFirestore()
 
-/**
- * 新增 WorkLoad 到指定 Epic
- */
-export async function addWorkLoadToEpic(epicId: string, load: WorkLoadEntity): Promise<void> {
+export async function getAllEpics(): Promise<{ epics: WorkEpicEntity[], unplanned: LooseWorkLoad[] }> {
+  const snapshot = await firestoreAdmin.collection('workEpic').get()
+  const epics: WorkEpicEntity[] = snapshot.docs.map(doc => ({
+    ...doc.data(),
+    epicId: doc.id,
+  }) as WorkEpicEntity)
+  const unplanned: LooseWorkLoad[] = epics.flatMap(e =>
+    (e.workLoads || [])
+      .filter(l => !l.plannedStartTime || l.plannedStartTime === '')
+      .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
+  )
+  return { epics, unplanned }
+}
+
+export async function updateWorkLoad(epicId: string, loadId: string, start: string, end: string | null): Promise<void> {
   const epicRef = firestoreAdmin.collection('workEpic').doc(epicId)
   await firestoreAdmin.runTransaction(async transaction => {
     const epicDoc = await transaction.get(epicRef)
-    const data = epicDoc.exists ? epicDoc.data() : undefined
-    if (!data) throw new Error('Epic 不存在')
-    const workLoads = Array.isArray(data.workLoads) ? [...data.workLoads, load] : [load]
+    if (!epicDoc.exists) throw new Error('Epic 不存在')
+    const data = epicDoc.data()
+    const workLoads: WorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : []
+    const idx = workLoads.findIndex(wl => wl.loadId === loadId)
+    if (idx === -1) throw new Error('WorkLoad 不存在')
+    workLoads[idx].plannedStartTime = new Date(start).toISOString()
+    workLoads[idx].plannedEndTime = end ? new Date(end).toISOString() : ''
     transaction.update(epicRef, { workLoads })
   })
+}
+
+export async function unplanWorkLoad(loadId: string): Promise<void> {
+  const epicSnap = await firestoreAdmin.collection('workEpic').get()
+  let foundEpicId: string | null = null
+  let foundIdx = -1
+  let foundWorkLoads: WorkLoadEntity[] = []
+  epicSnap.forEach(doc => {
+    const workLoads: WorkLoadEntity[] = doc.data().workLoads || []
+    const idx = workLoads.findIndex(wl => wl.loadId === loadId)
+    if (idx !== -1) {
+      foundEpicId = doc.id
+      foundIdx = idx
+      foundWorkLoads = workLoads
+    }
+  })
+  if (!foundEpicId || foundIdx === -1) return
+  foundWorkLoads[foundIdx].plannedStartTime = ''
+  foundWorkLoads[foundIdx].plannedEndTime = ''
+  await firestoreAdmin.collection('workEpic').doc(foundEpicId).update({ workLoads: foundWorkLoads })
 }
