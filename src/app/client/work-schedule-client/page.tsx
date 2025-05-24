@@ -79,8 +79,23 @@ const ClientWorkSchedulePage = () => {
 			orientation: 'top',
 			editable: false,
 			locale: 'zh-tw',
-			zoomMin: 24 * 60 * 60 * 1000,
-			zoomMax: 90 * 24 * 60 * 60 * 1000
+			zoomMin: 24 * 60 * 60 * 1000, // 1日
+			zoomMax: 30 * 24 * 60 * 60 * 1000, // 30日
+			timeAxis: { scale: 'day', step: 1 },
+			format: {
+				minorLabels: {
+					minute: '',
+					hour: '',
+					day: 'D',
+					month: 'MMM',
+					year: 'YYYY'
+				},
+				majorLabels: {
+					day: 'YYYY/MM/DD',
+					month: 'YYYY/MM',
+					year: 'YYYY'
+				}
+			}
 		})
 		return () => { tl.destroy() }
 	}, [epics])
