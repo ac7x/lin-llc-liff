@@ -1,8 +1,6 @@
-// src/app/client/work-schedule-admin/page.tsx
-
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import {
 	createTestEpic,
 	createTestWorkLoad,
@@ -10,6 +8,12 @@ import {
 	getAllTestEpics,
 	TestWorkEpicEntity
 } from './work-schedule-admin.action'
+
+// ↓↓↓ 加入 timeline 依賴
+import { addDays } from 'date-fns'
+import { DataSet, Timeline } from 'vis-timeline/standalone'
+import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
+// ↑↑↑
 
 export default function TestWorkScheduleAdminPage() {
 	const [epics, setEpics] = useState<TestWorkEpicEntity[]>([])
@@ -20,6 +24,10 @@ export default function TestWorkScheduleAdminPage() {
 	const [workTitle, setWorkTitle] = useState('')
 	const [workStart, setWorkStart] = useState('')
 	const [workEnd, setWorkEnd] = useState('')
+
+	// ↓↓↓ timeline ref
+	const timelineRef = useRef<HTMLDivElement>(null)
+	// ↑↑↑
 
 	function refresh() {
 		setLoading(true)
@@ -53,6 +61,40 @@ export default function TestWorkScheduleAdminPage() {
 		await deleteTestWorkLoad(loadId)
 		startTransition(refresh)
 	}
+
+	// ↓↓↓ 電影屏渲染
+	useEffect(() => {
+		if (!timelineRef.current || !epics.length) return
+		const groups = new DataSet(
+			epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
+		)
+		const items = new DataSet(
+			epics.flatMap(e =>
+				(e.workLoads || [])
+					.filter(l => l.plannedStartTime && l.plannedStartTime !== '')
+					.map(l => ({
+						id: l.loadId,
+						group: e.epicId,
+						type: 'range',
+						content: `<div>${l.title || '(無標題)'}</div>`,
+						start: new Date(l.plannedStartTime),
+						end: l.plannedEndTime && l.plannedEndTime !== ''
+							? new Date(l.plannedEndTime)
+							: addDays(new Date(l.plannedStartTime), 1)
+					}))
+			)
+		)
+		const tl = new Timeline(timelineRef.current, items, groups, {
+			stack: true,
+			orientation: 'top',
+			editable: false,
+			locale: 'zh-tw',
+			zoomMin: 24 * 60 * 60 * 1000,
+			zoomMax: 90 * 24 * 60 * 60 * 1000
+		})
+		return () => { tl.destroy() }
+	}, [epics])
+	// ↑↑↑
 
 	return (
 		<div style={{ padding: 16 }}>
@@ -104,6 +146,12 @@ export default function TestWorkScheduleAdminPage() {
 					</div>
 				))}
 			</div>
+			{/* ↓↓↓ 電影屏區塊 */}
+			<div style={{ marginTop: 48, height: 400 }}>
+				<h3 style={{ marginBottom: 8 }}>電影屏</h3>
+				<div ref={timelineRef} style={{ width: '100%', height: 350, background: '#fff', borderRadius: 8 }} />
+			</div>
+			{/* ↑↑↑ */}
 		</div>
 	)
 }
