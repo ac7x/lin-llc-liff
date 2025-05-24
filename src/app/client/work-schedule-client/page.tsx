@@ -43,12 +43,10 @@ const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) =>
 	`<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`
 
 const ClientWorkSchedulePage = () => {
-	const [baseDate] = useState(() => new Date())
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 	const timelineRef = useRef<HTMLDivElement>(null)
 	const timelineInstance = useRef<Timeline | null>(null)
-	const intervalRef = useRef<NodeJS.Timeout | null>(null)
 	const [epicSnapshot, epicLoading] = useCollection(collection(firestore, 'workEpic'))
 
 	useEffect(() => {
@@ -78,7 +76,8 @@ const ClientWorkSchedulePage = () => {
 			)
 		)
 
-		const today0 = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate())
+		const now = new Date()
+		const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 		const start = subDays(today0, 3) // 過去3天
 		const end = addDays(today0, 4)   // 未來4天（含今天）
 		end.setHours(23, 59, 59, 999)    // 包含第7天的最後一刻
@@ -112,6 +111,7 @@ const ClientWorkSchedulePage = () => {
 				}
 			},
 			zoomMin: 7 * 24 * 60 * 60 * 1000, // 一週
+			zoomMax: 30 * 24 * 60 * 60 * 1000,
 			timeAxis: { scale: 'day', step: 1 },
 			format: {
 				minorLabels: {
@@ -131,22 +131,13 @@ const ClientWorkSchedulePage = () => {
 		})
 		timelineInstance.current = tl
 
-		// 一開始顯示紅線
-		tl.setCurrentTime(baseDate)
-		// 讓視窗區間為「過去三天～未來四天」並讓紅線居中
+		// 讓視窗區間為「過去三天～未來四天」
 		tl.setWindow(start, end, { animation: false })
-
-		// 定時刷新紅線
-		intervalRef.current = setInterval(() => {
-			const now = new Date()
-			tl.setCurrentTime(now)
-		}, 60 * 1000)
 
 		return () => {
 			tl.destroy()
-			if (intervalRef.current) clearInterval(intervalRef.current)
 		}
-	}, [epics, baseDate])
+	}, [epics])
 
 	return (
 		<div className="min-h-screen w-full bg-gradient-to-b from-blue-100 via-white to-blue-50 flex flex-col">
