@@ -17,6 +17,7 @@ interface ManagementBottomNavProps {
 
 const defaultAdminNavItems: NavItem[] = [
     { href: '/management/dashboard', icon: '📊', label: '儀表板', active: false },
+    { href: '/management/work-schedule', icon: '📅', label: '工作行程', active: false },
     { href: '/management/work-skill', icon: '🛠️', label: '技能管理', active: false },
     { href: '/management/work-task', icon: '📝', label: '工作任務', active: false },
     { href: '/management/work-epic', icon: '📖', label: '工作史詩', active: false },
