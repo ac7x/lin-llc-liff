@@ -13,7 +13,7 @@ import {
 	subDays
 } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Timeline from 'react-calendar-timeline'
 import {
 	getAllWorkEpics,
@@ -51,45 +51,28 @@ const parseEpicSnapshot = (
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) =>
 	`${wl.title || '(無標題)'} | ${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}`
 
-const tailwindPalette = [
-	'bg-blue-500',    // 0
-	'bg-green-500',   // 1
-	'bg-yellow-500',  // 2
-	'bg-red-500',     // 3
-	'bg-purple-500',  // 4
-	'bg-pink-500',    // 5
-	'bg-orange-400',  // 6
-	'bg-teal-500',    // 7
-	'bg-indigo-500',  // 8
-	'bg-cyan-500',    // 9
-]
-
 const WorkScheduleAdminPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
-	const [epicLoading, setEpicLoading] = useState(false)
-	const timelineRef = useRef<HTMLDivElement>(null)
 
 	const fetchEpics = async () => {
-		setEpicLoading(true)
 		const docs = await getAllWorkEpics()
 		const { epics, unplanned } = parseEpicSnapshot(docs as WorkEpicEntity[])
 		setEpics(epics)
 		setUnplanned(unplanned)
-		setEpicLoading(false)
 	}
 	useEffect(() => {
 		fetchEpics()
 	}, [])
 
-	const groups = useMemo(() => epics.map((e, idx) => ({
-		id: e.epicId,
-		title: e.title,
-		colorClass: tailwindPalette[idx % tailwindPalette.length]
-	})), [epics])
+	const groups = useMemo(() =>
+		epics.map((e) => ({
+			id: e.epicId,
+			title: e.title
+		})), [epics])
 
 	const items = useMemo(() =>
-		epics.flatMap((e, idx) =>
+		epics.flatMap((e) =>
 			(e.workLoads || [])
 				.filter(l => l.plannedStartTime && l.plannedStartTime !== '')
 				.map(l => {
@@ -102,8 +85,7 @@ const WorkScheduleAdminPage: React.FC = () => {
 						group: e.epicId,
 						title: getWorkloadContent(l),
 						start_time: start,
-						end_time: end,
-						colorClass: tailwindPalette[idx % tailwindPalette.length]
+						end_time: end
 					}
 				})
 		), [epics]
@@ -183,18 +165,10 @@ const WorkScheduleAdminPage: React.FC = () => {
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
 	return (
-		// 📌 頁面主容器
 		<div className="min-h-screen w-full bg-black flex flex-col">
-			{/* 📌 上方 Vis Timeline 區 */}
-			<div className="flex-none h-[70vh] w-full flex items-center justify-center relative">
-				{epicLoading && (
-					// 📌 資料載入中遮罩
-					<div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-10">
-						<div className="text-white text-lg font-bold">載入中…</div>
-					</div>
-				)}
-				{/* 📌 Vis Timeline 畫布容器 */}
-				<div ref={timelineRef} className="w-full h-full rounded-2xl border border-gray-300 shadow overflow-hidden bg-black" style={{ minWidth: '100vw', height: '100%' }}>
+			<div className="flex-none h-[20vh]" />
+			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
+				<div className="w-full h-full rounded-2xl border border-gray-300 shadow overflow-hidden bg-black" style={{ minWidth: '100vw', height: 400 }}>
 					<Timeline
 						groups={groups}
 						items={items}
@@ -210,17 +184,18 @@ const WorkScheduleAdminPage: React.FC = () => {
 						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
 						onItemDoubleClick={handleItemRemove}
 						groupRenderer={({ group }) => (
-							<div className={`px-2 py-1 rounded text-white font-bold ${group.colorClass}`}>
+							<div className="px-2 py-1 rounded text-white font-bold">
 								{group.title}
 							</div>
 						)}
 						itemRenderer={({ item, getItemProps, getResizeProps }) => {
 							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+							// 日期格式本地化
 							const dateStr = `${format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
 							return (
 								<div
 									{...getItemProps({
-										className: `rounded-lg px-3 py-2 shadow text-white font-bold ${item.colorClass} bg-opacity-90 hover:opacity-90 transition-colors`,
+										className: `rounded-lg px-3 py-2 shadow text-white font-bold bg-opacity-90 hover:opacity-90 transition-colors`,
 										style: { minHeight: 38 }
 									})}
 								>
@@ -234,21 +209,19 @@ const WorkScheduleAdminPage: React.FC = () => {
 					/>
 				</div>
 			</div>
-			{/* 📌 下方未排班區塊 */}
-			<div className="flex-none h-[30vh] w-full bg-black px-4 py-2">
+			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2">
 				<div className="w-full h-full flex flex-col">
 					<h2 className="text-lg font-bold text-center text-white mb-2 tracking-wide">未排班工作</h2>
-					{/* 📌 卡片容器 */}
 					<div className="flex flex-wrap gap-4 overflow-auto max-h-full w-full">
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400 text-center w-full">（無）</div>
 						) : unplanned.map(wl => (
-							// 📌 單一未排班工作卡片
 							<div
 								key={wl.loadId}
 								className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-base shadow-sm
 									hover:bg-yellow-100 transition-colors flex flex-col justify-between
-									basis-[250px] grow-0 shrink-1"
+									min-w-[220px] flex-1"
+								style={{ maxWidth: 320 }}
 								title={`來自 ${wl.epicTitle}`}
 							>
 								<div className="font-medium text-gray-700">{wl.title || '(無標題)'}</div>
