@@ -24,7 +24,7 @@ const firebaseConfig = {
 	apiKey: "AIzaSyDsJP6_bjWLQ0SQiarhe3UIApnqx60vCqg",
 	authDomain: "lin-llc-liff.firebaseapp.com",
 	projectId: "lin-llc-liff",
-	storageBucket: "lin-llc-liff.firebasestorage.app",
+	storageBucket: "lin-llc-liff.firbasestorage.app",
 	messagingSenderId: "734381604026",
 	appId: "1:734381604026:web:a07a50fe85c6c5acd25683",
 	measurementId: "G-KBMLTJL6KK"
@@ -67,7 +67,7 @@ const getWorkloadContent = (wl: Pick<WorkLoadEntity, "title" | "executor">) =>
 const WorkScheduleManagementPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
-	const [epicSnapshot, epicLoading] = useCollection(collection(firestore, "workEpic"))
+	const [epicSnapshot] = useCollection(collection(firestore, "workEpic"))
 
 	// 1. 取得 Firestore 的排班資料
 	useEffect(() => {
