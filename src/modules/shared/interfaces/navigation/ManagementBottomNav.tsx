@@ -8,9 +8,9 @@ const navItems = [
         icon: '📆',
         label: '日程',
         popover: [
-            { label: '排程客戶', href: '/management/schedule-module/customer' },
-            { label: '排程後端', href: '/management/schedule-module/backend' },
-            { label: '儀表板', href: '/management/schedule-module/dashboard' },
+            { label: '排程客戶', href: '/management/work-schedule' },
+            { label: '排程後端', href: '/management/work-schedule-admin' },
+            { label: '儀表板', href: '/management/dashboard' },
         ],
     },
     {
@@ -18,9 +18,9 @@ const navItems = [
         icon: '🗂️',
         label: '工作模組',
         popover: [
-            { label: '工作任務', href: '/management/work-module/task' },
-            { label: '工作史詩', href: '/management/work-module/epic' },
-            { label: '工作範本', href: '/management/work-module/template' },
+            { label: '工作任務', href: '/management/work-task' },
+            { label: '工作史詩', href: '/management/work-epic' },
+            { label: '工作範本', href: '/management/work-template' },
         ],
     },
     {
@@ -28,8 +28,8 @@ const navItems = [
         icon: '👤',
         label: '成員管理',
         popover: [
-            { label: '技能管理', href: '/management/member-management/skills' },
-            { label: '成員列表', href: '/management/member-management/list' },
+            { label: '技能管理', href: '/management/work-skill' },
+            { label: '成員列表', href: '/management/work-member' },
         ],
     },
 ];
