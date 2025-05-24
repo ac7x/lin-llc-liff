@@ -190,14 +190,26 @@ const ClientWorkScheduleAdminPage: React.FC = () => {
 						onItemMove={handleItemMove}
 						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
 						onItemDoubleClick={handleItemRemove}
+						className="!bg-gray-900 !text-white" // 套用 TailwindCSS 背景與文字色
 						itemRenderer={({ item, getItemProps, getResizeProps }) => {
 							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
 							const color = groupColorMap[item.group] || '#fbbf24'
 							const dateStr = `${format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
 							return (
-								<div {...getItemProps({ style: { background: color, color: '#222', borderRadius: 6, padding: '8px 12px', minHeight: 38 } })}>
+								<div
+									{...getItemProps({
+										style: {
+											background: color,
+											color: '#222',
+											borderRadius: 6,
+											padding: '8px 12px',
+											minHeight: 38
+										},
+										className: 'text-black bg-opacity-90' // 讓 item 文字與背景也可用 Tailwind
+									})}
+								>
 									<div {...leftResizeProps} />
-									<span>{item.title}</span>
+									<span className="font-bold">{item.title}</span>
 									<div className="text-xs text-gray-700">{dateStr}</div>
 									<div {...rightResizeProps} />
 								</div>
