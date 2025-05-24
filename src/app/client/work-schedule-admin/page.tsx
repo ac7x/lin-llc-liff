@@ -51,13 +51,13 @@ export default function WorkScheduleAdminPage() {
 	useEffect(() => {
 		Promise.all([getAllWorkEpics(false), getAllWorkLoads()]).then(([epics, loads]) => {
 			setGroups(
-				(epics as Epic[]).map((e) => ({
+				(epics as Epic[]).map(e => ({
 					id: e.epicId,
 					content: e.title,
 				}))
 			)
 			setItems(
-				(loads as Load[]).map((l) => ({
+				(loads as Load[]).map(l => ({
 					id: l.loadId,
 					group: l.epicIds?.[0] || "",
 					title: l.title,
@@ -101,7 +101,7 @@ export default function WorkScheduleAdminPage() {
 			address: "",
 			createdAt: new Date().toISOString(),
 		})
-		setGroups((g) => [...g, { id: epicId, content: newGroupTitle }])
+		setGroups(g => [...g, { id: epicId, content: newGroupTitle }])
 		setNewGroupTitle("")
 	}
 
@@ -123,7 +123,7 @@ export default function WorkScheduleAdminPage() {
 			notes: "",
 		}
 		await addWorkLoadToEpic(newItem.group, newLoad)
-		setItems((i) => [
+		setItems(i => [
 			...i,
 			{
 				id: loadId,
@@ -138,13 +138,13 @@ export default function WorkScheduleAdminPage() {
 	}
 
 	return (
-		<div className="p-4 pb-24">
+		<div className="min-h-screen w-full bg-black flex flex-col">
 			<h1 className="text-2xl font-bold mb-4">時程管理（管理員）</h1>
 			<div className="mb-4">
 				<h2 className="font-semibold mb-2">建立 group（標的）</h2>
 				<input
 					value={newGroupTitle}
-					onChange={(e) => setNewGroupTitle(e.target.value)}
+					onChange={e => setNewGroupTitle(e.target.value)}
 					placeholder="group 標題"
 					className="border p-1 mr-2"
 				/>
@@ -156,17 +156,17 @@ export default function WorkScheduleAdminPage() {
 				<h2 className="font-semibold mb-2">建立 item（工作負載）</h2>
 				<input
 					value={newItem.title}
-					onChange={(e) => setNewItem((v) => ({ ...v, title: e.target.value }))}
+					onChange={e => setNewItem(v => ({ ...v, title: e.target.value }))}
 					placeholder="item 標題"
 					className="border p-1 mr-2"
 				/>
 				<select
 					value={newItem.group}
-					onChange={(e) => setNewItem((v) => ({ ...v, group: e.target.value }))}
+					onChange={e => setNewItem(v => ({ ...v, group: e.target.value }))}
 					className="border p-1 mr-2"
 				>
 					<option value="">選擇 group</option>
-					{groups.map((g) => (
+					{groups.map(g => (
 						<option key={g.id} value={g.id}>
 							{g.content}
 						</option>
@@ -175,21 +175,25 @@ export default function WorkScheduleAdminPage() {
 				<input
 					type="datetime-local"
 					value={newItem.start}
-					onChange={(e) => setNewItem((v) => ({ ...v, start: e.target.value }))}
+					onChange={e => setNewItem(v => ({ ...v, start: e.target.value }))}
 					className="border p-1 mr-2"
 				/>
 				<input
 					type="datetime-local"
 					value={newItem.end}
-					onChange={(e) => setNewItem((v) => ({ ...v, end: e.target.value }))}
+					onChange={e => setNewItem(v => ({ ...v, end: e.target.value }))}
 					className="border p-1 mr-2"
 				/>
 				<button onClick={handleAddItem} className="bg-green-500 text-white px-3 py-1 rounded">
 					建立
 				</button>
 			</div>
-			<div className="my-8">
-				<div ref={timelineRef} style={{ width: "100%", height: 500, background: "#fff", borderRadius: 8 }} />
+			<div className="my-8 flex-1 flex flex-col">
+				<div
+					className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden"
+					ref={timelineRef}
+					style={{ minWidth: '100vw' }}
+				/>
 			</div>
 			<ClientBottomNav />
 		</div>
