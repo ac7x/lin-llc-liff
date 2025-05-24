@@ -77,7 +77,7 @@ export function ManagementBottomNav() {
         >
             {navItems.map((item, idx) => (
                 <div
-                    key={item.href}
+                    key={item.label}
                     style={{
                         position: 'relative',
                         flex: 1,
@@ -130,23 +130,6 @@ export function ManagementBottomNav() {
                                 alignItems: 'center',
                             }}
                         >
-                            <Link
-                                href={item.href}
-                                style={{
-                                    color: '#00B900',
-                                    padding: '0.5rem 1.5rem',
-                                    width: '100%',
-                                    textAlign: 'center',
-                                    textDecoration: 'none',
-                                    borderRadius: 8,
-                                    fontWeight: 600,
-                                    fontSize: 15,
-                                    marginBottom: item.popover.length ? 6 : 0,
-                                }}
-                                onClick={() => setOpen(null)}
-                            >
-                                {item.label}
-                            </Link>
                             {item.popover.map(link => (
                                 <Link
                                     key={link.href}
