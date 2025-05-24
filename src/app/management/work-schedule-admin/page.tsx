@@ -65,7 +65,7 @@ const WorkScheduleAdminPage: React.FC = () => {
 		fetchEpics()
 	}, [])
 
-	const groupCount = 30
+	const groupCount = 10
 	const groups = useMemo(() => {
 		const filledEpics = [...epics]
 		while (filledEpics.length < groupCount) {
