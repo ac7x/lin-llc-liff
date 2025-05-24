@@ -78,7 +78,7 @@ const groupColors = [
 const ClientWorkSchedulePage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
-	const [epicSnapshot, epicLoading] = useCollection(collection(firestore, "workEpic"))
+	const [epicSnapshot] = useCollection(collection(firestore, "workEpic"))
 
 	// 1. 取得 Firestore 的排班資料
 	useEffect(() => {

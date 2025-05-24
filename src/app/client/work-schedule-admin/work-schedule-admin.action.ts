@@ -3,63 +3,40 @@
 import admin from 'firebase-admin';
 
 /**
- * 工作負載資料結構
- */
-export interface TestWorkLoadEntity {
-  loadId: string
-  plannedStartTime: string
-  plannedEndTime: string
-  title: string
-}
-
-/**
- * 史詩資料結構
- */
-export interface TestWorkEpicEntity {
-  epicId: string
-  title: string
-  workLoads?: TestWorkLoadEntity[]
-}
-
-/**
  * Firebase Admin 客戶端（單例）
+ * 初始化 Firebase Admin SDK 並提供 Firestore 操作
  */
-class FirebaseAdminClient {
-  private static instance: FirebaseAdminClient
-  private firestore: admin.firestore.Firestore
+export class FirebaseAdminClient {
+  private static instance: FirebaseAdminClient;
+  private firestore: admin.firestore.Firestore;
 
   private constructor() {
     if (!admin.apps.length) {
-      admin.initializeApp()
+      admin.initializeApp();
     }
-    this.firestore = admin.firestore()
+    this.firestore = admin.firestore();
   }
 
+  /**
+   * 取得單例實例
+   */
   static getInstance(): FirebaseAdminClient {
-    return this.instance ?? (this.instance = new FirebaseAdminClient())
+    return this.instance ?? (this.instance = new FirebaseAdminClient());
   }
 
+  /**
+   * 取得 Firestore 實例
+   */
   getFirestore(): admin.firestore.Firestore {
-    return this.firestore
+    return this.firestore;
   }
 }
 
-const firebaseAdminClient = FirebaseAdminClient.getInstance()
-const firestoreAdmin = firebaseAdminClient.getFirestore()
+// 不再直接 export 物件，改為 async 函式
+export async function getFirebaseAdminClient() {
+  return FirebaseAdminClient.getInstance();
+}
 
-/**
- * 取得所有 TestWorkEpicEntity
- */
-export const getAllTestEpics = async (): Promise<{ epics: TestWorkEpicEntity[] }> => {
-  const snapshot = await firestoreAdmin.collection('testEpics').get()
-  const epics: TestWorkEpicEntity[] = []
-  snapshot.forEach(doc => {
-    const data = doc.data() as TestWorkEpicEntity
-    epics.push({
-      ...data,
-      epicId: doc.id,
-      workLoads: data.workLoads ?? []
-    })
-  })
-  return { epics }
+export async function getFirestoreAdmin() {
+  return FirebaseAdminClient.getInstance().getFirestore();
 }
