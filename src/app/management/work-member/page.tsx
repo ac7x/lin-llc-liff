@@ -44,14 +44,14 @@ export default function WorkMemberPage() {
   const [updatedFields, setUpdatedFields] = useState<UpdatedFields>({});
   const [skillsMap, setSkillsMap] = useState<Record<string, string>>({});
 
-  // 載入所有技能 (id -> name)
+  // 載入所有技能 (name -> id)
   useEffect(() => {
     (async () => {
       const snap = await getDocs(collection(firestore, "workSkill"));
       const map: Record<string, string> = {};
       snap.forEach(docSnap => {
         const d = docSnap.data();
-        map[d.id || docSnap.id] = d.name || "";
+        map[d.name || ""] = docSnap.id;
       });
       setSkillsMap(map);
     })();
@@ -109,48 +109,15 @@ export default function WorkMemberPage() {
                     onChange={e => setUpdatedFields(prev => ({ ...prev, name: e.target.value }))} placeholder="姓名" />
                   <input type="text" value={updatedFields.role ?? member.role}
                     onChange={e => setUpdatedFields(prev => ({ ...prev, role: e.target.value }))} placeholder="角色" />
-                  <input type="text" value={updatedFields.skills ?? member.skills.map(skillId => skillsMap[skillId] || skillId).join(", ")}
+                  <input type="text" value={updatedFields.skills ?? member.skills.map(skillId => Object.keys(skillsMap).find(name => skillsMap[name] === skillId) || skillId).join(", ")}
                     onChange={e => setUpdatedFields(prev => ({ ...prev, skills: e.target.value }))} placeholder="技能(逗號分隔)" />
-                  <input type="text" value={updatedFields.email ?? member.contactInfo.email ?? ""}
-                    onChange={e => setUpdatedFields(prev => ({ ...prev, email: e.target.value }))} placeholder="Email" />
-                  <input type="text" value={updatedFields.phone ?? member.contactInfo.phone ?? ""}
-                    onChange={e => setUpdatedFields(prev => ({ ...prev, phone: e.target.value }))} placeholder="電話" />
-                  <input type="text" value={updatedFields.lineId ?? member.contactInfo.lineId ?? ""}
-                    onChange={e => setUpdatedFields(prev => ({ ...prev, lineId: e.target.value }))} placeholder="LineId" />
-                  <select value={updatedFields.availability ?? member.availability}
-                    onChange={e => setUpdatedFields(prev => ({ ...prev, availability: e.target.value as WorkMember["availability"] }))}>
-                    <option value="空閒">空閒</option>
-                    <option value="忙碌">忙碌</option>
-                    <option value="請假">請假</option>
-                    <option value="離線">離線</option>
-                  </select>
-                  <select value={updatedFields.status ?? member.status}
-                    onChange={e => setUpdatedFields(prev => ({ ...prev, status: e.target.value as WorkMember["status"] }))}>
-                    <option value="在職">在職</option>
-                    <option value="離職">離職</option>
-                    <option value="暫停合作">暫停合作</option>
-                    <option value="黑名單">黑名單</option>
-                  </select>
                   <div className="flex gap-2 mt-2">
                     <button
                       onClick={async () => {
-                        const { email, phone, lineId, skills, ...rest } = updatedFields;
+                        const { skills, ...rest } = updatedFields;
                         const updateData: Partial<WorkMember> = { ...rest };
                         if (skills !== undefined) {
-                          // name 轉 id
-                          updateData.skills = skills.split(',').map((name: string) => {
-                            const trimmed = name.trim();
-                            const found = Object.entries(skillsMap).find(([, n]) => n === trimmed);
-                            return found ? found[0] : trimmed;
-                          }).filter(Boolean);
-                        }
-                        if (email !== undefined || phone !== undefined || lineId !== undefined) {
-                          updateData.contactInfo = {
-                            ...(member.contactInfo || {}),
-                            email: email ?? member.contactInfo.email,
-                            phone: phone ?? member.contactInfo.phone,
-                            lineId: lineId ?? member.contactInfo.lineId,
-                          };
+                          updateData.skills = skills.split(',').map(name => skillsMap[name.trim()] || name.trim());
                         }
                         await updateDoc(doc(firestore, "workMember", member.memberId), updateData);
                         setEditingMember(null); setUpdatedFields({});
@@ -162,13 +129,7 @@ export default function WorkMemberPage() {
                 <div className="flex flex-col gap-1">
                   <div className="font-semibold text-lg">{member.name}</div>
                   <div>角色: {member.role}</div>
-                  <div>
-                    技能: {member.skills.map(skillId => skillsMap[skillId] || skillId).join(", ")}
-                  </div>
-                  <div>狀態: {member.availability}</div>
-                  <div>身份: {member.status}</div>
-                  <div>最後活躍: {member.lastActiveTime}</div>
-                  <div>聯絡: {member.contactInfo?.phone || member.contactInfo?.email || "無"}</div>
+                  <div>技能: {member.skills.map(skillId => Object.keys(skillsMap).find(name => skillsMap[name] === skillId) || skillId).join(", ")}</div>
                   <div className="flex gap-2 mt-2">
                     <button onClick={() => setEditingMember(member.memberId)}>編輯</button>
                     <button className="text-red-600" onClick={async () => {
