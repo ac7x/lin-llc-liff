@@ -2,7 +2,7 @@
 
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
-import { addDays } from 'date-fns'
+import { addDays, subDays } from 'date-fns'
 import { collection, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
@@ -76,8 +76,13 @@ const ClientWorkSchedulePage = () => {
 					}))
 			)
 		)
-		const today = new Date()
-		const weekLater = addDays(today, 7)
+
+		const now = new Date()
+		const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+		const start = subDays(today0, 3) // 過去3天
+		const end = addDays(today0, 4)   // 未來4天（含今天）
+		end.setHours(23, 59, 59, 999)    // 包含第7天的最後一刻
+
 		const tl = new Timeline(timelineRef.current, items, groups, {
 			stack: true,
 			orientation: 'top',
@@ -123,14 +128,16 @@ const ClientWorkSchedulePage = () => {
 					year: 'YYYY'
 				}
 			},
-			start: today,
-			end: weekLater
+			// 不設 start/end，直接用 setWindow 控制視窗
 		})
 		timelineInstance.current = tl
 
-		// 一開始就顯示紅線
-		tl.setCurrentTime(today)
-		// 設定定時器，每分鐘刷新紅線
+		// 一開始顯示紅線
+		tl.setCurrentTime(now)
+		// 讓視窗區間為「過去三天～未來四天」並讓紅線居中
+		tl.setWindow(start, end, { animation: false })
+
+		// 定時刷新紅線
 		intervalRef.current = setInterval(() => {
 			const now = new Date()
 			tl.setCurrentTime(now)
