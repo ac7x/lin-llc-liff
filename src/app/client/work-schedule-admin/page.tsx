@@ -210,8 +210,7 @@ export default function TestWorkScheduleAdminPage() {
 
 	return (
 		<div style={{
-			width: '100vw',
-			margin: '0 auto',
+			width: '100%',
 			height: '80vh',
 			overflowX: 'hidden',
 			background: 'black',
