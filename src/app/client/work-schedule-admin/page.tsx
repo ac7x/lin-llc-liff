@@ -1,6 +1,5 @@
 'use client';
 
-import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav';
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { DataSet, Timeline, TimelineOptions } from 'vis-timeline/standalone';
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css';
@@ -8,8 +7,7 @@ import {
 	getAllEpics,
 	unplanWorkLoad,
 	updateWorkLoad,
-	WorkEpicEntity,
-	WorkLoadEntity,
+	WorkEpicEntity
 } from './work-schedule-admin.action';
 
 interface VisItem {
@@ -37,20 +35,16 @@ interface TimelineRemoveEvent {
 
 export default function WorkScheduleAdminPage() {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([]);
-	const [unplanned, setUnplanned] = useState<(WorkLoadEntity & { epicId: string; epicTitle: string })[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [, startTransition] = useTransition();
 	const timelineRef = useRef<HTMLDivElement>(null);
-	const loadToEpicMap = useRef<Record<string, string>>({}); // loadId => epicId
+	const loadToEpicMap = useRef<Record<string, string>>({});
 
-	// 初始化與資料拉取
+	// 初始化與載入
 	useEffect(() => {
 		setLoading(true);
-		getAllEpics().then(({ epics, unplanned }) => {
+		getAllEpics().then(({ epics }) => {
 			setEpics(epics);
-			setUnplanned(unplanned);
-
-			// 建立 loadId -> epicId 對照表
 			const map: Record<string, string> = {};
 			epics.forEach(epic =>
 				(epic.workLoads || []).forEach(wl => {
@@ -62,15 +56,12 @@ export default function WorkScheduleAdminPage() {
 		});
 	}, []);
 
-	// 監控 epics 變動，初始化 vis-timeline
 	useEffect(() => {
-		if (!timelineRef.current || epics.length === 0) {
-			return;
-		}
+		if (!timelineRef.current || epics.length === 0) return;
 
 		const groups: VisGroup[] = epics.map(epic => ({
 			id: epic.epicId,
-			content: `<b>${epic.title}</b>`,
+			content: epic.title,
 		}));
 
 		const items: VisItem[] = epics.flatMap(epic =>
@@ -80,7 +71,7 @@ export default function WorkScheduleAdminPage() {
 					id: wl.loadId,
 					group: epic.epicId,
 					type: 'range',
-					content: `<div><div>${wl.title || '(無標題)'}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}</div></div>`,
+					content: wl.title || '(無標題)',
 					start: new Date(wl.plannedStartTime),
 					end: wl.plannedEndTime && wl.plannedEndTime !== '' ? new Date(wl.plannedEndTime) : undefined,
 				}))
@@ -94,18 +85,13 @@ export default function WorkScheduleAdminPage() {
 			orientation: 'top',
 			editable: { updateTime: true, updateGroup: true, remove: true },
 			locale: 'zh-tw',
-			zoomMin: 24 * 60 * 60 * 1000,
-			zoomMax: 90 * 24 * 60 * 60 * 1000,
 		} as TimelineOptions);
 
-		// 變更（移動/改時間/換分組）同步 Firestore
+		// 明確型別，避免 ESLint any
 		timeline.on('change', async (event: TimelineChangeEvent) => {
 			for (const itemId of event.items) {
 				const itemData = event.data[itemId];
-				if (!itemData) {
-					continue;
-				}
-
+				if (!itemData) continue;
 				const fromEpicId = loadToEpicMap.current[itemId];
 				const toEpicId = itemData.group;
 				await updateWorkLoad(
@@ -116,14 +102,10 @@ export default function WorkScheduleAdminPage() {
 					itemData.end ? itemData.end.toISOString() : null
 				);
 			}
-
-			// 變更後刷新資料
 			startTransition(() => {
 				setLoading(true);
-				getAllEpics().then(({ epics, unplanned }) => {
+				getAllEpics().then(({ epics }) => {
 					setEpics(epics);
-					setUnplanned(unplanned);
-
 					const map: Record<string, string> = {};
 					epics.forEach(epic =>
 						(epic.workLoads || []).forEach(wl => {
@@ -136,17 +118,14 @@ export default function WorkScheduleAdminPage() {
 			});
 		});
 
-		// 移除（unplan）
 		timeline.on('remove', async (event: TimelineRemoveEvent) => {
 			for (const itemId of event.items) {
 				await unplanWorkLoad(itemId);
 			}
 			startTransition(() => {
 				setLoading(true);
-				getAllEpics().then(({ epics, unplanned }) => {
+				getAllEpics().then(({ epics }) => {
 					setEpics(epics);
-					setUnplanned(unplanned);
-
 					const map: Record<string, string> = {};
 					epics.forEach(epic =>
 						(epic.workLoads || []).forEach(wl => {
@@ -164,46 +143,9 @@ export default function WorkScheduleAdminPage() {
 	}, [epics.length]);
 
 	return (
-		<div className="min-h-screen w-full bg-black flex flex-col">
-			<div className="flex-none h-[20vh]" />
-			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
-				{loading && (
-					<div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
-						<div className="text-white">資料載入中...</div>
-					</div>
-				)}
-				<div
-					className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden"
-					ref={timelineRef}
-					style={{ minWidth: '100vw' }}
-				/>
-			</div>
-			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2 overflow-y-auto">
-				<div className="max-w-7xl mx-auto h-full flex flex-col">
-					<h2 className="text-lg font-bold text-center text-white mb-2">未排班工作</h2>
-					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
-						{unplanned.length === 0 ? (
-							<div className="text-gray-400">（無）</div>
-						) : (
-							unplanned.map(wl => (
-								<div
-									key={wl.loadId}
-									className="bg-yellow-50 border rounded px-3 py-2 text-sm"
-									title={`來自 ${wl.epicTitle}`}
-								>
-									<div>{wl.title || '(無標題)'}</div>
-									<div className="text-xs text-gray-400">
-										{Array.isArray(wl.executor)
-											? wl.executor.join(', ')
-											: wl.executor || '(無執行者)'}
-									</div>
-								</div>
-							))
-						)}
-					</div>
-				</div>
-			</div>
-			<ClientBottomNav />
+		<div style={{ width: '100vw', height: '70vh' }}>
+			{loading && <div>Loading...</div>}
+			<div ref={timelineRef} style={{ width: '100%', height: '100%' }} />
 		</div>
 	);
 }

@@ -2,92 +2,30 @@
 
 import { firestoreAdmin } from '@/modules/shared/infrastructure/persistence/firebase-admin/adminApp';
 
-/**
- * 工作負載實體
- */
 export interface WorkLoadEntity {
   loadId: string;
-  taskId?: string;
-  plannedQuantity?: number;
-  unit?: string;
   plannedStartTime: string;
   plannedEndTime: string;
-  actualQuantity?: number;
-  executor: string[];
   title: string;
-  notes?: string;
-  epicIds?: string[];
 }
 
-/**
- * 工作主題（Epic）實體
- */
 export interface WorkEpicEntity {
   epicId: string;
   title: string;
-  startDate: string;
-  endDate: string;
-  insuranceStatus?: '無' | '有';
-  insuranceDate?: string;
-  owner: { memberId: string; name: string };
-  siteSupervisors?: { memberId: string; name: string }[];
-  safetyOfficers?: { memberId: string; name: string }[];
-  status: '待開始' | '進行中' | '已完成' | '已取消';
-  priority: number;
-  region: '北部' | '中部' | '南部' | '東部' | '離島';
-  address: string;
-  createdAt: string;
-  workZones?: unknown[];
-  workTypes?: unknown[];
-  workFlows?: unknown[];
-  workTasks?: unknown[];
   workLoads?: WorkLoadEntity[];
 }
 
-/**
- * ISO 日期格式安全轉換
- * @param date 可為 string、number、Date、undefined 或 null
- * @returns 成功則為 ISO 字串，否則為空字串
- */
-function toISO(date: string | number | Date | undefined | null): string {
-  if (!date) {
-    return '';
-  }
-  const d = new Date(date);
-  return isNaN(d.getTime()) ? '' : d.toISOString();
-}
-
-/**
- * 取得所有 Epic 及未排班工作
- * @returns {Promise<{ epics: WorkEpicEntity[]; unplanned: (WorkLoadEntity & { epicId: string; epicTitle: string })[] }>}
- */
-export async function getAllEpics(): Promise<{
-  epics: WorkEpicEntity[];
-  unplanned: (WorkLoadEntity & { epicId: string; epicTitle: string })[];
-}> {
+/** 取得所有 Epic 及其工作 */
+export async function getAllEpics(): Promise<{ epics: WorkEpicEntity[] }> {
   const snapshot = await firestoreAdmin.collection('workEpic').get();
   const epics: WorkEpicEntity[] = snapshot.docs.map(doc => ({
     ...(doc.data() as object),
-    epicId: doc.id,
+    epicId: doc.id
   }) as WorkEpicEntity);
-
-  const unplanned = epics.flatMap(e =>
-    (e.workLoads || [])
-      .filter(l => !l.plannedStartTime || l.plannedStartTime === '')
-      .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
-  );
-
-  return { epics, unplanned };
+  return { epics };
 }
 
-/**
- * 支援 vis-timeline 實時同步：移動、調整長度、換分組
- * @param fromEpicId 原 epicId
- * @param loadId 負載ID
- * @param toEpicId 目的 epicId（可相同）
- * @param start 開始時間
- * @param end 結束時間
- */
+/** 更新工作位置/時間 */
 export async function updateWorkLoad(
   fromEpicId: string,
   loadId: string,
@@ -96,61 +34,37 @@ export async function updateWorkLoad(
   end: string | null
 ): Promise<void> {
   if (fromEpicId === toEpicId) {
-    // 僅調整時間
     const epicRef = firestoreAdmin.collection('workEpic').doc(fromEpicId);
     await firestoreAdmin.runTransaction(async transaction => {
       const epicDoc = await transaction.get(epicRef);
-      if (!epicDoc.exists) {
-        throw new Error('Epic 不存在');
-      }
+      if (!epicDoc.exists) return;
       const data = epicDoc.data();
-      if (!data) {
-        throw new Error('Epic 資料為空');
-      }
+      if (!data) return;
       const workLoads: WorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : [];
       const idx = workLoads.findIndex(wl => wl.loadId === loadId);
-      if (idx === -1) {
-        throw new Error('WorkLoad 不存在');
-      }
-      workLoads[idx].plannedStartTime = toISO(start);
-      workLoads[idx].plannedEndTime = end ? toISO(end) : '';
+      if (idx === -1) return;
+      workLoads[idx].plannedStartTime = start;
+      workLoads[idx].plannedEndTime = end ?? '';
       transaction.update(epicRef, { workLoads });
     });
   } else {
-    // 換分組（Epic）
     const fromRef = firestoreAdmin.collection('workEpic').doc(fromEpicId);
     const toRef = firestoreAdmin.collection('workEpic').doc(toEpicId);
     await firestoreAdmin.runTransaction(async transaction => {
       const fromDoc = await transaction.get(fromRef);
       const toDoc = await transaction.get(toRef);
-
-      if (!fromDoc.exists) {
-        throw new Error('來源 Epic 不存在');
-      }
-      if (!toDoc.exists) {
-        throw new Error('目的 Epic 不存在');
-      }
-
+      if (!fromDoc.exists || !toDoc.exists) return;
       const fromData = fromDoc.data();
       const toData = toDoc.data();
-
-      if (!fromData) {
-        throw new Error('來源 Epic 資料為空');
-      }
-      if (!toData) {
-        throw new Error('目的 Epic 資料為空');
-      }
-
+      if (!fromData || !toData) return;
       const fromLoads: WorkLoadEntity[] = Array.isArray(fromData.workLoads) ? fromData.workLoads : [];
       const toLoads: WorkLoadEntity[] = Array.isArray(toData.workLoads) ? toData.workLoads : [];
       const idx = fromLoads.findIndex(wl => wl.loadId === loadId);
-      if (idx === -1) {
-        throw new Error('WorkLoad 不存在');
-      }
-      const moved: WorkLoadEntity = {
+      if (idx === -1) return;
+      const moved = {
         ...fromLoads[idx],
-        plannedStartTime: toISO(start),
-        plannedEndTime: end ? toISO(end) : '',
+        plannedStartTime: start,
+        plannedEndTime: end ?? ''
       };
       fromLoads.splice(idx, 1);
       toLoads.push(moved);
@@ -160,17 +74,12 @@ export async function updateWorkLoad(
   }
 }
 
-/**
- * 將工作項目設為未排班（移除排程）
- * @param loadId 工作負載ID
- */
+/** 解除排程（刪除） */
 export async function unplanWorkLoad(loadId: string): Promise<void> {
   const snapshot = await firestoreAdmin.collection('workEpic').get();
   for (const doc of snapshot.docs) {
     const data = doc.data();
-    if (!data) {
-      continue;
-    }
+    if (!data) continue;
     const workLoads: WorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : [];
     const idx = workLoads.findIndex(wl => wl.loadId === loadId);
     if (idx !== -1) {
