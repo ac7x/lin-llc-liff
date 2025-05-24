@@ -65,11 +65,20 @@ const WorkScheduleAdminPage: React.FC = () => {
 		fetchEpics()
 	}, [])
 
-	const groups = useMemo(() =>
-		epics.map((e) => ({
+	const groupCount = 30
+	const groups = useMemo(() => {
+		const filledEpics = [...epics]
+		while (filledEpics.length < groupCount) {
+			filledEpics.push({
+				epicId: `empty-${filledEpics.length}`,
+				title: ''
+			})
+		}
+		return filledEpics.map(e => ({
 			id: e.epicId,
 			title: e.title
-		})), [epics])
+		}))
+	}, [epics])
 
 	const items = useMemo(() =>
 		epics.flatMap((e) =>
