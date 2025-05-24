@@ -75,10 +75,10 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
             if (shouldClose) setActivePopover(null);
         };
         if (activePopover) {
-            document.addEventListener('click', handleClick);
+            document.addEventListener('mousedown', handleClick);
         }
         return () => {
-            document.removeEventListener('click', handleClick);
+            document.removeEventListener('mousedown', handleClick);
         };
     }, [activePopover]);
 
