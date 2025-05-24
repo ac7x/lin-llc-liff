@@ -212,20 +212,24 @@ const WorkScheduleAdminPage: React.FC = () => {
 			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2">
 				<div className="w-full h-full flex flex-col">
 					<h2 className="text-lg font-bold text-center text-white mb-2 tracking-wide">未排班工作</h2>
-					<div className="flex flex-wrap gap-4 overflow-auto max-h-full w-full">
+					<div className="flex flex-wrap gap-3 overflow-y-auto pb-16">
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400 text-center w-full">（無）</div>
 						) : unplanned.map(wl => (
 							<div
 								key={wl.loadId}
-								className="bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-3 text-base shadow-sm
-									hover:bg-yellow-100 transition-colors flex flex-col justify-between
-									min-w-[220px] flex-1"
-								style={{ maxWidth: 320 }}
+								className="
+									bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2.5
+									hover:bg-yellow-100 transition-all hover:shadow-md
+									flex flex-col justify-between gap-2
+									w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] lg:w-[calc(25%-0.5625rem)]
+								"
 								title={`來自 ${wl.epicTitle}`}
 							>
-								<div className="font-medium text-gray-700">{wl.title || '(無標題)'}</div>
-								<div className="text-xs text-gray-500 mt-1">
+								<div className="font-medium text-gray-700 text-sm line-clamp-2">
+									{wl.title || '(無標題)'}
+								</div>
+								<div className="text-xs text-gray-500">
 									{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
 								</div>
 							</div>
