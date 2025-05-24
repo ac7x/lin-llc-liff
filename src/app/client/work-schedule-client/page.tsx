@@ -126,6 +126,7 @@ const ClientWorkSchedulePage = () => {
 			start: today,
 			end: weekLater
 		})
+		tl.setCurrentTime(today) // 顯示紅線定位今天
 		return () => { tl.destroy() }
 	}, [epics])
 
