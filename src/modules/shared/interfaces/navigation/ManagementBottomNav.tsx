@@ -75,7 +75,7 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                 paddingBottom: 'env(safe-area-inset-bottom)'
             }}
         >
-            <div className="flex h-full mx-auto justify-between items-end overflow-x-auto w-full">
+            <div className="flex h-full mx-auto justify-between items-end overflow-x-visible w-full">
                 {navItems.map((item, index) => {
                     if (item.label === '成員管理') {
                         return (
