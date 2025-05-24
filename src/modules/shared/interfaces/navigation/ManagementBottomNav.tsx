@@ -14,7 +14,7 @@ const navItems = [
     },
     {
         icon: '🗂️',
-        label: '工作模組',
+        label: '工區',
         popover: [
             { label: '工作任務', href: '/management/work-task' },
             { label: '工作史詩', href: '/management/work-epic' },
@@ -23,7 +23,7 @@ const navItems = [
     },
     {
         icon: '👤',
-        label: '成員管理',
+        label: '團隊',
         popover: [
             { label: '技能管理', href: '/management/work-skill' },
             { label: '成員列表', href: '/management/work-member' },
