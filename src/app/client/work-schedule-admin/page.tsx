@@ -8,25 +8,39 @@ import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { getAllTestEpics, TestWorkEpicEntity } from './work-schedule-admin.action'
 
-const eventHandlers = {
-	// 操作事件
-	add: (props: any) => { console.log('add', props) },
-	update: (props: any) => { console.log('update', props) },
-	remove: (props: any) => { console.log('remove', props) },
-	change: (props: any) => { console.log('change', props) },
-	// 使用者互動
-	select: (props: any) => { console.log('select', props) },
-	deselect: (props: any) => { console.log('deselect', props) },
-	click: (props: any) => { console.log('click', props) },
-	doubleClick: (props: any) => { console.log('doubleClick', props) },
-	contextmenu: (props: any) => { console.log('contextmenu', props) },
-	// 時間軸範圍
-	rangechange: (props: any) => { console.log('rangechange', props) },
-	rangechanged: (props: any) => { console.log('rangechanged', props) },
-	// 拖曳
-	dragStart: (props: any) => { console.log('dragStart', props) },
-	dragEnd: (props: any) => { console.log('dragEnd', props) },
-	move: (props: any) => { console.log('move', props) }
+type TimelineEventProps = Record<string, unknown>
+
+const eventHandlers: Record<
+	| 'add'
+	| 'update'
+	| 'remove'
+	| 'change'
+	| 'select'
+	| 'deselect'
+	| 'click'
+	| 'doubleClick'
+	| 'contextmenu'
+	| 'rangechange'
+	| 'rangechanged'
+	| 'dragStart'
+	| 'dragEnd'
+	| 'move',
+	(props: TimelineEventProps) => void
+> = {
+	add: (props) => { console.log('add', props) },
+	update: (props) => { console.log('update', props) },
+	remove: (props) => { console.log('remove', props) },
+	change: (props) => { console.log('change', props) },
+	select: (props) => { console.log('select', props) },
+	deselect: (props) => { console.log('deselect', props) },
+	click: (props) => { console.log('click', props) },
+	doubleClick: (props) => { console.log('doubleClick', props) },
+	contextmenu: (props) => { console.log('contextmenu', props) },
+	rangechange: (props) => { console.log('rangechange', props) },
+	rangechanged: (props) => { console.log('rangechanged', props) },
+	dragStart: (props) => { console.log('dragStart', props) },
+	dragEnd: (props) => { console.log('dragEnd', props) },
+	move: (props) => { console.log('move', props) }
 }
 
 const WorkScheduleAdminPage = () => {
@@ -72,13 +86,12 @@ const WorkScheduleAdminPage = () => {
 		const timeline = new Timeline(timelineRef.current, items, groups, {
 			stack: true,
 			orientation: 'top',
-			editable: true, // 改 true：才能觸發 add/update/remove/drag 事件
+			editable: true, // 必須為 true 才能觸發 add/update/remove/drag 事件
 			locale: 'zh-tw',
 			zoomMin: 24 * 60 * 60 * 1000,
 			zoomMax: 90 * 24 * 60 * 60 * 1000
 		})
 
-		// 一行註冊所有事件
 		Object.entries(eventHandlers).forEach(([event, handler]) => {
 			timeline.on(event, handler)
 		})
@@ -88,12 +101,10 @@ const WorkScheduleAdminPage = () => {
 	}, [epics])
 
 	return (
-		<div style={{ minHeight: '100vh', width: '100vw', overflowX: 'auto' }}>
+		<div>
 			{loading && <div>Loading...</div>}
-			<div style={{ height: 600, width: '100%' }}>
-				<h3>電影屏</h3>
-				<div ref={timelineRef} style={{ width: '100%', height: 350, background: '#fff' }} />
-			</div>
+			<h3>電影屏</h3>
+			<div ref={timelineRef} style={{ width: '100vw', height: 350, background: '#fff', margin: 0, padding: 0 }} />
 			<ClientBottomNav />
 		</div>
 	)
