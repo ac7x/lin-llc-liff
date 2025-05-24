@@ -1,7 +1,7 @@
 'use client'
 
-import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
-import { initializeApp } from "firebase/app"
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
+import { initializeApp } from "firebase/app";
 import {
 	collection,
 	doc,
@@ -9,12 +9,12 @@ import {
 	getFirestore,
 	QueryDocumentSnapshot,
 	updateDoc,
-} from "firebase/firestore"
-import moment from 'moment'
-import React, { useEffect, useMemo, useState } from "react"
-import Timeline from "react-calendar-timeline"
-import 'react-calendar-timeline/style.css'
-import { useCollection } from "react-firebase-hooks/firestore"
+} from "firebase/firestore";
+import moment from 'moment';
+import React, { useEffect, useMemo, useState } from "react";
+import Timeline from "react-calendar-timeline";
+import 'react-calendar-timeline/style.css';
+import { useCollection } from "react-firebase-hooks/firestore";
 
 // Firebase config
 const firebaseConfig = {
@@ -222,7 +222,7 @@ const ClientWorkSchedulePage: React.FC = () => {
 					</div>
 				</div>
 			</div>
-			<ClientBottomNav />
+			<ManagementBottomNav />
 		</div>
 	)
 }

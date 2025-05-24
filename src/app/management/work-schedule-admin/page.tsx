@@ -1,6 +1,6 @@
 'use client'
 
-import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav'
 import moment from 'moment'
 import React, { useEffect, useMemo, useState } from "react"
 import Timeline from "react-calendar-timeline"
@@ -229,7 +229,7 @@ const ClientWorkSchedulePage: React.FC = () => {
 					</div>
 				</div>
 			</div>
-			<ClientBottomNav />
+			<ManagementBottomNav />
 		</div>
 	)
 }
