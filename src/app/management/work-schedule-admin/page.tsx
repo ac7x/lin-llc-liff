@@ -209,10 +209,12 @@ const WorkScheduleAdminPage: React.FC = () => {
 					/>
 				</div>
 			</div>
-			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2">
-				<div className="w-full h-full flex flex-col">
-					<h2 className="text-lg font-bold text-center text-white mb-2 tracking-wide">未排班工作</h2>
-					<div className="flex flex-wrap gap-3 overflow-y-auto pb-16">
+			<div className="flex-none h-[20vh] w-full bg-black">
+				<div className="w-full h-full flex flex-col p-4 max-w-[100vw] mx-auto">
+					<h2 className="text-lg font-bold text-center text-white mb-2 tracking-wide">
+						未排班工作
+					</h2>
+					<div className="flex flex-wrap gap-3 overflow-y-auto pb-16 px-0.5">
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400 text-center w-full">（無）</div>
 						) : unplanned.map(wl => (
