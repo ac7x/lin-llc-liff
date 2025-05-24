@@ -46,18 +46,17 @@ const ClientWorkSchedulePage = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 	const timelineRef = useRef<HTMLDivElement>(null)
-	const timelineInstance = useRef<Timeline | null>(null)
 	const [epicSnapshot, epicLoading] = useCollection(collection(firestore, 'workEpic'))
 
 	useEffect(() => {
-		if (!epicSnapshot) { return }
+		if (!epicSnapshot) return
 		const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs)
 		setEpics(epics)
 		setUnplanned(unplanned)
 	}, [epicSnapshot])
 
 	useEffect(() => {
-		if (!timelineRef.current || !epics.length) { return }
+		if (!timelineRef.current || !epics.length) return
 		const groups = new DataSet(epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` })))
 		const items = new DataSet(
 			epics.flatMap(e =>
@@ -78,9 +77,9 @@ const ClientWorkSchedulePage = () => {
 
 		const now = new Date()
 		const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-		const start = subDays(today0, 3) // 過去3天
-		const end = addDays(today0, 4)   // 未來4天（含今天）
-		end.setHours(23, 59, 59, 999)    // 包含第7天的最後一刻
+		const start = subDays(today0, 3)
+		const end = addDays(today0, 4)
+		end.setHours(23, 59, 59, 999)
 
 		const tl = new Timeline(timelineRef.current, items, groups, {
 			stack: true,
@@ -110,7 +109,7 @@ const ClientWorkSchedulePage = () => {
 					daysShort: ['日', '一', '二', '三', '四', '五', '六'],
 				}
 			},
-			zoomMin: 7 * 24 * 60 * 60 * 1000, // 一週
+			zoomMin: 7 * 24 * 60 * 60 * 1000,
 			zoomMax: 30 * 24 * 60 * 60 * 1000,
 			timeAxis: { scale: 'day', step: 1 },
 			format: {
@@ -126,17 +125,11 @@ const ClientWorkSchedulePage = () => {
 					month: 'YYYY/MM',
 					year: 'YYYY'
 				}
-			},
-			// 不設 start/end，直接用 setWindow 控制視窗
+			}
 		})
-		timelineInstance.current = tl
-
-		// 讓視窗區間為「過去三天～未來四天」
 		tl.setWindow(start, end, { animation: false })
 
-		return () => {
-			tl.destroy()
-		}
+		return () => { tl.destroy() }
 	}, [epics])
 
 	return (
@@ -156,19 +149,17 @@ const ClientWorkSchedulePage = () => {
 			<div className="flex-none h-[30vh] w-full px-4 py-4 bg-blue-50 rounded-t-3xl shadow-inner">
 				<div className="w-full h-full flex flex-col">
 					<h2 className="text-lg font-bold text-center text-blue-800 mb-2 tracking-wide">未排班工作</h2>
-					<div
-						className="flex flex-wrap gap-4 overflow-auto max-h-full w-full"
-					>
+					<div className="flex flex-wrap gap-4 overflow-auto max-h-full w-full">
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400 text-center w-full">（無）</div>
 						) : unplanned.map(wl => (
 							<div
 								key={wl.loadId}
 								className="
-									bg-white border border-blue-200 rounded-xl px-4 py-3 text-base shadow-sm
-									hover:bg-blue-100 transition-colors flex flex-col justify-between
-									min-w-[220px] flex-1
-								"
+                  bg-white border border-blue-200 rounded-xl px-4 py-3 text-base shadow-sm
+                  hover:bg-blue-100 transition-colors flex flex-col justify-between
+                  min-w-[220px] flex-1
+                "
 								style={{ maxWidth: 320 }}
 								title={`來自 ${wl.epicTitle}`}
 							>
