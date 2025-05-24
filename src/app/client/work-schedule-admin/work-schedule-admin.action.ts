@@ -1,141 +1,53 @@
-"use server";
+// src/app/client/work-schedule-admin/work-schedule-admin.action.ts
 
-import { firestoreAdmin } from '@/modules/shared/infrastructure/persistence/firebase-admin/adminApp';
-import { FieldValue } from 'firebase-admin/firestore';
+// 用記憶體暫存資料（重啟伺服器就會歸零）
+let epics: TestWorkEpicEntity[] = []
 
 export interface TestWorkLoadEntity {
-  loadId: string;
-  plannedStartTime: string;
-  plannedEndTime: string;
-  title: string;
+  loadId: string
+  plannedStartTime: string
+  plannedEndTime: string
+  title: string
 }
 
 export interface TestWorkEpicEntity {
-  epicId: string;
-  title: string;
-  workLoads?: TestWorkLoadEntity[];
+  epicId: string
+  title: string
+  workLoads?: TestWorkLoadEntity[]
 }
 
-/** 取得所有 Epic 及其工作 */
 export async function getAllTestEpics(): Promise<{ epics: TestWorkEpicEntity[] }> {
-  const snapshot = await firestoreAdmin.collection('testEpics').get();
-  const epics: TestWorkEpicEntity[] = snapshot.docs.map(doc => ({
-    ...(doc.data() as object),
-    epicId: doc.id
-  }) as TestWorkEpicEntity);
-  return { epics };
+  return { epics }
 }
 
-/** 新增 Epic */
 export async function createTestEpic(title: string): Promise<void> {
-  await firestoreAdmin.collection('testEpics').add({
+  epics.push({
+    epicId: Math.random().toString(36).slice(2, 10),
     title,
     workLoads: [],
-  });
+  })
 }
 
-/** 新增工作到指定 Epic */
 export async function createTestWorkLoad(epicId: string, title: string, start: string, end: string): Promise<void> {
-  const epicRef = firestoreAdmin.collection('testEpics').doc(epicId);
-  await epicRef.update({
-    workLoads: FieldValue.arrayUnion({
-      loadId: Math.random().toString(36).substring(2, 10),
+  const epic = epics.find(e => e.epicId === epicId)
+  if (epic) {
+    epic.workLoads = epic.workLoads || []
+    epic.workLoads.push({
+      loadId: Math.random().toString(36).slice(2, 10),
       title,
       plannedStartTime: start,
       plannedEndTime: end,
-    }),
-  });
-}
-
-/** 更新工作位置/時間 */
-export async function updateTestWorkLoad(
-  fromEpicId: string,
-  loadId: string,
-  toEpicId: string,
-  start: string,
-  end: string | null
-): Promise<void> {
-  try {
-    if (fromEpicId === toEpicId) {
-      const epicRef = firestoreAdmin.collection('testEpics').doc(fromEpicId);
-      await firestoreAdmin.runTransaction(async transaction => {
-        const epicDoc = await transaction.get(epicRef);
-        if (!epicDoc.exists) throw new Error('Epic not found');
-        const data = epicDoc.data();
-        if (!data) throw new Error('Epic data not found');
-        const workLoads: TestWorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : [];
-        const idx = workLoads.findIndex(wl => wl.loadId === loadId);
-        if (idx === -1) throw new Error('WorkLoad not found');
-        workLoads[idx].plannedStartTime = start;
-        workLoads[idx].plannedEndTime = end ?? '';
-        transaction.update(epicRef, { workLoads });
-      });
-    } else {
-      const fromRef = firestoreAdmin.collection('testEpics').doc(fromEpicId);
-      const toRef = firestoreAdmin.collection('testEpics').doc(toEpicId);
-      await firestoreAdmin.runTransaction(async transaction => {
-        const fromDoc = await transaction.get(fromRef);
-        const toDoc = await transaction.get(toRef);
-        if (!fromDoc.exists || !toDoc.exists) throw new Error('Epic not found');
-        const fromData = fromDoc.data();
-        const toData = toDoc.data();
-        if (!fromData || !toData) throw new Error('Epic data not found');
-        const fromLoads: TestWorkLoadEntity[] = Array.isArray(fromData.workLoads) ? fromData.workLoads : [];
-        const toLoads: TestWorkLoadEntity[] = Array.isArray(toData.workLoads) ? toData.workLoads : [];
-        const idx = fromLoads.findIndex(wl => wl.loadId === loadId);
-        if (idx === -1) throw new Error('WorkLoad not found');
-        const moved = {
-          ...fromLoads[idx],
-          plannedStartTime: start,
-          plannedEndTime: end ?? ''
-        };
-        fromLoads.splice(idx, 1);
-        toLoads.push(moved);
-        transaction.update(fromRef, { workLoads: fromLoads });
-        transaction.update(toRef, { workLoads: toLoads });
-      });
-    }
-  } catch (error) {
-    console.error('Error updating workload:', error);
-    throw error;
+    })
   }
 }
 
-/** 解除排程（清空時間） */
-export async function unplanTestWorkLoad(loadId: string): Promise<void> {
-  const snapshot = await firestoreAdmin.collection('testEpics').get();
-  for (const doc of snapshot.docs) {
-    const data = doc.data();
-    if (!data) continue;
-    const workLoads: TestWorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : [];
-    const idx = workLoads.findIndex(wl => wl.loadId === loadId);
-    if (idx !== -1) {
-      workLoads[idx].plannedStartTime = '';
-      workLoads[idx].plannedEndTime = '';
-      await firestoreAdmin.collection('testEpics').doc(doc.id).update({ workLoads });
-      break;
-    }
-  }
-}
-
-/** 徹底從陣列移除 */
 export async function deleteTestWorkLoad(loadId: string): Promise<void> {
-  try {
-    const snapshot = await firestoreAdmin.collection('testEpics').get();
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-      if (!data) continue;
-      const workLoads: TestWorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : [];
-      const idx = workLoads.findIndex(wl => wl.loadId === loadId);
-      if (idx !== -1) {
-        const newWorkLoads = [...workLoads];
-        newWorkLoads.splice(idx, 1);
-        await firestoreAdmin.collection('testEpics').doc(doc.id).update({ workLoads: newWorkLoads });
-        break;
-      }
+  for (const epic of epics) {
+    if (!epic.workLoads) continue
+    const idx = epic.workLoads.findIndex(wl => wl.loadId === loadId)
+    if (idx !== -1) {
+      epic.workLoads.splice(idx, 1)
+      break
     }
-  } catch (error) {
-    console.error('Error deleting workload:', error);
-    throw error;
   }
 }
