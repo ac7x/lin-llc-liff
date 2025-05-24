@@ -9,7 +9,7 @@ import {
 	createTestWorkLoad,
 	deleteTestWorkLoad,
 	getAllTestEpics,
-	updateTestWorkLoad
+	updateTestWorkLoad,
 } from './work-schedule-admin.action';
 
 interface VisItem {
@@ -46,6 +46,7 @@ export default function TestWorkScheduleAdminPage() {
 	const [workTitle, setWorkTitle] = useState('');
 	const [workStart, setWorkStart] = useState('');
 	const [workEnd, setWorkEnd] = useState('');
+	const dragCache = useRef<Record<string, { group: string; start: Date; end?: Date }>>({});
 
 	function refresh() {
 		setLoading(true);
@@ -97,28 +98,90 @@ export default function TestWorkScheduleAdminPage() {
 			locale: 'zh-tw',
 		} as TimelineOptions);
 
+		// ----------- 這裡是 dragStart 的安全實作 -----------
+		timeline.on('dragStart', function (props: { items: string[] }) {
+			if (props && Array.isArray(props.items)) {
+				props.items.forEach((itemId: string) => {
+					const item = visItems.get(itemId);
+					const singleItem = Array.isArray(item) ? item[0] : item;
+					if (singleItem) {
+						dragCache.current[itemId] = {
+							group: singleItem.group,
+							start: singleItem.start,
+							end: singleItem.end,
+						};
+					}
+				});
+			}
+		});
+
+		// ----------- 這裡是 dragEnd 的安全實作 -----------
+		timeline.on('dragEnd', async function (props: { items: string[] }) {
+			if (props && Array.isArray(props.items)) {
+				for (const itemId of props.items) {
+					const old = dragCache.current[itemId];
+					const item = visItems.get(itemId);
+					const singleItem = Array.isArray(item) ? item[0] : item;
+					if (!singleItem || !old) continue;
+
+					const groupChanged = old.group !== singleItem.group;
+					const startChanged = old.start?.toISOString() !== singleItem.start?.toISOString();
+					const endChanged =
+						(old.end?.toISOString?.() || '') !== (singleItem.end?.toISOString?.() || '');
+					if (groupChanged || startChanged || endChanged) {
+						const fromEpicId = old.group;
+						const toEpicId = singleItem.group;
+						try {
+							await updateTestWorkLoad(
+								fromEpicId,
+								itemId,
+								toEpicId,
+								singleItem.start.toISOString(),
+								singleItem.end ? singleItem.end.toISOString() : null
+							);
+						} catch (e) {
+							alert('即時同步失敗');
+							console.error(e);
+						}
+						startTransition(refresh);
+					}
+					delete dragCache.current[itemId];
+				}
+			}
+		});
+
+		// 變更fallback（保險）
 		timeline.on('change', async (event: TimelineChangeEvent) => {
 			for (const itemId of event.items) {
 				const itemData = event.data[itemId];
 				if (!itemData) continue;
 				const fromEpicId = loadToEpicMap.current[itemId];
 				const toEpicId = itemData.group;
-				await updateTestWorkLoad(
-					fromEpicId,
-					itemId,
-					toEpicId,
-					itemData.start.toISOString(),
-					itemData.end ? itemData.end.toISOString() : null
-				);
+				try {
+					await updateTestWorkLoad(
+						fromEpicId,
+						itemId,
+						toEpicId,
+						itemData.start.toISOString(),
+						itemData.end ? itemData.end.toISOString() : null
+					);
+				} catch (e) {
+					alert('資料庫同步失敗');
+					console.error(e);
+				}
 			}
 			startTransition(refresh);
 		});
 
-		// 解除排程（只清空時間）或改成徹底刪除
+		// 移除
 		timeline.on('remove', async (event: TimelineRemoveEvent) => {
 			for (const itemId of event.items) {
-				// await unplanTestWorkLoad(itemId); // 只清空時間
-				await deleteTestWorkLoad(itemId);   // 徹底刪除
+				try {
+					await deleteTestWorkLoad(itemId);
+				} catch (e) {
+					alert('刪除失敗');
+					console.error(e);
+				}
 			}
 			startTransition(refresh);
 		});
