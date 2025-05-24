@@ -192,7 +192,6 @@ const ClientWorkScheduleAdminPage: React.FC = () => {
 						onItemMove={handleItemMove}
 						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
 						onItemDoubleClick={handleItemRemove}
-						className="!bg-gray-900 !text-white"
 						itemRenderer={({ item, getItemProps, getResizeProps }) => {
 							const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
 							const color = groupColorMap[item.group] || '#fbbf24'
