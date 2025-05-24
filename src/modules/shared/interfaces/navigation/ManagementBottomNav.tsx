@@ -1,28 +1,13 @@
 'use client';
-
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-interface NavItem {
-    href: string;
-    icon: ReactNode;
-    label: string;
-    active: boolean;
-    popoverLinks?: { label: string; href: string }[];
-}
-
-interface ManagementBottomNavProps {
-    items?: NavItem[];
-}
-
-const defaultAdminNavItems: NavItem[] = [
+const navItems = [
     {
         href: '/management/schedule-module',
         icon: '📆',
         label: '日程',
-        active: false,
-        popoverLinks: [
+        popover: [
             { label: '排程客戶', href: '/management/schedule-module/customer' },
             { label: '排程後端', href: '/management/schedule-module/backend' },
             { label: '儀表板', href: '/management/schedule-module/dashboard' },
@@ -32,8 +17,7 @@ const defaultAdminNavItems: NavItem[] = [
         href: '/management/work-module',
         icon: '🗂️',
         label: '工作模組',
-        active: false,
-        popoverLinks: [
+        popover: [
             { label: '工作任務', href: '/management/work-module/task' },
             { label: '工作史詩', href: '/management/work-module/epic' },
             { label: '工作範本', href: '/management/work-module/template' },
@@ -43,113 +27,127 @@ const defaultAdminNavItems: NavItem[] = [
         href: '/management/member-management',
         icon: '👤',
         label: '成員管理',
-        active: false,
-        popoverLinks: [
+        popover: [
             { label: '技能管理', href: '/management/member-management/skills' },
             { label: '成員列表', href: '/management/member-management/list' },
         ],
     },
 ];
 
-export function ManagementBottomNav({ items = defaultAdminNavItems }: ManagementBottomNavProps) {
-    const pathname = usePathname();
-    const [activePopover, setActivePopover] = useState<string | null>(null);
+export default function ManagementBottomNav() {
+    const [open, setOpen] = useState<number | null>(null);
+    const popoverRef = useRef<HTMLDivElement | null>(null);
 
-    // Popover refs
-    const popoverRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-    const btnRefs = useRef<{ [key: string]: HTMLAnchorElement | null }>({});
-
-    // 點擊外部收起 popover
     useEffect(() => {
-        const handleClick = (e: MouseEvent) => {
-            const target = e.target as Node;
-            let shouldClose = true;
-            Object.keys(popoverRefs.current).forEach(key => {
-                if (
-                    (btnRefs.current[key] && btnRefs.current[key]!.contains(target)) ||
-                    (popoverRefs.current[key] && popoverRefs.current[key]!.contains(target))
-                ) {
-                    shouldClose = false;
-                }
-            });
-            if (shouldClose) setActivePopover(null);
+        const handle = (e: MouseEvent) => {
+            if (
+                popoverRef.current &&
+                !popoverRef.current.contains(e.target as Node)
+            ) setOpen(null);
         };
-        if (activePopover) {
-            document.addEventListener('click', handleClick);
-        }
-        return () => {
-            document.removeEventListener('click', handleClick);
-        };
-    }, [activePopover]);
-
-    const navItems = (items && items.length > 0 ? items : defaultAdminNavItems).map(item => ({
-        ...item,
-        active: pathname === item.href,
-    }));
+        if (open !== null) document.addEventListener('mousedown', handle);
+        return () => document.removeEventListener('mousedown', handle);
+    }, [open]);
 
     return (
-        <nav
-            className="
-                fixed bottom-0 left-0 z-50 w-full
-                h-16 bg-[var(--background,white)] border-t border-gray-200 font-sans
-                px-safe pb-safe
-            "
-            style={{
-                paddingBottom: 'env(safe-area-inset-bottom)',
-            }}
-        >
-            <div className="flex h-full mx-auto justify-center items-center overflow-x-visible w-full">
-                {navItems.map((item, index) => {
-                    const hasPopover = !!item.popoverLinks;
-                    const popKey = `${item.label}-${index}`;
-                    return (
-                        <div key={index} className="relative flex-1 min-w-0 flex flex-col items-center justify-end h-full">
-                            {hasPopover && activePopover === popKey && (
-                                <div
-                                    ref={el => { popoverRefs.current[popKey] = el; }} // 修正：不回傳值
-                                    className="fixed left-1/2 transform -translate-x-1/2 bg-[var(--background,white)] border rounded-lg shadow-lg px-4 py-2 flex flex-col items-center z-50"
-                                    style={{
-                                        minWidth: 'max-content',
-                                        bottom: 'calc(env(safe-area-inset-bottom) + 4rem)',
-                                    }}
-                                >
-                                    {item.popoverLinks!.map((link, i) => (
-                                        <Link
-                                            key={i}
-                                            href={link.href}
-                                            className="px-4 py-2 text-gray-700 hover:text-[#00B900] hover:bg-gray-100 w-full text-center rounded transition"
-                                            onClick={() => setActivePopover(null)}
-                                        >
-                                            {link.label}
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
-                            <a
-                                href="#"
-                                ref={el => { btnRefs.current[popKey] = el; }} // 修正：不回傳值
-                                onClick={e => {
-                                    e.preventDefault();
-                                    setActivePopover(activePopover === popKey ? null : popKey);
+        <nav style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            width: '100%',
+            background: 'white',
+            borderTop: '1px solid #e5e7eb',
+            height: '4rem',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 50,
+        }}>
+            {navItems.map((item, idx) => (
+                <div key={item.href} style={{ position: 'relative', flex: 1, display: 'flex', justifyContent: 'center' }}>
+                    <button
+                        onClick={() => setOpen(open === idx ? null : idx)}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#00B900',
+                            fontWeight: 600,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0.5rem 1.5rem',
+                            borderRadius: '0.75rem',
+                            textDecoration: 'none',
+                            fontSize: '1.25rem',
+                            minWidth: 76,
+                            cursor: 'pointer',
+                            transition: 'background 0.2s',
+                        }}
+                    >
+                        <span style={{ fontSize: '1.5rem' }}>{item.icon}</span>
+                        <span style={{ fontSize: '0.85rem' }}>{item.label}</span>
+                    </button>
+                    {open === idx && (
+                        <div
+                            ref={popoverRef}
+                            style={{
+                                position: 'absolute',
+                                bottom: '3.5rem',
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                                background: 'white',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: 10,
+                                boxShadow: '0 4px 24px 0 rgba(0,0,0,0.08)',
+                                padding: '0.5rem 0',
+                                minWidth: 120,
+                                zIndex: 100,
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Link
+                                href={item.href}
+                                style={{
+                                    color: '#00B900',
+                                    padding: '0.5rem 1.5rem',
+                                    width: '100%',
+                                    textAlign: 'center',
+                                    textDecoration: 'none',
+                                    borderRadius: 8,
+                                    fontWeight: 600,
+                                    fontSize: 15,
+                                    marginBottom: item.popover.length ? 6 : 0,
                                 }}
-                                className={`
-                                    flex w-full min-w-0 flex-col items-center justify-center h-full
-                                    px-2 sm:px-5 max-w-[120px]
-                                    ${item.active
-                                        ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'
-                                        : 'text-gray-500 hover:text-[#00B900]'
-                                    }
-                                    transition-colors duration-150
-                                `}
-                                style={{ minWidth: '76px' }}
+                                onClick={() => setOpen(null)}
                             >
-                                <div className="text-xl sm:text-2xl">{item.icon}</div>
-                                <span className="text-[11px] sm:text-xs truncate block">{item.label}</span>
-                            </a>
+                                {item.label}
+                            </Link>
+                            {item.popover.map(link => (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    style={{
+                                        color: '#222',
+                                        padding: '0.5rem 1.5rem',
+                                        width: '100%',
+                                        textAlign: 'center',
+                                        borderRadius: 8,
+                                        textDecoration: 'none',
+                                        fontSize: 15,
+                                        transition: 'background 0.2s',
+                                    }}
+                                    onClick={() => setOpen(null)}
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
                         </div>
-                    );
-                })}
-            </div>
+                    )}
+                </div>
+            ))}
         </nav>
     );
 }
