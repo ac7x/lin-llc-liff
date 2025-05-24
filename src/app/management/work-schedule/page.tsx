@@ -64,7 +64,7 @@ function parseEpicSnapshot(
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, "title" | "executor">) =>
 	`${wl.title || "(無標題)"} | ${Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "(無執行者)"}`
 
-const ClientWorkSchedulePage: React.FC = () => {
+const WorkScheduleManagementPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 	const [epicSnapshot, epicLoading] = useCollection(collection(firestore, "workEpic"))
@@ -237,4 +237,4 @@ const ClientWorkSchedulePage: React.FC = () => {
 	)
 }
 
-export default ClientWorkSchedulePage
+export default WorkScheduleManagementPage

@@ -56,7 +56,7 @@ const groupColors = [
 	'#f472b6', '#fdba74', '#6ee7b7', '#facc15', '#818cf8'
 ]
 
-const ClientWorkScheduleAdminPage: React.FC = () => {
+const WorkScheduleAdminPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 
@@ -176,8 +176,8 @@ const ClientWorkScheduleAdminPage: React.FC = () => {
 	const defaultTimeStart = subDays(startOfDay(now), 7)
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
-	// 分組渲染（加上紅底白字）
-	const groupRenderer = ({ group }) => (
+	// 分組渲染（加上紅底白字）- 修正型別
+	const groupRenderer = ({ group }: { group: { id: string; title: string } }) => (
 		<div className="bg-red-500 text-white px-2 py-1 rounded">
 			{group.title}
 		</div>
@@ -257,4 +257,4 @@ const ClientWorkScheduleAdminPage: React.FC = () => {
 	)
 }
 
-export default ClientWorkScheduleAdminPage
+export default WorkScheduleAdminPage
