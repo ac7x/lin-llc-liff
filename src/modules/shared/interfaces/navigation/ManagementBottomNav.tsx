@@ -16,12 +16,8 @@ interface ManagementBottomNavProps {
 }
 
 const defaultAdminNavItems: NavItem[] = [
-    { href: '/management/dashboard', icon: '📊', label: '儀表板', active: false },
-    { href: '/management/work-schedule', icon: '📅', label: '排程客戶', active: false },
-    { href: '/management/work-schedule-admin', icon: '📅', label: '排程後端', active: false },
-    { href: '/management/work-task', icon: '📝', label: '工作任務', active: false },
-    { href: '/management/work-epic', icon: '📖', label: '工作史詩', active: false },
-    { href: '/management/work-template', icon: '📂', label: '工作範本', active: false },
+    { href: '/management/schedule-module', icon: '📆', label: '日程', active: false },
+    { href: '/management/work-module', icon: '🗂️', label: '工作模組', active: false },
     { href: '/management/member-management', icon: '👤', label: '成員管理', active: false }
 ];
 
@@ -29,6 +25,10 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
     const pathname = usePathname();
     const [showMemberPopover, setShowMemberPopover] = useState(false);
     const memberBtnRef = useRef<HTMLAnchorElement>(null);
+    const [showWorkPopover, setShowWorkPopover] = useState(false);
+    const workBtnRef = useRef<HTMLAnchorElement>(null);
+    const [showSchedulePopover, setShowSchedulePopover] = useState(false);
+    const scheduleBtnRef = useRef<HTMLAnchorElement>(null);
 
     const navItems = (items && items.length > 0 ? items : defaultAdminNavItems).map(item => ({
         ...item,
@@ -44,14 +44,26 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
             ) {
                 setShowMemberPopover(false);
             }
+            if (
+                workBtnRef.current &&
+                !workBtnRef.current.contains(e.target as Node)
+            ) {
+                setShowWorkPopover(false);
+            }
+            if (
+                scheduleBtnRef.current &&
+                !scheduleBtnRef.current.contains(e.target as Node)
+            ) {
+                setShowSchedulePopover(false);
+            }
         };
-        if (showMemberPopover) {
+        if (showMemberPopover || showWorkPopover || showSchedulePopover) {
             document.addEventListener('mousedown', handleClick);
         }
         return () => {
             document.removeEventListener('mousedown', handleClick);
         };
-    }, [showMemberPopover]);
+    }, [showMemberPopover, showWorkPopover, showSchedulePopover]);
 
     return (
         <nav
@@ -98,6 +110,82 @@ export function ManagementBottomNav({ items = defaultAdminNavItems }: Management
                                     >
                                         <span className="text-2xl" title="技能管理">🛠️</span>
                                         <span className="text-2xl" title="成員列表">👥</span>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+                    if (item.label === '工作模組') {
+                        return (
+                            <div key={index} className="relative flex-1 min-w-0">
+                                <a
+                                    href="#"
+                                    ref={workBtnRef}
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        setShowWorkPopover(v => !v);
+                                    }}
+                                    className={`
+										flex-1 min-w-0 inline-flex flex-col items-center justify-center
+										px-2 sm:px-5 max-w-[120px]
+										${item.active
+                                            ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'
+                                            : 'text-gray-500 hover:text-[#00B900]'
+                                        }
+										transition-colors duration-150
+									`}
+                                    style={{ minWidth: '76px' }}
+                                >
+                                    <div className="text-xl sm:text-2xl">🗂️</div>
+                                    <span className="text-[11px] sm:text-xs truncate block">
+                                        {item.label}
+                                    </span>
+                                </a>
+                                {showWorkPopover && (
+                                    <div
+                                        className="absolute bottom-14 left-1/2 -translate-x-1/2 bg-white border rounded shadow-lg px-4 py-2 flex gap-4 z-50"
+                                    >
+                                        <span className="text-2xl" title="工作任務">📝</span>
+                                        <span className="text-2xl" title="工作史詩">📖</span>
+                                        <span className="text-2xl" title="工作範本">📂</span>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+                    if (item.label === '日程') {
+                        return (
+                            <div key={index} className="relative flex-1 min-w-0">
+                                <a
+                                    href="#"
+                                    ref={scheduleBtnRef}
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        setShowSchedulePopover(v => !v);
+                                    }}
+                                    className={`
+										flex-1 min-w-0 inline-flex flex-col items-center justify-center
+										px-2 sm:px-5 max-w-[120px]
+										${item.active
+                                            ? 'text-[#00B900] font-semibold border-t-2 border-[#00B900] bg-green-50'
+                                            : 'text-gray-500 hover:text-[#00B900]'
+                                        }
+										transition-colors duration-150
+									`}
+                                    style={{ minWidth: '76px' }}
+                                >
+                                    <div className="text-xl sm:text-2xl">📆</div>
+                                    <span className="text-[11px] sm:text-xs truncate block">
+                                        {item.label}
+                                    </span>
+                                </a>
+                                {showSchedulePopover && (
+                                    <div
+                                        className="absolute bottom-14 left-1/2 -translate-x-1/2 bg-white border rounded shadow-lg px-4 py-2 flex gap-4 z-50"
+                                    >
+                                        <span className="text-2xl" title="排程客戶">📅</span>
+                                        <span className="text-2xl" title="排程後端">📅</span>
+                                        <span className="text-2xl" title="儀表板">📊</span>
                                     </div>
                                 )}
                             </div>
