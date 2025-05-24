@@ -1,201 +1,232 @@
-"use client"
+'use client'
 
-import { getAllWorkLoads } from "@/app/actions/workload.action"
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
-import { useEffect, useRef, useState } from "react"
+import { addDays } from "date-fns"
+import { initializeApp } from "firebase/app"
+import {
+	collection,
+	doc,
+	DocumentData,
+	getFirestore,
+	QueryDocumentSnapshot,
+	updateDoc,
+} from "firebase/firestore"
+import React, { useEffect, useRef, useState } from "react"
+import { useCollection } from "react-firebase-hooks/firestore"
 import { DataSet, Timeline, TimelineOptions } from "vis-timeline/standalone"
 import "vis-timeline/styles/vis-timeline-graph2d.min.css"
-import { addWorkEpic, addWorkLoadToEpic, getAllWorkEpics } from "./work-schedule-admin.action"
 
-// 型別定義
-type Group = {
-	id: string
-	content: string
+// Firebase config
+const firebaseConfig = {
+	apiKey: "AIzaSyDsJP6_bjWLQ0SQiarhe3UIApnqx60vCqg",
+	authDomain: "lin-llc-liff.firebaseapp.com",
+	projectId: "lin-llc-liff",
+	storageBucket: "lin-llc-liff.firebasestorage.app",
+	messagingSenderId: "734381604026",
+	appId: "1:734381604026:web:a07a50fe85c6c5acd25683",
+	measurementId: "G-KBMLTJL6KK"
 }
 
-type Item = {
-	id: string
-	group: string
-	title: string
-	start: string
-	end: string
-	content: string
-}
+const app = initializeApp(firebaseConfig)
+const firestore = getFirestore(app)
 
-type Epic = {
-	epicId: string
-	title: string
-}
-
-type Load = {
+interface WorkLoadEntity {
 	loadId: string
-	epicIds?: string[]
 	title: string
+	executor: string[]
 	plannedStartTime: string
 	plannedEndTime: string
 }
+interface WorkEpicEntity {
+	epicId: string
+	title: string
+	workLoads?: WorkLoadEntity[]
+}
 
-export default function WorkScheduleAdminPage() {
+type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
+
+function parseEpicSnapshot(
+	docs: QueryDocumentSnapshot<DocumentData, DocumentData>[]
+): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
+	const epics: WorkEpicEntity[] = docs.map(
+		doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity)
+	)
+	const unplanned: LooseWorkLoad[] = epics.flatMap(e =>
+		(e.workLoads || [])
+			.filter(l => !l.plannedStartTime || l.plannedStartTime === "")
+			.map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
+	)
+	return { epics, unplanned }
+}
+
+const getWorkloadContent = (wl: Pick<WorkLoadEntity, "title" | "executor">) =>
+	`<div><div>${wl.title || "(無標題)"}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "(無執行者)"}</div></div>`
+
+// vis-timeline 的 change 事件型別
+interface TimelineChangeEventProps {
+	items: string[]
+	data: Record<string, {
+		id: string
+		group: string
+		start: Date
+		end?: Date
+		[key: string]: unknown
+	}>
+}
+
+const WorkScheduleAdminPage: React.FC = () => {
+	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
+	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 	const timelineRef = useRef<HTMLDivElement>(null)
-	const [groups, setGroups] = useState<Group[]>([])
-	const [items, setItems] = useState<Item[]>([])
-	const [newGroupTitle, setNewGroupTitle] = useState("")
-	const [newItem, setNewItem] = useState<{ title: string; group: string; start: string; end: string }>({
-		title: "",
-		group: "",
-		start: "",
-		end: "",
-	})
+	const [epicSnapshot, epicLoading] = useCollection(collection(firestore, "workEpic"))
 
-	// 載入 Firestore groups/items
 	useEffect(() => {
-		Promise.all([getAllWorkEpics(false), getAllWorkLoads()]).then(([epics, loads]) => {
-			setGroups(
-				(epics as Epic[]).map(e => ({
-					id: e.epicId,
-					content: e.title,
-				}))
-			)
-			setItems(
-				(loads as Load[]).map(l => ({
-					id: l.loadId,
-					group: l.epicIds?.[0] || "",
-					title: l.title,
-					start: l.plannedStartTime,
-					end: l.plannedEndTime,
-					content: l.title,
-				}))
-			)
-		})
-	}, [])
+		if (!epicSnapshot) return
+		const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs)
+		setEpics(epics)
+		setUnplanned(unplanned)
+	}, [epicSnapshot])
 
-	// 初始化 vis-timeline
 	useEffect(() => {
-		if (!timelineRef.current) return
-		const dsGroups = new DataSet(groups)
-		const dsItems = new DataSet(items)
-		const tl = new Timeline(timelineRef.current, dsItems, dsGroups, {
+		if (!timelineRef.current || !epics.length) return
+
+		const groups = new DataSet(
+			epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
+		)
+		const items = new DataSet(
+			epics.flatMap(e =>
+				(e.workLoads || [])
+					.filter(l => l.plannedStartTime && l.plannedStartTime !== "")
+					.map(l => ({
+						id: l.loadId,
+						group: e.epicId,
+						type: "range",
+						content: getWorkloadContent(l),
+						start: new Date(l.plannedStartTime),
+						end:
+							l.plannedEndTime && l.plannedEndTime !== ""
+								? new Date(l.plannedEndTime)
+								: addDays(new Date(l.plannedStartTime), 1),
+					})
+					)
+			)
+		)
+
+		const tl = new Timeline(timelineRef.current, items, groups, {
 			stack: true,
 			orientation: "top",
-			editable: false,
+			editable: { updateTime: true, updateGroup: true, remove: true }, // 支援刪除
 			locale: "zh-tw",
+			zoomMin: 24 * 60 * 60 * 1000,
+			zoomMax: 90 * 24 * 60 * 60 * 1000,
 		} as TimelineOptions)
+
+		// 處理移動、長度調整、分組變更
+		tl.on("change", async (event: TimelineChangeEventProps) => {
+			for (const itemId of event.items) {
+				const itemData = event.data[itemId]
+				if (!itemData) continue
+
+				const epicId = itemData.group
+				const epic = epics.find(e => e.epicId === epicId)
+				if (!epic) continue
+
+				const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+				if (wlIdx === -1) continue
+
+				// 檢查是否換分組
+				const currentEpicId = epics.find(e =>
+					(e.workLoads || []).some(wl => wl.loadId === itemId)
+				)?.epicId
+
+				if (currentEpicId && currentEpicId !== epicId) {
+					// 1. 從舊epic移除
+					const oldEpic = epics.find(e => e.epicId === currentEpicId)
+					if (oldEpic) {
+						const updatedOldWorkLoads = (oldEpic.workLoads || []).filter(wl => wl.loadId !== itemId)
+						await updateDoc(doc(firestore, "workEpic", currentEpicId), { workLoads: updatedOldWorkLoads })
+					}
+					// 2. 加到新epic底下
+					const newWorkLoad: WorkLoadEntity = {
+						...((epic.workLoads || [])[wlIdx]),
+						plannedStartTime: itemData.start.toISOString(),
+						plannedEndTime: itemData.end ? itemData.end.toISOString() : "",
+					}
+					const updatedNewWorkLoads = [...(epic.workLoads || []), newWorkLoad]
+					await updateDoc(doc(firestore, "workEpic", epicId), { workLoads: updatedNewWorkLoads })
+				} else {
+					// 沒換分組，只是修改時間
+					const newWorkLoads = [...(epic.workLoads || [])]
+					newWorkLoads[wlIdx] = {
+						...newWorkLoads[wlIdx],
+						plannedStartTime: itemData.start.toISOString(),
+						plannedEndTime: itemData.end ? itemData.end.toISOString() : "",
+					}
+					await updateDoc(doc(firestore, "workEpic", epicId), { workLoads: newWorkLoads })
+				}
+			}
+		})
+
+		// 支援刪除（回到未排班）
+		tl.on("remove", async function (event: { items: string[] }) {
+			for (const itemId of event.items) {
+				// 找到這個 item 是哪個 epic 下的哪個 workload
+				const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+				if (!epic) continue
+				const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+				if (wlIdx === -1) continue
+
+				const newWorkLoads = [...(epic.workLoads || [])]
+				const updateWL = { ...newWorkLoads[wlIdx], plannedStartTime: "", plannedEndTime: "" }
+				newWorkLoads[wlIdx] = updateWL
+				await updateDoc(doc(firestore, "workEpic", epic.epicId), { workLoads: newWorkLoads })
+			}
+		})
+
 		return () => {
 			tl.destroy()
 		}
-	}, [groups, items])
-
-	// 建立 group
-	const handleAddGroup = async () => {
-		if (!newGroupTitle) return
-		const epicId = `epic_${Date.now()}`
-		await addWorkEpic({
-			epicId,
-			title: newGroupTitle,
-			startDate: "",
-			endDate: "",
-			owner: { memberId: "", name: "" },
-			status: "待開始",
-			priority: 1,
-			region: "北部",
-			address: "",
-			createdAt: new Date().toISOString(),
-		})
-		setGroups(g => [...g, { id: epicId, content: newGroupTitle }])
-		setNewGroupTitle("")
-	}
-
-	// 建立 item
-	const handleAddItem = async () => {
-		if (!newItem.title || !newItem.group || !newItem.start) return
-		const loadId = `load_${Date.now()}`
-		const newLoad = {
-			loadId,
-			title: newItem.title,
-			plannedStartTime: newItem.start,
-			plannedEndTime: newItem.end,
-			epicIds: [newItem.group],
-			taskId: "",
-			plannedQuantity: 1,
-			unit: "",
-			actualQuantity: 0,
-			executor: [],
-			notes: "",
-		}
-		await addWorkLoadToEpic(newItem.group, newLoad)
-		setItems(i => [
-			...i,
-			{
-				id: loadId,
-				group: newItem.group,
-				title: newItem.title,
-				start: newItem.start,
-				end: newItem.end,
-				content: newItem.title,
-			},
-		])
-		setNewItem({ title: "", group: "", start: "", end: "" })
-	}
+	}, [epics])
 
 	return (
 		<div className="min-h-screen w-full bg-black flex flex-col">
-			<h1 className="text-2xl font-bold mb-4">時程管理（管理員）</h1>
-			<div className="mb-4">
-				<h2 className="font-semibold mb-2">建立 group（標的）</h2>
-				<input
-					value={newGroupTitle}
-					onChange={e => setNewGroupTitle(e.target.value)}
-					placeholder="group 標題"
-					className="border p-1 mr-2"
-				/>
-				<button onClick={handleAddGroup} className="bg-blue-500 text-white px-3 py-1 rounded">
-					建立
-				</button>
-			</div>
-			<div className="mb-4">
-				<h2 className="font-semibold mb-2">建立 item（工作負載）</h2>
-				<input
-					value={newItem.title}
-					onChange={e => setNewItem(v => ({ ...v, title: e.target.value }))}
-					placeholder="item 標題"
-					className="border p-1 mr-2"
-				/>
-				<select
-					value={newItem.group}
-					onChange={e => setNewItem(v => ({ ...v, group: e.target.value }))}
-					className="border p-1 mr-2"
-				>
-					<option value="">選擇 group</option>
-					{groups.map(g => (
-						<option key={g.id} value={g.id}>
-							{g.content}
-						</option>
-					))}
-				</select>
-				<input
-					type="datetime-local"
-					value={newItem.start}
-					onChange={e => setNewItem(v => ({ ...v, start: e.target.value }))}
-					className="border p-1 mr-2"
-				/>
-				<input
-					type="datetime-local"
-					value={newItem.end}
-					onChange={e => setNewItem(v => ({ ...v, end: e.target.value }))}
-					className="border p-1 mr-2"
-				/>
-				<button onClick={handleAddItem} className="bg-green-500 text-white px-3 py-1 rounded">
-					建立
-				</button>
-			</div>
-			<div className="my-8 flex-1 flex flex-col">
+			<div className="flex-none h-[20vh]" />
+			<div className="flex-none h-[60vh] w-full flex items-center justify-center">
+				{epicLoading && (
+					<div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
+						<div className="text-white">資料載入中...</div>
+					</div>
+				)}
 				<div
 					className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden"
 					ref={timelineRef}
 					style={{ minWidth: '100vw' }}
 				/>
 			</div>
+			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2 overflow-y-auto">
+				<div className="max-w-7xl mx-auto h-full flex flex-col">
+					<h2 className="text-lg font-bold text-center text-white mb-2">未排班工作</h2>
+					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
+						{unplanned.length === 0 ? (
+							<div className="text-gray-400">（無）</div>
+						) : unplanned.map(wl => (
+							<div
+								key={wl.loadId}
+								className="bg-yellow-50 border rounded px-3 py-2 text-sm"
+								title={`來自 ${wl.epicTitle}`}
+							>
+								<div>{wl.title || '(無標題)'}</div>
+								<div className="text-xs text-gray-400">
+									{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
+								</div>
+							</div>
+						))}
+					</div>
+				</div>
+			</div>
 			<ClientBottomNav />
 		</div>
 	)
 }
+
+export default WorkScheduleAdminPage
