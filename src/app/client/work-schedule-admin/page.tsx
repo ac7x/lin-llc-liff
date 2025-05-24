@@ -1,15 +1,21 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { DataSet, Timeline } from 'vis-timeline/standalone'
+// 直接從 vis-data 引用 DataSet
+import { DataSet } from 'vis-data/peer'
+// Timeline 還是從 vis-timeline 引用
+import { Timeline } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
+
 import { getAllTestEpics, TestWorkEpicEntity } from './work-schedule-admin.action'
 
 const WorkScheduleAdminPage = () => {
 	const [epics, setEpics] = useState<TestWorkEpicEntity[]>([])
 	const [loading, setLoading] = useState(true)
 	const timelineRef = useRef<HTMLDivElement>(null)
+	const timelineInstance = useRef<Timeline | null>(null)
 
+	// 取得資料
 	useEffect(() => {
 		setLoading(true)
 		getAllTestEpics().then(({ epics }) => {
@@ -18,10 +24,11 @@ const WorkScheduleAdminPage = () => {
 		})
 	}, [])
 
+	// 初始化 vis-timeline
 	useEffect(() => {
-		if (!timelineRef.current || !epics.length) {
-			return
-		}
+		if (!timelineRef.current || !epics.length) return
+
+		// 建立 DataSet
 		const groups = new DataSet(
 			epics.map(epic => ({
 				id: epic.epicId,
@@ -44,6 +51,8 @@ const WorkScheduleAdminPage = () => {
 					}))
 			)
 		)
+
+		// 建立 Timeline
 		const timeline = new Timeline(timelineRef.current, items, groups, {
 			stack: true,
 			orientation: 'top',
@@ -52,6 +61,9 @@ const WorkScheduleAdminPage = () => {
 			zoomMin: 24 * 60 * 60 * 1000,
 			zoomMax: 90 * 24 * 60 * 60 * 1000
 		})
+
+		timelineInstance.current = timeline
+
 		return () => { timeline.destroy() }
 	}, [epics])
 
