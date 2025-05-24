@@ -185,11 +185,6 @@ const ClientWorkSchedulePage: React.FC = () => {
 		<div className="min-h-screen w-full bg-black flex flex-col">
 			<div className="flex-none h-[20vh]" />
 			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
-				{epicLoading && (
-					<div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 z-10">
-						<div className="text-white">資料載入中...</div>
-					</div>
-				)}
 				<div className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
 					<Timeline
 						groups={groups}
