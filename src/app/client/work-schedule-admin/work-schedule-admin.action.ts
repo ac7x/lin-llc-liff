@@ -55,44 +55,49 @@ export async function updateTestWorkLoad(
   start: string,
   end: string | null
 ): Promise<void> {
-  if (fromEpicId === toEpicId) {
-    const epicRef = firestoreAdmin.collection('testEpics').doc(fromEpicId);
-    await firestoreAdmin.runTransaction(async transaction => {
-      const epicDoc = await transaction.get(epicRef);
-      if (!epicDoc.exists) return;
-      const data = epicDoc.data();
-      if (!data) return;
-      const workLoads: TestWorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : [];
-      const idx = workLoads.findIndex(wl => wl.loadId === loadId);
-      if (idx === -1) return;
-      workLoads[idx].plannedStartTime = start;
-      workLoads[idx].plannedEndTime = end ?? '';
-      transaction.update(epicRef, { workLoads });
-    });
-  } else {
-    const fromRef = firestoreAdmin.collection('testEpics').doc(fromEpicId);
-    const toRef = firestoreAdmin.collection('testEpics').doc(toEpicId);
-    await firestoreAdmin.runTransaction(async transaction => {
-      const fromDoc = await transaction.get(fromRef);
-      const toDoc = await transaction.get(toRef);
-      if (!fromDoc.exists || !toDoc.exists) return;
-      const fromData = fromDoc.data();
-      const toData = toDoc.data();
-      if (!fromData || !toData) return;
-      const fromLoads: TestWorkLoadEntity[] = Array.isArray(fromData.workLoads) ? fromData.workLoads : [];
-      const toLoads: TestWorkLoadEntity[] = Array.isArray(toData.workLoads) ? toData.workLoads : [];
-      const idx = fromLoads.findIndex(wl => wl.loadId === loadId);
-      if (idx === -1) return;
-      const moved = {
-        ...fromLoads[idx],
-        plannedStartTime: start,
-        plannedEndTime: end ?? ''
-      };
-      fromLoads.splice(idx, 1);
-      toLoads.push(moved);
-      transaction.update(fromRef, { workLoads: fromLoads });
-      transaction.update(toRef, { workLoads: toLoads });
-    });
+  try {
+    if (fromEpicId === toEpicId) {
+      const epicRef = firestoreAdmin.collection('testEpics').doc(fromEpicId);
+      await firestoreAdmin.runTransaction(async transaction => {
+        const epicDoc = await transaction.get(epicRef);
+        if (!epicDoc.exists) throw new Error('Epic not found');
+        const data = epicDoc.data();
+        if (!data) throw new Error('Epic data not found');
+        const workLoads: TestWorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : [];
+        const idx = workLoads.findIndex(wl => wl.loadId === loadId);
+        if (idx === -1) throw new Error('WorkLoad not found');
+        workLoads[idx].plannedStartTime = start;
+        workLoads[idx].plannedEndTime = end ?? '';
+        transaction.update(epicRef, { workLoads });
+      });
+    } else {
+      const fromRef = firestoreAdmin.collection('testEpics').doc(fromEpicId);
+      const toRef = firestoreAdmin.collection('testEpics').doc(toEpicId);
+      await firestoreAdmin.runTransaction(async transaction => {
+        const fromDoc = await transaction.get(fromRef);
+        const toDoc = await transaction.get(toRef);
+        if (!fromDoc.exists || !toDoc.exists) throw new Error('Epic not found');
+        const fromData = fromDoc.data();
+        const toData = toDoc.data();
+        if (!fromData || !toData) throw new Error('Epic data not found');
+        const fromLoads: TestWorkLoadEntity[] = Array.isArray(fromData.workLoads) ? fromData.workLoads : [];
+        const toLoads: TestWorkLoadEntity[] = Array.isArray(toData.workLoads) ? toData.workLoads : [];
+        const idx = fromLoads.findIndex(wl => wl.loadId === loadId);
+        if (idx === -1) throw new Error('WorkLoad not found');
+        const moved = {
+          ...fromLoads[idx],
+          plannedStartTime: start,
+          plannedEndTime: end ?? ''
+        };
+        fromLoads.splice(idx, 1);
+        toLoads.push(moved);
+        transaction.update(fromRef, { workLoads: fromLoads });
+        transaction.update(toRef, { workLoads: toLoads });
+      });
+    }
+  } catch (error) {
+    console.error('Error updating workload:', error);
+    throw error;
   }
 }
 
@@ -115,17 +120,22 @@ export async function unplanTestWorkLoad(loadId: string): Promise<void> {
 
 /** 徹底從陣列移除 */
 export async function deleteTestWorkLoad(loadId: string): Promise<void> {
-  const snapshot = await firestoreAdmin.collection('testEpics').get();
-  for (const doc of snapshot.docs) {
-    const data = doc.data();
-    if (!data) continue;
-    const workLoads: TestWorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : [];
-    const idx = workLoads.findIndex(wl => wl.loadId === loadId);
-    if (idx !== -1) {
-      const newWorkLoads = [...workLoads];
-      newWorkLoads.splice(idx, 1);
-      await firestoreAdmin.collection('testEpics').doc(doc.id).update({ workLoads: newWorkLoads });
-      break;
+  try {
+    const snapshot = await firestoreAdmin.collection('testEpics').get();
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      if (!data) continue;
+      const workLoads: TestWorkLoadEntity[] = Array.isArray(data.workLoads) ? data.workLoads : [];
+      const idx = workLoads.findIndex(wl => wl.loadId === loadId);
+      if (idx !== -1) {
+        const newWorkLoads = [...workLoads];
+        newWorkLoads.splice(idx, 1);
+        await firestoreAdmin.collection('testEpics').doc(doc.id).update({ workLoads: newWorkLoads });
+        break;
+      }
     }
+  } catch (error) {
+    console.error('Error deleting workload:', error);
+    throw error;
   }
 }
