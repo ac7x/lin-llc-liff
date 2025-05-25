@@ -19,15 +19,15 @@ const shortId = (prefix = ''): string => `${prefix}${Math.random().toString(36).
 
 /**
  * 轉換日期為 ISO 格式
- * @param date 日期字串
+ * @param date - 日期字串
  */
-const toISO = (date: string | undefined | null): string => {
-    if (!date) return '';
+const toISO = (date?: string | null): string => {
+    if (!date) { return ''; }
     if (date.includes('T')) {
         const d = new Date(date);
         return isNaN(d.getTime()) ? '' : d.toISOString();
     }
-    const d = new Date(date + 'T00:00:00.000Z');
+    const d = new Date(`${date}T00:00:00.000Z`);
     return isNaN(d.getTime()) ? '' : d.toISOString();
 };
 
@@ -113,10 +113,15 @@ export default function WorkEpicPage() {
     const [newSafetyOfficers, setNewSafetyOfficers] = useState<string[]>([]);
 
     useEffect(() => {
-        (async () => {
-            setWorkEpics(await getAllWorkEpics(false) as WorkEpicEntity[]);
-            setMembers(await getAllWorkMembers());
-        })();
+        const fetchData = async () => {
+            const [epics, allMembers] = await Promise.all([
+                getAllWorkEpics(false) as Promise<WorkEpicEntity[]>,
+                getAllWorkMembers()
+            ]);
+            setWorkEpics(epics);
+            setMembers(allMembers);
+        };
+        fetchData();
     }, []);
 
     const getProgress = (epic: WorkEpicEntity) => {
@@ -132,7 +137,7 @@ export default function WorkEpicPage() {
 
     const handleAdd = async () => {
         if (!newTitle.trim() || !newOwner || !newAddress.trim()) {
-            alert('請完整填寫標題、負責人、地址');
+            alert("請完整填寫標題、負責人、地址");
             return;
         }
         const siteSupervisors = members.filter(m => newSiteSupervisors.includes(m.memberId)).map(m => ({
@@ -141,29 +146,26 @@ export default function WorkEpicPage() {
         const safetyOfficers = members.filter(m => newSafetyOfficers.includes(m.memberId)).map(m => ({
             memberId: m.memberId, name: m.name
         }));
-
-        // 修正 WorkZoneEntity 必要欄位
         const defaultZone: WorkZoneEntity = {
             zoneId: shortId('zone-'),
-            title: '預設區域',
-            address: '',
+            title: "預設區域",
+            address: "",
             createdAt: new Date().toISOString(),
-            status: '啟用',
-            region: '北部'
+            status: "啟用",
+            region: "北部"
         };
-
         const newEpic: WorkEpicEntity = {
             epicId: shortId('epic-'),
             title: newTitle,
-            startDate: '',
-            endDate: '',
-            insuranceStatus: '無',
+            startDate: "",
+            endDate: "",
+            insuranceStatus: "無",
             owner: newOwner,
             siteSupervisors,
             safetyOfficers,
-            status: '待開始',
+            status: "待開始",
             priority: 1,
-            region: '北部',
+            region: "北部",
             address: newAddress,
             createdAt: new Date().toISOString(),
             workZones: [defaultZone],
@@ -181,7 +183,7 @@ export default function WorkEpicPage() {
             setNewSiteSupervisors([]);
             setNewSafetyOfficers([]);
         } catch {
-            alert('建立失敗，請稍後再試');
+            alert("建立失敗，請稍後再試");
         }
     };
 
@@ -207,7 +209,7 @@ export default function WorkEpicPage() {
         setEditFields({});
     };
     const handleDelete = async (epicId: string) => {
-        if (window.confirm('確定要刪除這個標的嗎？')) {
+        if (window.confirm("確定要刪除這個標的嗎？")) {
             await deleteWorkEpic(epicId);
             setWorkEpics(prev => prev.filter(e => e.epicId !== epicId));
         }

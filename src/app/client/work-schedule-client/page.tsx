@@ -1,5 +1,6 @@
 'use client'
 
+import type { WorkEpicEntity } from '@/app/actions/workepic.action'
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, subDays } from 'date-fns'
@@ -15,12 +16,6 @@ interface WorkLoadEntity {
   executor: string[]
   plannedStartTime: string
   plannedEndTime: string
-}
-
-interface WorkEpicEntity {
-  epicId: string
-  title: string
-  workLoads?: WorkLoadEntity[]
 }
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
@@ -118,12 +113,13 @@ const ClientWorkSchedulePage = () => {
           style={{ minWidth: '100vw', height: '100%' }}
         />
       </div>
-      <div className="flex-none min-h-[25vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300">
-        <div className="w-full h-full flex flex-col p-4 max-w-none mx-auto">
+      {/* 這裡是關鍵，讓「未排班工作」區塊滿寬且橫向捲動 */}
+      <div className="flex-none min-h-[25vh] w-screen max-w-none bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300">
+        <div className="w-full h-full flex flex-col p-4 mx-auto">
           <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors duration-300">
             未排班工作
           </h2>
-          <div className="flex flex-wrap gap-3 overflow-y-auto pb-16 px-0.5 w-full max-w-none">
+          <div className="flex flex-nowrap gap-3 overflow-x-auto pb-16 px-0.5 w-full">
             {unplanned.length === 0 ? (
               <div className="text-gray-400 dark:text-gray-500 text-center w-full transition-colors duration-300">（無未排班工作）</div>
             ) : (
@@ -131,11 +127,11 @@ const ClientWorkSchedulePage = () => {
                 <div
                   key={wl.loadId}
                   className="
-                    bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5
-                    hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-300 hover:shadow-md
-                    flex flex-col justify-between gap-2
-                    flex-1 min-w-[180px] max-w-full
-                  "
+										bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5
+										hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-300 hover:shadow-md
+										flex flex-col justify-between gap-2
+										flex-1 min-w-[180px] max-w-full
+									"
                   title={`來自 ${wl.epicTitle}`}
                 >
                   <div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors duration-300">
