@@ -16,7 +16,7 @@ const navItems = [
         label: '工作',
         popover: [
             { label: '工作任務', href: '/management/work-task' },
-            { label: '工作史詩', href: '/management/work-epic' },
+            { label: '工作標的', href: '/management/work-epic' },
             { label: '工作範本', href: '/management/work-template' },
         ],
     },

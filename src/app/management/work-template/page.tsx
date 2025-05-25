@@ -191,13 +191,13 @@ const WorkTemplatePage: React.FC = () => {
             <main className="p-4 bg-gray-100 dark:bg-neutral-900 min-h-screen text-foreground dark:text-neutral-100">
                 <h1 className="text-xl font-bold mb-4">工作種類模板</h1>
                 {/* 種類卡片 */}
-                <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
+                <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6 transition-colors">
                     <div className="flex items-center mb-2">
                         <input
                             value={newWorkTypeTitle}
                             onChange={e => setNewWorkTypeTitle(e.target.value)}
                             placeholder="新種類標題"
-                            className="border p-2 rounded mr-2 flex-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                            className="border p-2 rounded mr-2 flex-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
                         />
                         <button
                             onClick={handleAddWorkType}
@@ -208,18 +208,18 @@ const WorkTemplatePage: React.FC = () => {
                     </div>
                     <ul className="flex flex-wrap gap-2">
                         {workTypes.map(t =>
-                            <li key={t.typeId} className="bg-gray-50 dark:bg-neutral-700 rounded px-3 py-1 shadow text-gray-700 dark:text-neutral-100">{t.title}</li>
+                            <li key={t.typeId} className="bg-gray-50 dark:bg-neutral-700 rounded px-3 py-1 shadow text-gray-700 dark:text-neutral-100 transition-colors">{t.title}</li>
                         )}
                     </ul>
                 </div>
                 {/* 流程管理卡片 */}
-                <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
+                <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6 transition-colors">
                     <h2 className="font-bold mb-2">流程管理</h2>
                     <div className="flex gap-2 mb-2">
                         <select
                             value={selectedWorkTypeId}
                             onChange={e => setSelectedWorkTypeId(e.target.value)}
-                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
                         >
                             <option value="">選擇種類</option>
                             {typeOptions}
@@ -230,20 +230,20 @@ const WorkTemplatePage: React.FC = () => {
                             value={newStepName}
                             onChange={e => setNewStepName(e.target.value)}
                             placeholder="步驟名稱"
-                            className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                            className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
                         />
                         <input
                             type="number"
                             value={newStepOrder}
                             min={1}
                             onChange={e => setNewStepOrder(Number(e.target.value))}
-                            className="border w-20 p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                            className="border w-20 p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
                         />
                         <input
                             value={newStepSkills}
                             onChange={e => setNewStepSkills(e.target.value)}
                             placeholder="技能(逗號)"
-                            className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                            className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
                         />
                         <button
                             onClick={handleAddStep}
@@ -254,7 +254,7 @@ const WorkTemplatePage: React.FC = () => {
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {filteredFlows.map(f =>
-                            <div key={f.flowId} className="bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 mb-1 min-w-[180px]">
+                            <div key={f.flowId} className="bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 mb-1 min-w-[180px] transition-colors">
                                 {f.steps.map(s => (
                                     <div key={s.stepName} className="text-gray-700 dark:text-neutral-100">
                                         <span className="font-semibold">{s.order}. {s.stepName}</span>
@@ -266,7 +266,7 @@ const WorkTemplatePage: React.FC = () => {
                     </div>
                 </div>
                 {/* 加入標的卡片 */}
-                <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
+                <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6 transition-colors">
                     <h2 className="font-bold mb-2">加入工作標的</h2>
                     <div className="flex flex-wrap gap-2 mb-2">
                         <select
@@ -275,14 +275,14 @@ const WorkTemplatePage: React.FC = () => {
                                 setSelectedWorkEpicId(e.target.value);
                                 setSelectedWorkZoneId('');
                             }}
-                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
                         >
                             <option value="">選擇標的</option>{epicOptions}
                         </select>
                         <select
                             value={selectedRegion}
                             onChange={e => setSelectedRegion(e.target.value as '北部' | '中部' | '南部' | '東部' | '離島')}
-                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
                         >
                             {['北部', '中部', '南部', '東部', '離島'].map(region => (
                                 <option key={region} value={region}>{region}</option>
@@ -292,7 +292,7 @@ const WorkTemplatePage: React.FC = () => {
                             <select
                                 value={selectedWorkZoneId}
                                 onChange={e => setSelectedWorkZoneId(e.target.value)}
-                                className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                                className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
                             >
                                 <option value="">使用預設工作區</option>
                                 {workZones.map(z => (
@@ -304,7 +304,7 @@ const WorkTemplatePage: React.FC = () => {
                     <select
                         value={selectedWorkTypeId}
                         onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }}
-                        className="border p-2 rounded mb-2 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                        className="border p-2 rounded mb-2 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
                     >
                         <option value="">選擇種類</option>{typeOptions}
                     </select>
@@ -322,7 +322,7 @@ const WorkTemplatePage: React.FC = () => {
                     )}
                     <div className="flex flex-wrap gap-2">
                         {filteredFlows.map(f => (
-                            <div key={f.flowId} className="bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 flex items-center gap-2 mb-2 min-w-[220px]">
+                            <div key={f.flowId} className="bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 flex items-center gap-2 mb-2 min-w-[220px] transition-colors">
                                 <input
                                     type="checkbox"
                                     checked={selectedWorkFlowIds.includes(f.flowId)}
@@ -335,7 +335,7 @@ const WorkTemplatePage: React.FC = () => {
                                     min={1}
                                     onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))}
                                     placeholder="數量"
-                                    className="border w-16 mx-1 p-1 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                                    className="border w-16 mx-1 p-1 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
                                 />
                                 <input
                                     type="number"
@@ -343,7 +343,7 @@ const WorkTemplatePage: React.FC = () => {
                                     min={1}
                                     onChange={e => setWorkloadCounts(c => ({ ...c, [f.flowId]: Number(e.target.value) || 1 }))}
                                     placeholder="分割"
-                                    className="border w-12 p-1 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                                    className="border w-12 p-1 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
                                 />
                             </div>
                         ))}
