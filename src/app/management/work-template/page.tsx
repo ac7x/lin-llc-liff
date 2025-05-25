@@ -29,7 +29,7 @@ const STRINGS = {
     order: "順序",
     skills: "技能(逗號)",
     addStep: "新增步驟",
-    addToEpicTitle: "加入工作標的",
+    addToEpicTitle: "標的",
     selectEpic: "選擇標的",
     selectZone: "選擇工作區",
     region: ["北部", "中部", "南部", "東部", "離島"],
