@@ -171,11 +171,67 @@ const WorkScheduleAdminPage: React.FC = () => {
 	const defaultTimeStart = subDays(startOfDay(now), 7)
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
+	// 拖曳處理
+	const handleDragStart = (e: React.DragEvent, wl: LooseWorkLoad) => {
+		e.dataTransfer.setData('application/json', JSON.stringify(wl))
+	}
+
+	const timelineRef = React.useRef<HTMLDivElement>(null)
+
+	const handleTimelineDragOver = (e: React.DragEvent) => {
+		e.preventDefault()
+	}
+
+	const handleTimelineDrop = async (e: React.DragEvent) => {
+		e.preventDefault()
+		const data = e.dataTransfer.getData('application/json')
+		if (!data) return
+		const wl: LooseWorkLoad = JSON.parse(data)
+		// 取得滑鼠於 timeline 的座標
+		const timelineDiv = timelineRef.current
+		if (!timelineDiv) return
+
+		const rect = timelineDiv.getBoundingClientRect()
+		const x = e.clientX - rect.left
+		const y = e.clientY - rect.top
+
+		// 計算 group
+		// Timeline group 高度預設 41px
+		const groupHeight = 41
+		const groupIndex = Math.floor(y / groupHeight)
+		const group = groups[groupIndex]
+		if (!group) return
+
+		// 計算時間
+		const timelineWidth = rect.width
+		const msPerPixel = (defaultTimeEnd.getTime() - defaultTimeStart.getTime()) / timelineWidth
+		const time = defaultTimeStart.getTime() + x * msPerPixel
+		const start = new Date(time)
+		const end = addDays(start, 1)
+
+		// 新增到 group
+		const epic = epics.find(e => e.epicId === group.id)
+		if (!epic) return
+		const newWorkLoads = [...(epic.workLoads || []), {
+			...wl,
+			plannedStartTime: start.toISOString(),
+			plannedEndTime: end.toISOString()
+		}]
+		await updateWorkEpicWorkLoads(epic.epicId, newWorkLoads)
+		await fetchEpics()
+	}
+
 	return (
 		<div className="min-h-screen w-full bg-black dark:bg-neutral-900 flex flex-col">
 			<div className="flex-none h-[20vh]" />
 			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
-				<div className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
+				<div
+					ref={timelineRef}
+					className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden"
+					style={{ minWidth: '100vw', height: 400 }}
+					onDragOver={handleTimelineDragOver}
+					onDrop={handleTimelineDrop}
+				>
 					<Timeline
 						groups={groups}
 						items={items}
@@ -240,6 +296,8 @@ const WorkScheduleAdminPage: React.FC = () => {
 										flex-1 min-w-[180px] max-w-full
 									"
 									title={`來自 ${wl.epicTitle}`}
+									draggable
+									onDragStart={e => handleDragStart(e, wl)}
 								>
 									<div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors duration-300">
 										{wl.title || "(無標題)"}
