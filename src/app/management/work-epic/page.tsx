@@ -282,6 +282,8 @@ export default function WorkEpicPage() {
                             <th className="px-2 py-2 text-left">開始</th>
                             <th className="px-2 py-2 text-left">結束</th>
                             <th className="px-2 py-2 text-left">負責人</th>
+                            <th className="px-2 py-2 text-left">現場監工</th>
+                            <th className="px-2 py-2 text-left">安全人員</th>
                             <th className="px-2 py-2 text-left">狀態</th>
                             <th className="px-2 py-2 text-left">優先</th>
                             <th className="px-2 py-2 text-left">區域</th>
@@ -331,6 +333,34 @@ export default function WorkEpicPage() {
                                                     }}
                                                     options={members}
                                                     placeholder="負責人"
+                                                />
+                                            </td>
+                                            <td className="px-2 py-1">
+                                                <MultiSelect
+                                                    value={Array.isArray(editFields.siteSupervisors) ? editFields.siteSupervisors.map(s => s.memberId) : []}
+                                                    onChange={selected => {
+                                                        const selectedMembers = members.filter(m => selected.includes(m.memberId)).map(m => ({
+                                                            memberId: m.memberId,
+                                                            name: m.name
+                                                        }));
+                                                        handleEditField('siteSupervisors', selectedMembers);
+                                                    }}
+                                                    options={members}
+                                                    placeholder="現場監工"
+                                                />
+                                            </td>
+                                            <td className="px-2 py-1">
+                                                <MultiSelect
+                                                    value={Array.isArray(editFields.safetyOfficers) ? editFields.safetyOfficers.map(s => s.memberId) : []}
+                                                    onChange={selected => {
+                                                        const selectedMembers = members.filter(m => selected.includes(m.memberId)).map(m => ({
+                                                            memberId: m.memberId,
+                                                            name: m.name
+                                                        }));
+                                                        handleEditField('safetyOfficers', selectedMembers);
+                                                    }}
+                                                    options={members}
+                                                    placeholder="安全人員"
                                                 />
                                             </td>
                                             <td className="px-2 py-1">
@@ -394,6 +424,16 @@ export default function WorkEpicPage() {
                                             <td className="px-2 py-1">{epic.startDate?.slice(0, 10)}</td>
                                             <td className="px-2 py-1">{epic.endDate?.slice(0, 10)}</td>
                                             <td className="px-2 py-1">{epic.owner?.name}</td>
+                                            <td className="px-2 py-1">
+                                                {(epic.siteSupervisors && epic.siteSupervisors.length > 0)
+                                                    ? epic.siteSupervisors.map(s => s.name).join(', ')
+                                                    : '—'}
+                                            </td>
+                                            <td className="px-2 py-1">
+                                                {(epic.safetyOfficers && epic.safetyOfficers.length > 0)
+                                                    ? epic.safetyOfficers.map(s => s.name).join(', ')
+                                                    : '—'}
+                                            </td>
                                             <td className="px-2 py-1">{epic.status}</td>
                                             <td className="px-2 py-1">{epic.priority}</td>
                                             <td className="px-2 py-1">{epic.region}</td>
