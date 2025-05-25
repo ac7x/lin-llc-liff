@@ -82,6 +82,23 @@ const WorkTemplatePage: React.FC = () => {
         const epic = workEpics.find(e => e.epicId === selectedWorkEpicId);
         const type = workTypes.find(t => t.typeId === selectedWorkTypeId);
         if (!epic || !type || !type.flows) return;
+
+        // 如果沒有選擇工作區，建立預設工作區
+        let workZoneId = selectedWorkZoneId;
+        if (!workZoneId) {
+            const defaultZone: WorkZoneEntity = {
+                zoneId: shortId('wz-'),
+                title: 'default',
+                description: '預設工作區'
+            };
+            workZoneId = defaultZone.zoneId;
+            if (!epic.workZones) {
+                epic.workZones = [defaultZone];
+            } else if (!epic.workZones.some(z => z.title === 'default')) {
+                epic.workZones.push(defaultZone);
+            }
+        }
+
         const flows = type.flows.filter(f => selectedWorkFlowIds.includes(f.flowId));
         if (!flows.length) return;
         const tasks: WorkTaskEntity[] = [];
@@ -185,16 +202,6 @@ const WorkTemplatePage: React.FC = () => {
                         <option value="">選擇種類</option>
                         {typeOptions}
                     </select>
-                    <select
-                        value={selectedWorkZoneId}
-                        onChange={e => setSelectedWorkZoneId(e.target.value)}
-                        className="border p-1"
-                    >
-                        <option value="">請選擇工作區</option>
-                        {allWorkZones.map(zone => (
-                            <option key={zone.zoneId} value={zone.zoneId}>{zone.title}</option>
-                        ))}
-                    </select>
                 </div>
                 <div>
                     <input value={newStepName} onChange={e => setNewStepName(e.target.value)} placeholder="步驟名稱" className="border p-1 mr-1" />
@@ -212,20 +219,22 @@ const WorkTemplatePage: React.FC = () => {
                     )}
                 </ul>
                 <h2 className="font-bold mt-6 mb-2">加入工作標的</h2>
-                <select value={selectedWorkEpicId} onChange={e => {
-                    setSelectedWorkEpicId(e.target.value);
-                    setSelectedWorkZoneId('');
-                }} className="border p-1 mb-2">
-                    <option value="">選擇標的</option>{epicOptions}
-                </select>
-                {workZones.length > 0 && (
-                    <select value={selectedWorkZoneId} onChange={e => setSelectedWorkZoneId(e.target.value)} className="border p-1 mb-2">
-                        <option value="">請選擇工作區</option>
-                        {workZones.map(z => (
-                            <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
-                        ))}
+                <div className="flex gap-2 mb-2">
+                    <select value={selectedWorkEpicId} onChange={e => {
+                        setSelectedWorkEpicId(e.target.value);
+                        setSelectedWorkZoneId('');
+                    }} className="border p-1">
+                        <option value="">選擇標的</option>{epicOptions}
                     </select>
-                )}
+                    {workZones.length > 0 && (
+                        <select value={selectedWorkZoneId} onChange={e => setSelectedWorkZoneId(e.target.value)} className="border p-1">
+                            <option value="">使用預設工作區</option>
+                            {workZones.map(z => (
+                                <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
+                            ))}
+                        </select>
+                    )}
+                </div>
                 <select value={selectedWorkTypeId} onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }} className="border p-1 mb-2">
                     <option value="">選擇種類</option>{typeOptions}
                 </select>
