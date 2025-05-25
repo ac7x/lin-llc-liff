@@ -1,6 +1,7 @@
 'use client'
 
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav'
+import '@/styles/timeline.scss'
 import { getApp, getApps, initializeApp } from 'firebase/app'
 import {
 	collection,
@@ -13,7 +14,6 @@ import {
 import React, { useEffect, useMemo, useState } from 'react'
 import Timeline from 'react-calendar-timeline'
 import 'react-calendar-timeline/style.css'
-import '@/styles/timeline.scss'
 import { useCollection } from 'react-firebase-hooks/firestore'
 
 // === date-fns imports ===
@@ -85,10 +85,20 @@ const WorkScheduleManagementPage: React.FC = () => {
 	}, [epicSnapshot])
 
 	// 2. 將 Firestore 資料轉為 Timeline groups/items 格式
-	const groups = useMemo(() => epics.map(e => ({
-		id: e.epicId,
-		title: e.title
-	})), [epics])
+	const groupCount = 15
+	const groups = useMemo(() => {
+		const filledEpics = [...epics]
+		while (filledEpics.length < groupCount) {
+			filledEpics.push({
+				epicId: `empty-${filledEpics.length}`,
+				title: ''
+			})
+		}
+		return filledEpics.map(e => ({
+			id: e.epicId,
+			title: e.title
+		}))
+	}, [epics])
 
 	const items = useMemo(() =>
 		epics.flatMap(e =>
