@@ -52,6 +52,11 @@ const toIso = (date: string | number | Date | undefined | null): string => {
     return isNaN(d.getTime()) ? '' : d.toISOString();
 };
 
+const selectBase =
+    "bg-background text-foreground border border-gray-300 dark:border-neutral-700 outline-none rounded min-w-[180px] max-w-full w-full px-3 py-2 " +
+    "transition-colors duration-150 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 " +
+    "dark:bg-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500";
+
 const WorkTemplatePage: React.FC = () => {
     const [workTypes, setWorkTypes] = useState<WorkTypeEntity[]>([]);
     const [newWorkTypeTitle, setNewWorkTypeTitle] = useState('');
@@ -257,7 +262,7 @@ const WorkTemplatePage: React.FC = () => {
                         <select
                             value={selectedWorkTypeId}
                             onChange={e => setSelectedWorkTypeId(e.target.value)}
-                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                            className={selectBase}
                         >
                             <option value="">{STRINGS.selectType}</option>
                             {typeOptions}
@@ -308,31 +313,40 @@ const WorkTemplatePage: React.FC = () => {
                 <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
                     <h2 className="font-bold mb-2">{STRINGS.addToEpicTitle}</h2>
                     <div className="flex flex-wrap gap-2 mb-2">
-                        <select
-                            value={selectedWorkEpicId}
-                            onChange={e => {
-                                setSelectedWorkEpicId(e.target.value);
-                                setSelectedWorkZoneId('');
-                            }}
-                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 min-w-[150px]"
-                        >
-                            <option value="">{STRINGS.selectEpic}</option>{epicOptions}
-                        </select>
-                        <select
-                            value={selectedRegion}
-                            onChange={e => setSelectedRegion(e.target.value as typeof selectedRegion)}
-                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 min-w-[110px]"
-                        >
-                            {STRINGS.region.map(region => (
-                                <option key={region} value={region}>{region}</option>
-                            ))}
-                        </select>
-                        {/* --- 工作區下拉選單 --- */}
-                        <div className="relative">
+                        {/* Epic 下拉選單 */}
+                        <div className="flex-1 min-w-[180px] max-w-xs">
+                            <select
+                                value={selectedWorkEpicId}
+                                onChange={e => {
+                                    setSelectedWorkEpicId(e.target.value);
+                                    setSelectedWorkZoneId('');
+                                }}
+                                className={selectBase}
+                                aria-label={STRINGS.selectEpic}
+                            >
+                                <option value="">{STRINGS.selectEpic}</option>
+                                {epicOptions}
+                            </select>
+                        </div>
+                        {/* 區域 下拉選單 */}
+                        <div className="flex-1 min-w-[120px] max-w-xs">
+                            <select
+                                value={selectedRegion}
+                                onChange={e => setSelectedRegion(e.target.value as typeof selectedRegion)}
+                                className={selectBase}
+                                aria-label="region"
+                            >
+                                {STRINGS.region.map(region => (
+                                    <option key={region} value={region}>{region}</option>
+                                ))}
+                            </select>
+                        </div>
+                        {/* 工作區 下拉選單 */}
+                        <div className="flex-1 min-w-[180px] max-w-xs relative">
                             <select
                                 value={selectedWorkZoneId}
                                 onChange={e => setSelectedWorkZoneId(e.target.value)}
-                                className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 min-w-[180px] pr-10"
+                                className={selectBase + " pr-10"}
                                 aria-label={STRINGS.selectZone}
                             >
                                 <option value="">{STRINGS.useDefaultZone}</option>
@@ -344,14 +358,18 @@ const WorkTemplatePage: React.FC = () => {
                             </select>
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 dark:text-neutral-500">&#9660;</span>
                         </div>
-                        <select
-                            value={selectedWorkTypeId}
-                            onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }}
-                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 min-w-[120px]"
-                        >
-                            <option value="">{STRINGS.selectType}</option>
-                            {typeOptions}
-                        </select>
+                        {/* 種類 下拉選單 */}
+                        <div className="flex-1 min-w-[120px] max-w-xs">
+                            <select
+                                value={selectedWorkTypeId}
+                                onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }}
+                                className={selectBase}
+                                aria-label={STRINGS.selectType}
+                            >
+                                <option value="">{STRINGS.selectType}</option>
+                                {typeOptions}
+                            </select>
+                        </div>
                     </div>
                     {filteredFlows.length > 0 && (
                         <div className="mb-2">
