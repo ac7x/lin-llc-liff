@@ -34,6 +34,8 @@ const toISO = (date?: string | null): string => {
 
 type MemberSimple = { memberId: string; name: string };
 
+const regionOptions = ['北部', '中部', '南部', '東部', '離島'] as const;
+
 /**
  * 進度條元件
  */
@@ -112,6 +114,7 @@ export default function WorkEpicPage() {
     const [newAddress, setNewAddress] = useState('');
     const [newSiteSupervisors, setNewSiteSupervisors] = useState<string[]>([]);
     const [newSafetyOfficers, setNewSafetyOfficers] = useState<string[]>([]);
+    const [newRegion, setNewRegion] = useState<'北部' | '中部' | '南部' | '東部' | '離島'>('北部');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -153,7 +156,7 @@ export default function WorkEpicPage() {
             address: "",
             createdAt: new Date().toISOString(),
             status: "啟用",
-            region: "北部"
+            region: newRegion
         };
         const newEpic: WorkEpicEntity = {
             epicId: shortId('epic-'),
@@ -166,7 +169,7 @@ export default function WorkEpicPage() {
             safetyOfficers,
             status: "待開始",
             priority: 1,
-            region: "北部",
+            region: newRegion,
             address: newAddress,
             createdAt: new Date().toISOString(),
             workZones: [defaultZone],
@@ -183,6 +186,7 @@ export default function WorkEpicPage() {
             setNewAddress('');
             setNewSiteSupervisors([]);
             setNewSafetyOfficers([]);
+            setNewRegion('北部');
         } catch {
             alert("建立失敗，請稍後再試");
         }
@@ -216,13 +220,6 @@ export default function WorkEpicPage() {
         }
     };
 
-    const renderMemberNames = (members: MemberSimple[] | undefined) => {
-        if (!members || members.length === 0) {
-            return '-';
-        }
-        return members.map(m => m.name).join(', ');
-    };
-
     return (
         <main className="p-4 min-h-screen bg-white dark:bg-gray-950 transition-colors">
             <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">工作標的列表</h1>
@@ -254,6 +251,15 @@ export default function WorkEpicPage() {
                     options={members}
                     placeholder="安全人員"
                 />
+                <select
+                    value={newRegion}
+                    onChange={e => setNewRegion(e.target.value as typeof regionOptions[number])}
+                    className="border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
+                >
+                    {regionOptions.map(r => (
+                        <option key={r} value={r}>{r}</option>
+                    ))}
+                </select>
                 <input
                     value={newAddress}
                     onChange={e => setNewAddress(e.target.value)}
@@ -276,11 +282,11 @@ export default function WorkEpicPage() {
                             <th className="px-2 py-2 text-left">開始</th>
                             <th className="px-2 py-2 text-left">結束</th>
                             <th className="px-2 py-2 text-left">負責人</th>
-                            <th className="px-2 py-2 text-left">現場監工</th>
-                            <th className="px-2 py-2 text-left">安全人員</th>
                             <th className="px-2 py-2 text-left">狀態</th>
                             <th className="px-2 py-2 text-left">優先</th>
+                            <th className="px-2 py-2 text-left">區域</th>
                             <th className="px-2 py-2 text-left">地址</th>
+                            <th className="px-2 py-2 text-left">工作區</th>
                             <th className="px-2 py-2">操作</th>
                         </tr>
                     </thead>
@@ -328,12 +334,6 @@ export default function WorkEpicPage() {
                                                 />
                                             </td>
                                             <td className="px-2 py-1">
-                                                {renderMemberNames(editFields.siteSupervisors as MemberSimple[])}
-                                            </td>
-                                            <td className="px-2 py-1">
-                                                {renderMemberNames(editFields.safetyOfficers as MemberSimple[])}
-                                            </td>
-                                            <td className="px-2 py-1">
                                                 <select
                                                     value={editFields.status || '待開始'}
                                                     onChange={e => handleEditField('status', e.target.value)}
@@ -354,11 +354,27 @@ export default function WorkEpicPage() {
                                                 />
                                             </td>
                                             <td className="px-2 py-1">
+                                                <select
+                                                    value={editFields.region || '北部'}
+                                                    onChange={e => handleEditField('region', e.target.value as typeof regionOptions[number])}
+                                                    className="border rounded px-2 py-1 w-full bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
+                                                >
+                                                    {regionOptions.map(r => (
+                                                        <option key={r} value={r}>{r}</option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                            <td className="px-2 py-1">
                                                 <input
                                                     value={editFields.address || ''}
                                                     onChange={e => handleEditField('address', e.target.value)}
                                                     className="border rounded px-2 py-1 w-full bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
                                                 />
+                                            </td>
+                                            <td className="px-2 py-1">
+                                                {(editFields.workZones && editFields.workZones.length > 0)
+                                                    ? editFields.workZones.map(z => z.title).join(', ')
+                                                    : '—'}
                                             </td>
                                             <td className="px-2 py-1 flex gap-2">
                                                 <button
@@ -378,11 +394,15 @@ export default function WorkEpicPage() {
                                             <td className="px-2 py-1">{epic.startDate?.slice(0, 10)}</td>
                                             <td className="px-2 py-1">{epic.endDate?.slice(0, 10)}</td>
                                             <td className="px-2 py-1">{epic.owner?.name}</td>
-                                            <td className="px-2 py-1">{renderMemberNames(epic.siteSupervisors)}</td>
-                                            <td className="px-2 py-1">{renderMemberNames(epic.safetyOfficers)}</td>
                                             <td className="px-2 py-1">{epic.status}</td>
                                             <td className="px-2 py-1">{epic.priority}</td>
+                                            <td className="px-2 py-1">{epic.region}</td>
                                             <td className="px-2 py-1">{epic.address}</td>
+                                            <td className="px-2 py-1">
+                                                {(epic.workZones && epic.workZones.length > 0)
+                                                    ? epic.workZones.map(z => z.title).join(', ')
+                                                    : '—'}
+                                            </td>
                                             <td className="px-2 py-1 flex gap-2">
                                                 <button
                                                     onClick={() => handleEdit(epic)}
