@@ -1,11 +1,16 @@
 'use client';
+
 import {
-    addWorkEpic, deleteWorkEpic, getAllWorkEpics, updateWorkEpic, WorkEpicEntity,
+    addWorkEpic,
+    deleteWorkEpic,
+    getAllWorkEpics,
+    updateWorkEpic,
+    WorkEpicEntity
 } from '@/app/actions/workepic.action';
 import { getAllWorkMembers, WorkMember } from '@/app/actions/workmember.action';
+import { WorkZoneEntity } from '@/app/actions/workzone.action';
 import { useEffect, useState } from 'react';
 
-//#region 工具函式
 /**
  * 產生簡短唯一 ID
  * @param prefix 前綴字串
@@ -25,7 +30,6 @@ const toISO = (date: string | undefined | null): string => {
     const d = new Date(date + 'T00:00:00.000Z');
     return isNaN(d.getTime()) ? '' : d.toISOString();
 };
-//#endregion
 
 type MemberSimple = { memberId: string; name: string };
 
@@ -48,7 +52,7 @@ const ProgressBar = ({ completed, total }: { completed: number; total: number })
  * 單選下拉元件
  */
 const SingleSelect = ({
-    value, onChange, options, placeholder,
+    value, onChange, options, placeholder
 }: {
     value: string;
     onChange: (val: string) => void;
@@ -71,7 +75,7 @@ const SingleSelect = ({
  * 多選下拉元件
  */
 const MultiSelect = ({
-    value, onChange, options, placeholder,
+    value, onChange, options, placeholder
 }: {
     value: string[];
     onChange: (selected: string[]) => void;
@@ -105,24 +109,24 @@ export default function WorkEpicPage() {
     const [newTitle, setNewTitle] = useState('');
     const [newOwner, setNewOwner] = useState<MemberSimple | null>(null);
     const [newAddress, setNewAddress] = useState('');
-    // 新增：現場監工與安全人員複選狀態
     const [newSiteSupervisors, setNewSiteSupervisors] = useState<string[]>([]);
     const [newSafetyOfficers, setNewSafetyOfficers] = useState<string[]>([]);
 
     useEffect(() => {
         (async () => {
-            const epics = await getAllWorkEpics(false) as WorkEpicEntity[];
-            setWorkEpics(epics);
+            setWorkEpics(await getAllWorkEpics(false) as WorkEpicEntity[]);
             setMembers(await getAllWorkMembers());
         })();
     }, []);
 
     const getProgress = (epic: WorkEpicEntity) => {
         let total = 0, completed = 0;
-        if (epic.workTasks) epic.workTasks.forEach(t => {
-            total += t.targetQuantity;
-            completed += t.completedQuantity;
-        });
+        if (epic.workTasks) {
+            epic.workTasks.forEach(t => {
+                total += t.targetQuantity;
+                completed += t.completedQuantity;
+            });
+        }
         return { completed, total };
     };
 
@@ -132,13 +136,22 @@ export default function WorkEpicPage() {
             return;
         }
         const siteSupervisors = members.filter(m => newSiteSupervisors.includes(m.memberId)).map(m => ({
-            memberId: m.memberId,
-            name: m.name
+            memberId: m.memberId, name: m.name
         }));
         const safetyOfficers = members.filter(m => newSafetyOfficers.includes(m.memberId)).map(m => ({
-            memberId: m.memberId,
-            name: m.name
+            memberId: m.memberId, name: m.name
         }));
+
+        // 修正 WorkZoneEntity 必要欄位
+        const defaultZone: WorkZoneEntity = {
+            zoneId: shortId('zone-'),
+            title: '預設區域',
+            address: '',
+            createdAt: new Date().toISOString(),
+            status: '啟用',
+            region: '北部'
+        };
+
         const newEpic: WorkEpicEntity = {
             epicId: shortId('epic-'),
             title: newTitle,
@@ -153,17 +166,11 @@ export default function WorkEpicPage() {
             region: '北部',
             address: newAddress,
             createdAt: new Date().toISOString(),
-            workZones: [
-                {
-                    zoneId: shortId('zone-'),
-                    title: '預設區域',
-                    // 其他欄位依照 WorkZoneEntity 型別補齊
-                }
-            ],
+            workZones: [defaultZone],
             workTypes: [],
             workFlows: [],
             workTasks: [],
-            workLoads: [],
+            workLoads: []
         };
         try {
             await addWorkEpic(newEpic);
@@ -189,7 +196,7 @@ export default function WorkEpicPage() {
         const updates: Partial<WorkEpicEntity> = {
             ...editFields,
             startDate: toISO(editFields.startDate as string),
-            endDate: toISO(editFields.endDate as string),
+            endDate: toISO(editFields.endDate as string)
         };
         await updateWorkEpic(epicId, updates);
         setWorkEpics(prev => prev.map(e => e.epicId === epicId ? { ...e, ...updates } : e));
@@ -207,7 +214,7 @@ export default function WorkEpicPage() {
     };
 
     return (
-        <main className="p-4 bg-white dark:bg-gray-950 min-h-screen">
+        <main className="p-4 min-h-screen bg-white dark:bg-gray-950 transition-colors">
             <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">工作標的列表</h1>
             <div className="mb-4 flex flex-wrap gap-2 items-center">
                 <input
@@ -225,14 +232,12 @@ export default function WorkEpicPage() {
                     options={members}
                     placeholder="負責人"
                 />
-                {/* 新增現場監工複選 */}
                 <MultiSelect
                     value={newSiteSupervisors}
                     onChange={setNewSiteSupervisors}
                     options={members}
                     placeholder="現場監工"
                 />
-                {/* 新增安全人員複選 */}
                 <MultiSelect
                     value={newSafetyOfficers}
                     onChange={setNewSafetyOfficers}
