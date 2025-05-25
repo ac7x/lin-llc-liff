@@ -130,8 +130,11 @@ export default function WorkMemberPage() {
                   <div className="font-semibold text-lg">{member.name}</div>
                   <div>角色: {member.role}</div>
                   <div>技能: {member.skills
-                    .map(skillId => Object.entries(skillsMap)
-                      .find(([_, id]) => id === skillId)?.[0] || skillId)
+                    .map(skillId => {
+                      const entry = Object.entries(skillsMap)
+                        .find(entry => entry[1] === skillId);
+                      return entry ? entry[0] : skillId;
+                    })
                     .join(", ")}
                   </div>
                   <div className="flex gap-2 mt-2">
