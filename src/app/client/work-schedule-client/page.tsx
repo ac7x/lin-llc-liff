@@ -4,7 +4,7 @@ import type { WorkEpicEntity } from '@/app/actions/workepic.action'
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, subDays } from 'date-fns'
-import { collection, QueryDocumentSnapshot } from 'firebase/firestore'
+import { collection, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataSet, Timeline } from 'vis-timeline/standalone'
@@ -20,7 +20,7 @@ interface WorkLoadEntity {
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
 
-function parseEpicSnapshot(docs: QueryDocumentSnapshot<WorkEpicEntity>[]): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
+function parseEpicSnapshot(docs: QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[]): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
   const epics: WorkEpicEntity[] = docs.map(doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity))
   const unplanned: LooseWorkLoad[] = epics.flatMap(e =>
     (e.workLoads || [])
@@ -37,11 +37,11 @@ const ClientWorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
-  const [epicSnapshot] = useCollection(collection(firestore, 'workEpic'))
+  const [epicSnapshot] = useCollection(collection(firestore, 'workEpic') as any)
 
   useEffect(() => {
     if (!epicSnapshot) return
-    const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs)
+    const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs as QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[])
     setEpics(epics)
     setUnplanned(unplanned)
   }, [epicSnapshot])
