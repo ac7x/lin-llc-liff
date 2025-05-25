@@ -109,7 +109,7 @@ const WorkTemplatePage: React.FC = () => {
     const [workloadCounts, setWorkloadCounts] = useState<Record<string, number>>({});
     const [showValidationError, setShowValidationError] = useState(false);
     const [allWorkZones, setAllWorkZones] = useState<WorkZoneEntity[]>([]);
-    const [tab, setTab] = useState<"template" | "epic">("template");
+    const [tab, setTab] = useState<"template" | "epic">("epic");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     useEffect(() => {
@@ -274,101 +274,22 @@ const WorkTemplatePage: React.FC = () => {
                 <div className="flex border-b border-gray-300 dark:border-neutral-700 mb-4 space-x-2">
                     <button
                         type="button"
-                        className={`${tabBase} ${tab === "template" ? tabActive : tabInactive}`}
-                        onClick={() => setTab("template")}
-                        tabIndex={0}
-                    >
-                        {STRINGS.workflowTitle} + {STRINGS.title}
-                    </button>
-                    <button
-                        type="button"
                         className={`${tabBase} ${tab === "epic" ? tabActive : tabInactive}`}
                         onClick={() => setTab("epic")}
                         tabIndex={0}
                     >
                         {STRINGS.addToEpicTitle}
                     </button>
+                    <button
+                        type="button"
+                        className={`${tabBase} ${tab === "template" ? tabActive : tabInactive}`}
+                        onClick={() => setTab("template")}
+                        tabIndex={0}
+                    >
+                        {STRINGS.workflowTitle} + {STRINGS.title}
+                    </button>
                 </div>
                 {/* Tab panels */}
-                {tab === "template" && (
-                    <>
-                        {/* 種類卡片 */}
-                        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
-                            <div className="flex items-center mb-2">
-                                <input
-                                    value={newWorkTypeTitle}
-                                    onChange={e => setNewWorkTypeTitle(e.target.value)}
-                                    placeholder={STRINGS.addTypePlaceholder}
-                                    className="border p-2 rounded mr-2 flex-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
-                                />
-                                <button
-                                    onClick={handleAddWorkType}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                                >
-                                    {STRINGS.add}
-                                </button>
-                            </div>
-                            <ul className="flex flex-wrap gap-2">
-                                {workTypes.map(t =>
-                                    <li key={t.typeId} className="bg-gray-50 dark:bg-neutral-700 rounded px-3 py-1 shadow text-gray-700 dark:text-neutral-100">{t.title}</li>
-                                )}
-                            </ul>
-                        </div>
-                        {/* 流程管理 */}
-                        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
-                            <h2 className="font-bold mb-2">{STRINGS.workflowTitle}</h2>
-                            <div className="flex gap-2 mb-2">
-                                <select
-                                    value={selectedWorkTypeId}
-                                    onChange={e => setSelectedWorkTypeId(e.target.value)}
-                                    className={selectBase}
-                                >
-                                    <option value="">{STRINGS.selectType}</option>
-                                    {typeOptions}
-                                </select>
-                            </div>
-                            <div className="flex flex-wrap gap-2 mb-2">
-                                <input
-                                    value={newStepName}
-                                    onChange={e => setNewStepName(e.target.value)}
-                                    placeholder={STRINGS.stepName}
-                                    className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
-                                />
-                                <input
-                                    type="number"
-                                    value={newStepOrder}
-                                    min={1}
-                                    onChange={e => setNewStepOrder(Number(e.target.value))}
-                                    className="border w-20 p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
-                                />
-                                <input
-                                    value={newStepSkills}
-                                    onChange={e => setNewStepSkills(e.target.value)}
-                                    placeholder={STRINGS.skills}
-                                    className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
-                                />
-                                <button
-                                    onClick={handleAddStep}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                                >
-                                    {STRINGS.addStep}
-                                </button>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {filteredFlows.map(f =>
-                                    <div key={f.flowId} className="bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 mb-1 min-w-[180px]">
-                                        {f.steps.map(s => (
-                                            <div key={s.stepName} className="text-gray-700 dark:text-neutral-100">
-                                                <span className="font-semibold">{s.order}. {s.stepName}</span>
-                                                <span className="ml-2 text-xs text-gray-500 dark:text-neutral-400">[{s.requiredSkills.join(",")}]</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </>
-                )}
                 {tab === "epic" && (
                     <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
                         <h2 className="font-bold mb-2">{STRINGS.addToEpicTitle}</h2>
@@ -481,6 +402,85 @@ const WorkTemplatePage: React.FC = () => {
                             {STRINGS.addToEpic}
                         </button>
                     </div>
+                )}
+                {tab === "template" && (
+                    <>
+                        {/* 種類卡片 */}
+                        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
+                            <div className="flex items-center mb-2">
+                                <input
+                                    value={newWorkTypeTitle}
+                                    onChange={e => setNewWorkTypeTitle(e.target.value)}
+                                    placeholder={STRINGS.addTypePlaceholder}
+                                    className="border p-2 rounded mr-2 flex-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                                />
+                                <button
+                                    onClick={handleAddWorkType}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                                >
+                                    {STRINGS.add}
+                                </button>
+                            </div>
+                            <ul className="flex flex-wrap gap-2">
+                                {workTypes.map(t =>
+                                    <li key={t.typeId} className="bg-gray-50 dark:bg-neutral-700 rounded px-3 py-1 shadow text-gray-700 dark:text-neutral-100">{t.title}</li>
+                                )}
+                            </ul>
+                        </div>
+                        {/* 流程管理 */}
+                        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
+                            <h2 className="font-bold mb-2">{STRINGS.workflowTitle}</h2>
+                            <div className="flex gap-2 mb-2">
+                                <select
+                                    value={selectedWorkTypeId}
+                                    onChange={e => setSelectedWorkTypeId(e.target.value)}
+                                    className={selectBase}
+                                >
+                                    <option value="">{STRINGS.selectType}</option>
+                                    {typeOptions}
+                                </select>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                                <input
+                                    value={newStepName}
+                                    onChange={e => setNewStepName(e.target.value)}
+                                    placeholder={STRINGS.stepName}
+                                    className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                                />
+                                <input
+                                    type="number"
+                                    value={newStepOrder}
+                                    min={1}
+                                    onChange={e => setNewStepOrder(Number(e.target.value))}
+                                    className="border w-20 p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                                />
+                                <input
+                                    value={newStepSkills}
+                                    onChange={e => setNewStepSkills(e.target.value)}
+                                    placeholder={STRINGS.skills}
+                                    className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                                />
+                                <button
+                                    onClick={handleAddStep}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                                >
+                                    {STRINGS.addStep}
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {filteredFlows.map(f =>
+                                    <div key={f.flowId} className="bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 mb-1 min-w-[180px]">
+                                        {f.steps.map(s => (
+                                            <div key={s.stepName} className="text-gray-700 dark:text-neutral-100">
+                                                <span className="font-semibold">{s.order}. {s.stepName}</span>
+                                                <span className="ml-2 text-xs text-gray-500 dark:text-neutral-400">[{s.requiredSkills.join(",")}]</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </>
                 )}
             </main>
             <SimpleModal
