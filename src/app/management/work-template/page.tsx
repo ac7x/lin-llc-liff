@@ -16,7 +16,7 @@ import {
 import type { WorkZoneEntity } from '@/app/actions/workzone.action';
 import { getAllWorkZones } from '@/app/actions/workzone.action';
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
-import React, { ChangeEvent, useEffect, useRef, useState } from 'react';
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 
 // 僅作為外部化示範
 const STRINGS = {
@@ -31,6 +31,7 @@ const STRINGS = {
     addStep: "新增步驟",
     addToEpicTitle: "加入工作標的",
     selectEpic: "選擇標的",
+    selectZone: "選擇工作區",
     region: ["北部", "中部", "南部", "東部", "離島"],
     useDefaultZone: "使用預設工作區",
     selectAll: "全選",
@@ -78,7 +79,7 @@ const WorkTemplatePage: React.FC = () => {
 
     const handleAddWorkType = async () => {
         const title = newWorkTypeTitle.trim();
-        if (!title) return alert('請輸入標題！');
+        if (!title) return alert("請輸入標題！");
         const newWorkType: WorkTypeEntity = { typeId: shortId('wt-'), title, requiredSkills: [], flows: [] };
         await addWorkType(newWorkType);
         setWorkTypes(prev => [...prev, newWorkType]);
@@ -90,7 +91,7 @@ const WorkTemplatePage: React.FC = () => {
         const workType = workTypes.find(t => t.typeId === selectedWorkTypeId);
         if (!workType) return;
         const steps = (workType.flows || []).flatMap(f => f.steps);
-        if (steps.some(s => s.order === newStepOrder)) return alert('順序重複');
+        if (steps.some(s => s.order === newStepOrder)) return alert("順序重複");
         const newFlow: WorkFlowEntity = {
             flowId: shortId('fl-'),
             workTypeId: selectedWorkTypeId,
@@ -313,35 +314,40 @@ const WorkTemplatePage: React.FC = () => {
                                 setSelectedWorkEpicId(e.target.value);
                                 setSelectedWorkZoneId('');
                             }}
-                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 min-w-[150px]"
                         >
                             <option value="">{STRINGS.selectEpic}</option>{epicOptions}
                         </select>
                         <select
                             value={selectedRegion}
                             onChange={e => setSelectedRegion(e.target.value as typeof selectedRegion)}
-                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 min-w-[110px]"
                         >
                             {STRINGS.region.map(region => (
                                 <option key={region} value={region}>{region}</option>
                             ))}
                         </select>
-                        {workZones.length > 0 && (
+                        {/* --- 工作區下拉選單 --- */}
+                        <div className="relative">
                             <select
                                 value={selectedWorkZoneId}
                                 onChange={e => setSelectedWorkZoneId(e.target.value)}
-                                className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                                className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 min-w-[180px] pr-10"
+                                aria-label={STRINGS.selectZone}
                             >
                                 <option value="">{STRINGS.useDefaultZone}</option>
                                 {workZones.map(z => (
-                                    <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
+                                    <option key={z.zoneId} value={z.zoneId}>
+                                        {z.title || '（未命名工作區）'}
+                                    </option>
                                 ))}
                             </select>
-                        )}
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 dark:text-neutral-500">&#9660;</span>
+                        </div>
                         <select
                             value={selectedWorkTypeId}
                             onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }}
-                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 min-w-[120px]"
                         >
                             <option value="">{STRINGS.selectType}</option>
                             {typeOptions}

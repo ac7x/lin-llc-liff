@@ -3,7 +3,7 @@
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, subDays } from 'date-fns'
-import { collection, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
+import { collection } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataSet, Timeline } from 'vis-timeline/standalone'
@@ -25,9 +25,7 @@ interface WorkEpicEntity {
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
 
-function parseEpicSnapshot(
-  docs: QueryDocumentSnapshot<DocumentData, DocumentData>[]
-): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
+function parseEpicSnapshot(docs: any[]): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
   const epics: WorkEpicEntity[] = docs.map(doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity))
   const unplanned: LooseWorkLoad[] = epics.flatMap(e =>
     (e.workLoads || [])
@@ -66,14 +64,10 @@ const ClientWorkSchedulePage = () => {
             type: 'range',
             content: getWorkloadContent(l),
             start: new Date(l.plannedStartTime),
-            end:
-              l.plannedEndTime && l.plannedEndTime !== ''
-                ? new Date(l.plannedEndTime)
-                : addDays(new Date(l.plannedStartTime), 1),
+            end: l.plannedEndTime && l.plannedEndTime !== '' ? new Date(l.plannedEndTime) : addDays(new Date(l.plannedStartTime), 1),
           }))
       )
     )
-
     const now = new Date()
     const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const start = subDays(today0, 3)
@@ -106,25 +100,13 @@ const ClientWorkSchedulePage = () => {
       zoomMax: 30 * 24 * 60 * 60 * 1000,
       timeAxis: { scale: 'day', step: 1 },
       format: {
-        minorLabels: {
-          minute: '',
-          hour: '',
-          day: 'D',
-          month: 'MMM',
-          year: 'YYYY',
-        },
-        majorLabels: {
-          day: 'YYYY/MM/DD',
-          month: 'YYYY/MM',
-          year: 'YYYY',
-        },
+        minorLabels: { minute: '', hour: '', day: 'D', month: 'MMM', year: 'YYYY' },
+        majorLabels: { day: 'YYYY/MM/DD', month: 'YYYY/MM', year: 'YYYY' },
       },
     })
     tl.setWindow(start, end, { animation: false })
 
-    return () => {
-      tl.destroy()
-    }
+    return () => { tl.destroy() }
   }, [epics])
 
   return (
@@ -137,11 +119,11 @@ const ClientWorkSchedulePage = () => {
         />
       </div>
       <div className="flex-none min-h-[25vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300">
-        <div className="w-full h-full flex flex-col p-4 max-w-[100vw] mx-auto">
+        <div className="w-full h-full flex flex-col p-4 max-w-none mx-auto">
           <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors duration-300">
             未排班工作
           </h2>
-          <div className="flex flex-wrap gap-3 overflow-y-auto pb-16 px-0.5">
+          <div className="flex flex-wrap gap-3 overflow-y-auto pb-16 px-0.5 w-full max-w-none">
             {unplanned.length === 0 ? (
               <div className="text-gray-400 dark:text-gray-500 text-center w-full transition-colors duration-300">（無未排班工作）</div>
             ) : (
@@ -152,7 +134,7 @@ const ClientWorkSchedulePage = () => {
                     bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5
                     hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-300 hover:shadow-md
                     flex flex-col justify-between gap-2
-                    flex-auto min-w-[180px] max-w-full
+                    flex-1 min-w-[180px] max-w-full
                   "
                   title={`來自 ${wl.epicTitle}`}
                 >

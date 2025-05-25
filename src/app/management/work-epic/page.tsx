@@ -105,6 +105,9 @@ export default function WorkEpicPage() {
     const [newTitle, setNewTitle] = useState('');
     const [newOwner, setNewOwner] = useState<MemberSimple | null>(null);
     const [newAddress, setNewAddress] = useState('');
+    // 新增：現場監工與安全人員複選狀態
+    const [newSiteSupervisors, setNewSiteSupervisors] = useState<string[]>([]);
+    const [newSafetyOfficers, setNewSafetyOfficers] = useState<string[]>([]);
 
     useEffect(() => {
         (async () => {
@@ -128,6 +131,14 @@ export default function WorkEpicPage() {
             alert('請完整填寫標題、負責人、地址');
             return;
         }
+        const siteSupervisors = members.filter(m => newSiteSupervisors.includes(m.memberId)).map(m => ({
+            memberId: m.memberId,
+            name: m.name
+        }));
+        const safetyOfficers = members.filter(m => newSafetyOfficers.includes(m.memberId)).map(m => ({
+            memberId: m.memberId,
+            name: m.name
+        }));
         const newEpic: WorkEpicEntity = {
             epicId: shortId('epic-'),
             title: newTitle,
@@ -135,14 +146,20 @@ export default function WorkEpicPage() {
             endDate: '',
             insuranceStatus: '無',
             owner: newOwner,
-            siteSupervisors: [],
-            safetyOfficers: [],
+            siteSupervisors,
+            safetyOfficers,
             status: '待開始',
             priority: 1,
             region: '北部',
             address: newAddress,
             createdAt: new Date().toISOString(),
-            workZones: [],
+            workZones: [
+                {
+                    zoneId: shortId('zone-'),
+                    title: '預設區域',
+                    // 其他欄位依照 WorkZoneEntity 型別補齊
+                }
+            ],
             workTypes: [],
             workFlows: [],
             workTasks: [],
@@ -154,6 +171,8 @@ export default function WorkEpicPage() {
             setNewTitle('');
             setNewOwner(null);
             setNewAddress('');
+            setNewSiteSupervisors([]);
+            setNewSafetyOfficers([]);
         } catch {
             alert('建立失敗，請稍後再試');
         }
@@ -205,6 +224,20 @@ export default function WorkEpicPage() {
                     }}
                     options={members}
                     placeholder="負責人"
+                />
+                {/* 新增現場監工複選 */}
+                <MultiSelect
+                    value={newSiteSupervisors}
+                    onChange={setNewSiteSupervisors}
+                    options={members}
+                    placeholder="現場監工"
+                />
+                {/* 新增安全人員複選 */}
+                <MultiSelect
+                    value={newSafetyOfficers}
+                    onChange={setNewSafetyOfficers}
+                    options={members}
+                    placeholder="安全人員"
                 />
                 <input
                     value={newAddress}
