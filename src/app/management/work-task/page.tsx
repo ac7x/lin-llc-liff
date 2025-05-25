@@ -116,7 +116,7 @@ export default function WorkTaskPage() {
       <main className="p-4 bg-background text-foreground min-h-screen">
         <h1 className="text-2xl font-bold mb-4">工作任務/工作量合併表</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {pagedTasks.map((task, idx) => {
+          {pagedTasks.map(task => {
             const taskWorkloads = workloads.filter(w => w.taskId === task.taskId);
             const isExpanded = expandedTaskIds.includes(task.taskId);
             const epic = epics.find(e => Array.isArray(e.workTasks) && e.workTasks.some(t => t.taskId === task.taskId));
