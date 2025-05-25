@@ -1,7 +1,5 @@
 'use client'
 
-import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav'
-import '@/styles/timeline.scss'
 import {
 	addDays,
 	differenceInMilliseconds,
@@ -37,10 +35,8 @@ type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
 const parseEpicSnapshot = (
 	docs: WorkEpicEntity[]
 ): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } => {
-	const epics: WorkEpicEntity[] = docs.map(
-		doc => ({ ...doc, epicId: doc.epicId } as WorkEpicEntity)
-	)
-	const unplanned: LooseWorkLoad[] = epics.flatMap(e =>
+	const epics = docs.map(doc => ({ ...doc, epicId: doc.epicId }))
+	const unplanned = epics.flatMap(e =>
 		(e.workLoads || [])
 			.filter(l => !l.plannedStartTime || l.plannedStartTime === '')
 			.map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
@@ -49,7 +45,7 @@ const parseEpicSnapshot = (
 }
 
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) =>
-	`${wl.title || '(無標題)'} | ${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}`
+	`${wl.title || '(無標題)'} | ${(wl.executor || []).join(', ') || '(無執行者)'}`
 
 const WorkScheduleManagementPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
@@ -61,27 +57,19 @@ const WorkScheduleManagementPage: React.FC = () => {
 		setEpics(epics)
 		setUnplanned(unplanned)
 	}
-	useEffect(() => {
-		fetchEpics()
-	}, [])
+	useEffect(() => { fetchEpics() }, [])
 
 	const groupCount = 10
 	const groups = useMemo(() => {
 		const filledEpics = [...epics]
 		while (filledEpics.length < groupCount) {
-			filledEpics.push({
-				epicId: `empty-${filledEpics.length}`,
-				title: ''
-			})
+			filledEpics.push({ epicId: `empty-${filledEpics.length}`, title: '' })
 		}
-		return filledEpics.map(e => ({
-			id: e.epicId,
-			title: e.title
-		}))
+		return filledEpics.map(e => ({ id: e.epicId, title: e.title }))
 	}, [epics])
 
 	const items = useMemo(() =>
-		epics.flatMap((e) =>
+		epics.flatMap(e =>
 			(e.workLoads || [])
 				.filter(l => l.plannedStartTime && l.plannedStartTime !== '')
 				.map(l => {
@@ -162,8 +150,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
 		if (wlIdx === -1) return
 		const newWorkLoads = [...(epic.workLoads || [])]
-		const updateWL = { ...newWorkLoads[wlIdx], plannedStartTime: '', plannedEndTime: '' }
-		newWorkLoads[wlIdx] = updateWL
+		newWorkLoads[wlIdx] = { ...newWorkLoads[wlIdx], plannedStartTime: '', plannedEndTime: '' }
 		await updateWorkEpicWorkLoads(epic.epicId, newWorkLoads)
 		await fetchEpics()
 	}
@@ -173,10 +160,9 @@ const WorkScheduleManagementPage: React.FC = () => {
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
 	return (
-		<div className="min-h-screen w-full bg-black dark:bg-neutral-900 flex flex-col">
-			<div className="flex-none h-[20vh]" />
-			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
-				<div className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
+		<div className="min-h-screen w-full bg-white dark:bg-neutral-900 flex flex-col">
+			<div className="flex-1 flex flex-col items-center justify-center">
+				<div className="w-full rounded bg-white dark:bg-neutral-800 border dark:border-neutral-700 shadow" style={{ minWidth: '100vw', height: 400 }}>
 					<Timeline
 						groups={groups}
 						items={items}
@@ -210,29 +196,22 @@ const WorkScheduleManagementPage: React.FC = () => {
 						}}
 					/>
 				</div>
-			</div>
-			<div className="flex-none h-[20vh] w-full bg-black dark:bg-neutral-900 px-4 py-2 overflow-y-auto">
-				<div className="max-w-7xl mx-auto h-full flex flex-col">
-					<h2 className="text-lg font-bold text-center text-white dark:text-neutral-100 mb-2">未排班工作</h2>
-					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
+				<div className="w-full bg-white dark:bg-neutral-900 p-4 mt-4">
+					<h2 className="text-lg font-bold text-center text-neutral-900 dark:text-neutral-100 mb-2">未排班工作</h2>
+					<div className="flex flex-wrap gap-2 justify-center">
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400 dark:text-neutral-400">（無）</div>
 						) : unplanned.map(wl => (
-							<div
-								key={wl.loadId}
-								className="bg-yellow-50 dark:bg-yellow-900 border rounded px-3 py-2 text-sm"
-								title={`來自 ${wl.epicTitle}`}
-							>
+							<div key={wl.loadId} className="bg-yellow-50 dark:bg-yellow-900 border rounded px-3 py-2 text-sm" title={`來自 ${wl.epicTitle}`}>
 								<div className="text-neutral-900 dark:text-neutral-100">{wl.title || '(無標題)'}</div>
 								<div className="text-xs text-gray-400 dark:text-neutral-300">
-									{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
+									{(wl.executor || []).join(', ') || '(無執行者)'}
 								</div>
 							</div>
 						))}
 					</div>
 				</div>
 			</div>
-			<ManagementBottomNav />
 		</div>
 	)
 }
