@@ -4,7 +4,7 @@ import type { WorkEpicEntity } from '@/app/actions/workepic.action'
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, subDays } from 'date-fns'
-import { collection, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
+import { collection, CollectionReference, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataSet, Timeline } from 'vis-timeline/standalone'
@@ -40,7 +40,9 @@ const ClientWorkSchedulePage = () => {
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
   const timelineInstance = useRef<Timeline | null>(null)
-  const [epicSnapshot] = useCollection(collection(firestore, 'workEpic') as any)
+  const [epicSnapshot] = useCollection(
+    collection(firestore, 'workEpic') as CollectionReference<WorkEpicEntity>
+  )
 
   useEffect(() => {
     if (!epicSnapshot) return
