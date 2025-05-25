@@ -20,9 +20,6 @@ interface WorkLoadEntity {
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
 
-/**
- * 解析 Epic Snapshots，取得所有 epic 及未排班工作
- */
 function parseEpicSnapshot(
   docs: QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[]
 ): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
@@ -35,9 +32,6 @@ function parseEpicSnapshot(
   return { epics, unplanned }
 }
 
-/**
- * 取得工作項目卡片內容
- */
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) =>
   `<div><div>${wl.title || "(無標題)"}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "(無執行者)"}</div></div>`
 
@@ -45,22 +39,24 @@ const ClientWorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const timelineInstance = useRef<Timeline | null>(null)
   const [epicSnapshot] = useCollection(collection(firestore, 'workEpic') as any)
 
   useEffect(() => {
-    if (!epicSnapshot) {
-      return
-    }
+    if (!epicSnapshot) return
     const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs as QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[])
     setEpics(epics)
     setUnplanned(unplanned)
   }, [epicSnapshot])
 
   useEffect(() => {
-    if (!timelineRef.current || !epics.length) {
-      return
+    if (!timelineRef.current || !epics.length) return
+
+    if (timelineInstance.current) {
+      timelineInstance.current.destroy()
+      timelineInstance.current = null
     }
+
     const groups = new DataSet(epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` })))
     const items = new DataSet(
       epics.flatMap(e =>
@@ -76,6 +72,7 @@ const ClientWorkSchedulePage = () => {
           }))
       )
     )
+
     const now = new Date()
     const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const start = subDays(today0, 3)
@@ -114,12 +111,16 @@ const ClientWorkSchedulePage = () => {
     })
     tl.setWindow(start, end, { animation: false })
 
-    return () => { tl.destroy() }
+    timelineInstance.current = tl
+
+    return () => {
+      tl.destroy()
+      timelineInstance.current = null
+    }
   }, [epics])
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col transition-colors duration-300 p-0 m-0">
-      {/* Timeline 區塊，固定於視窗中央且滿版 */}
       <div
         className="fixed top-0 left-0 right-0"
         style={{
@@ -142,15 +143,10 @@ const ClientWorkSchedulePage = () => {
           }}
         />
       </div>
-      {/* 下方預留空間，避免被 fixed 的未排班區塊蓋住 */}
       <div style={{ height: '74vh', flex: 'none' }} />
-      {/* 未排班工作區塊，固定於視窗底部且滿版 */}
       <div
         className="fixed left-0 right-0 bottom-0 flex-none min-h-[25vh] max-w-none bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300"
-        style={{
-          width: '100vw',
-          zIndex: 30
-        }}
+        style={{ width: '100vw', zIndex: 30 }}
       >
         <div className="w-full h-full flex flex-col p-4 mx-auto">
           <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors duration-300">
@@ -187,7 +183,6 @@ const ClientWorkSchedulePage = () => {
           )}
         </div>
       </div>
-      {/* Bottom Nav，固定於最底部，不會被其他 fixed 蓋住 */}
       <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 40 }}>
         <ClientBottomNav />
       </div>
