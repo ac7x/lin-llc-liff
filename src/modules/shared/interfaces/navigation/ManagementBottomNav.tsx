@@ -9,12 +9,11 @@ const navItems = [
         popover: [
             { label: '排程客戶', href: '/management/work-schedule' },
             { label: '排程後端', href: '/management/work-schedule-admin' },
-            { label: '儀表板', href: '/management/dashboard' },
         ],
     },
     {
         icon: '🗂️',
-        label: '工區',
+        label: '工作',
         popover: [
             { label: '工作任務', href: '/management/work-task' },
             { label: '工作史詩', href: '/management/work-epic' },

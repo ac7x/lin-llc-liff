@@ -28,6 +28,7 @@ const WorkTemplatePage: React.FC = () => {
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
     const [selectedWorkEpicId, setSelectedWorkEpicId] = useState('');
     const [selectedWorkZoneId, setSelectedWorkZoneId] = useState('');
+    const [selectedRegion, setSelectedRegion] = useState<'北部' | '中部' | '南部' | '東部' | '離島'>('北部');
     const [selectedWorkFlowIds, setSelectedWorkFlowIds] = useState<string[]>([]);
     const [flowQuantities, setFlowQuantities] = useState<Record<string, number>>({});
     const [workloadCounts, setWorkloadCounts] = useState<Record<string, number>>({});
@@ -89,7 +90,11 @@ const WorkTemplatePage: React.FC = () => {
             const defaultZone: WorkZoneEntity = {
                 zoneId: shortId('wz-'),
                 title: 'default',
-                description: '預設工作區'
+                description: '標的內預設區域',
+                address: '',
+                createdAt: new Date().toISOString(),
+                status: '啟用',
+                region: selectedRegion
             };
             workZoneId = defaultZone.zoneId;
             if (!epic.workZones) {
@@ -225,6 +230,15 @@ const WorkTemplatePage: React.FC = () => {
                         setSelectedWorkZoneId('');
                     }} className="border p-1">
                         <option value="">選擇標的</option>{epicOptions}
+                    </select>
+                    <select
+                        value={selectedRegion}
+                        onChange={e => setSelectedRegion(e.target.value as '北部' | '中部' | '南部' | '東部' | '離島')}
+                        className="border p-1"
+                    >
+                        {['北部', '中部', '南部', '東部', '離島'].map(region => (
+                            <option key={region} value={region}>{region}</option>
+                        ))}
                     </select>
                     {workZones.length > 0 && (
                         <select value={selectedWorkZoneId} onChange={e => setSelectedWorkZoneId(e.target.value)} className="border p-1">
