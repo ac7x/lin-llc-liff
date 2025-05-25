@@ -207,95 +207,118 @@ export default function WorkEpicPage() {
                     <input value={newAddress} onChange={e => setNewAddress(e.target.value)} placeholder="地址" className="border p-1" />
                     <button onClick={handleAdd} className="bg-blue-500 text-white px-3 py-1 rounded">建立</button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {workEpics.map(epic => {
-                        const progress = getProgress(epic);
-                        const editing = editingId === epic.epicId;
-                        return (
-                            <div key={epic.epicId} className="bg-white rounded shadow border border-gray-200 p-4 flex flex-col gap-2 relative">
-                                {editing ? (
-                                    <>
-                                        <div className="mb-2"><ProgressBar {...progress} /></div>
-                                        <input value={editFields.title || ''} onChange={e => handleEditField('title', e.target.value)} className="border p-1 w-full mb-1" placeholder="標題" />
-                                        <div className="flex gap-2 mb-1">
-                                            <input type="date" value={editFields.startDate ? String(editFields.startDate).slice(0, 10) : ''} onChange={e => handleEditField('startDate', e.target.value)} className="border p-1 w-full" />
-                                            <input type="date" value={editFields.endDate ? String(editFields.endDate).slice(0, 10) : ''} onChange={e => handleEditField('endDate', e.target.value)} className="border p-1 w-full" />
-                                        </div>
-                                        <div className="flex gap-2 mb-1">
-                                            <select value={editFields.insuranceStatus || '無'} onChange={e => handleEditField('insuranceStatus', e.target.value)} className="border p-1 w-full">
-                                                <option value="無">無</option>
-                                                <option value="有">有</option>
-                                            </select>
-                                            <select value={editFields.status || '待開始'} onChange={e => handleEditField('status', e.target.value)} className="border p-1 w-full">
-                                                <option value="待開始">待開始</option>
-                                                <option value="進行中">進行中</option>
-                                                <option value="已完成">已完成</option>
-                                                <option value="已取消">已取消</option>
-                                            </select>
-                                        </div>
-                                        <div className="flex gap-2 mb-1">
-                                            <SingleSelect value={editFields.owner?.memberId || ''} onChange={val => {
-                                                const m = members.find(mm => mm.memberId === val);
-                                                handleEditField('owner', m ? { memberId: m.memberId, name: m.name } : undefined);
-                                            }} options={members} placeholder="負責人" />
-                                            <input type="number" value={editFields.priority || 1} onChange={e => handleEditField('priority', Number(e.target.value))} className="border p-1 w-full" placeholder="優先" />
-                                        </div>
-                                        <div className="flex gap-2 mb-1">
-                                            <MultiSelect value={Array.isArray(editFields.siteSupervisors) ? editFields.siteSupervisors.map((s: MemberSimple) => s.memberId) : []}
-                                                onChange={selected => handleEditField('siteSupervisors', members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
-                                                options={members} placeholder="現場監督" />
-                                            <MultiSelect value={Array.isArray(editFields.safetyOfficers) ? editFields.safetyOfficers.map((s: MemberSimple) => s.memberId) : []}
-                                                onChange={selected => handleEditField('safetyOfficers', members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
-                                                options={members} placeholder="安全員" />
-                                        </div>
-                                        <div className="flex gap-2 mb-1">
-                                            <select value={editFields.region || '北部'} onChange={e => handleEditField('region', e.target.value)} className="border p-1 w-full">
-                                                <option value="北部">北部</option>
-                                                <option value="中部">中部</option>
-                                                <option value="南部">南部</option>
-                                                <option value="東部">東部</option>
-                                                <option value="離島">離島</option>
-                                            </select>
-                                            <input value={editFields.address || ''} onChange={e => handleEditField('address', e.target.value)} className="border p-1 w-full" placeholder="地址" />
-                                        </div>
-                                        <select multiple value={editWorkZoneIds} onChange={e => setEditWorkZoneIds(Array.from(e.target.selectedOptions).map(opt => opt.value))} className="border p-1 w-full mb-2">
-                                            <option disabled value="">選擇工作區</option>
-                                            {allWorkZones.map(z => (
-                                                <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
-                                            ))}
-                                        </select>
-                                        <div className="flex gap-2 mt-2">
-                                            <button onClick={() => handleSave(epic.epicId)} className="bg-green-500 text-white px-2 py-1 rounded">儲存</button>
-                                            <button onClick={handleCancel} className="bg-gray-300 px-2 py-1 rounded">取消</button>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="mb-2"><ProgressBar {...progress} /></div>
-                                        <div className="font-bold text-lg mb-1">{epic.title}</div>
-                                        <div className="text-sm text-gray-600 mb-1">期間：{epic.startDate || '-'} ~ {epic.endDate || '-'}</div>
-                                        <div className="flex flex-wrap gap-2 text-sm mb-1">
-                                            <span className="bg-gray-100 px-2 py-0.5 rounded">保險：{epic.insuranceStatus || '無'}</span>
-                                            <span className="bg-gray-100 px-2 py-0.5 rounded">狀態：{epic.status}</span>
-                                            <span className="bg-gray-100 px-2 py-0.5 rounded">優先：{epic.priority}</span>
-                                            <span className="bg-gray-100 px-2 py-0.5 rounded">地區：{epic.region}</span>
-                                        </div>
-                                        <div className="text-sm mb-1">負責人：{epic.owner?.name || '-'}</div>
-                                        <div className="text-sm mb-1">現場監督：{Array.isArray(epic.siteSupervisors) && epic.siteSupervisors.length > 0 ? epic.siteSupervisors.map((s: MemberSimple) => s.name).join('、') : '-'}</div>
-                                        <div className="text-sm mb-1">安全員：{Array.isArray(epic.safetyOfficers) && epic.safetyOfficers.length > 0 ? epic.safetyOfficers.map((s: MemberSimple) => s.name).join('、') : '-'}</div>
-                                        <div className="text-sm mb-1">地址：{epic.address}</div>
-                                        <div className="text-sm mb-1">工作區：{Array.isArray(epic.workZones) && epic.workZones.length > 0 ? epic.workZones.map(z => z.title).join('、') : '-'}</div>
-                                        <div className="flex gap-2 mt-2">
-                                            <button onClick={() => handleEdit(epic)} className="bg-yellow-400 text-white px-2 py-1 rounded">編輯</button>
-                                            <button onClick={() => handleDelete(epic.epicId)} className="bg-red-500 text-white px-2 py-1 rounded">刪除</button>
-                                            <button onClick={() => handleAddWorkZone(epic)} className="bg-blue-500 text-white px-2 py-1 rounded">新增工作區</button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
+                <table className="table-auto w-full border-collapse border border-gray-300">
+                    <thead>
+                        <tr>
+                            <th className="border px-2 py-1 w-52">進度</th>
+                            <th className="border px-2 py-1">標題</th>
+                            <th className="border px-2 py-1">開始</th>
+                            <th className="border px-2 py-1">結束</th>
+                            <th className="border px-2 py-1">保險</th>
+                            <th className="border px-2 py-1">負責人</th>
+                            <th className="border px-2 py-1">現場監督</th>
+                            <th className="border px-2 py-1">安全員</th>
+                            <th className="border px-2 py-1">狀態</th>
+                            <th className="border px-2 py-1">優先</th>
+                            <th className="border px-2 py-1">地區</th>
+                            <th className="border px-2 py-1">地址</th>
+                            <th className="border px-2 py-1">工作區</th>
+                            <th className="border px-2 py-1">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {workEpics.map(epic => {
+                            const progress = getProgress(epic);
+                            const editing = editingId === epic.epicId;
+                            return (
+                                <tr key={epic.epicId}>
+                                    {editing ? (
+                                        <>
+                                            <td className="border px-2 py-1 w-52"><ProgressBar {...progress} /></td>
+                                            <td className="border px-2 py-1"><input value={editFields.title || ''} onChange={e => handleEditField('title', e.target.value)} className="border p-1 w-full" /></td>
+                                            <td className="border px-2 py-1"><input type="date" value={editFields.startDate ? String(editFields.startDate).slice(0, 10) : ''} onChange={e => handleEditField('startDate', e.target.value)} className="border p-1 w-full" /></td>
+                                            <td className="border px-2 py-1"><input type="date" value={editFields.endDate ? String(editFields.endDate).slice(0, 10) : ''} onChange={e => handleEditField('endDate', e.target.value)} className="border p-1 w-full" /></td>
+                                            <td className="border px-2 py-1">
+                                                <select value={editFields.insuranceStatus || '無'} onChange={e => handleEditField('insuranceStatus', e.target.value)} className="border p-1 w-full">
+                                                    <option value="無">無</option>
+                                                    <option value="有">有</option>
+                                                </select>
+                                            </td>
+                                            <td className="border px-2 py-1">
+                                                <SingleSelect value={editFields.owner?.memberId || ''} onChange={val => {
+                                                    const m = members.find(mm => mm.memberId === val);
+                                                    handleEditField('owner', m ? { memberId: m.memberId, name: m.name } : undefined);
+                                                }} options={members} placeholder="負責人" />
+                                            </td>
+                                            <td className="border px-2 py-1">
+                                                <MultiSelect value={Array.isArray(editFields.siteSupervisors) ? editFields.siteSupervisors.map((s: MemberSimple) => s.memberId) : []}
+                                                    onChange={selected => handleEditField('siteSupervisors', members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
+                                                    options={members} placeholder="現場監督" />
+                                            </td>
+                                            <td className="border px-2 py-1">
+                                                <MultiSelect value={Array.isArray(editFields.safetyOfficers) ? editFields.safetyOfficers.map((s: MemberSimple) => s.memberId) : []}
+                                                    onChange={selected => handleEditField('safetyOfficers', members.filter(m => selected.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name })))}
+                                                    options={members} placeholder="安全員" />
+                                            </td>
+                                            <td className="border px-2 py-1">
+                                                <select value={editFields.status || '待開始'} onChange={e => handleEditField('status', e.target.value)} className="border p-1 w-full">
+                                                    <option value="待開始">待開始</option>
+                                                    <option value="進行中">進行中</option>
+                                                    <option value="已完成">已完成</option>
+                                                    <option value="已取消">已取消</option>
+                                                </select>
+                                            </td>
+                                            <td className="border px-2 py-1"><input type="number" value={editFields.priority || 1} onChange={e => handleEditField('priority', Number(e.target.value))} className="border p-1 w-full" /></td>
+                                            <td className="border px-2 py-1">
+                                                <select value={editFields.region || '北部'} onChange={e => handleEditField('region', e.target.value)} className="border p-1 w-full">
+                                                    <option value="北部">北部</option>
+                                                    <option value="中部">中部</option>
+                                                    <option value="南部">南部</option>
+                                                    <option value="東部">東部</option>
+                                                    <option value="離島">離島</option>
+                                                </select>
+                                            </td>
+                                            <td className="border px-2 py-1"><input value={editFields.address || ''} onChange={e => handleEditField('address', e.target.value)} className="border p-1 w-full" /></td>
+                                            <td className="border px-2 py-1">
+                                                <select multiple value={editWorkZoneIds} onChange={e => setEditWorkZoneIds(Array.from(e.target.selectedOptions).map(opt => opt.value))} className="border p-1 w-full">
+                                                    <option disabled value="">選擇工作區</option>
+                                                    {allWorkZones.map(z => (
+                                                        <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                            <td className="border px-2 py-1 flex gap-2">
+                                                <button onClick={() => handleSave(epic.epicId)} className="bg-green-500 text-white px-2 py-1 rounded">儲存</button>
+                                                <button onClick={handleCancel} className="bg-gray-300 px-2 py-1 rounded">取消</button>
+                                            </td>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <td className="border px-2 py-1 w-52"><ProgressBar {...progress} /></td>
+                                            <td className="border px-2 py-1">{epic.title}</td>
+                                            <td className="border px-2 py-1">{epic.startDate}</td>
+                                            <td className="border px-2 py-1">{epic.endDate}</td>
+                                            <td className="border px-2 py-1">{epic.insuranceStatus || '無'}</td>
+                                            <td className="border px-2 py-1">{epic.owner?.name}</td>
+                                            <td className="border px-2 py-1">{Array.isArray(epic.siteSupervisors) && epic.siteSupervisors.length > 0 ? epic.siteSupervisors.map((s: MemberSimple) => s.name).join('、') : '-'}</td>
+                                            <td className="border px-2 py-1">{Array.isArray(epic.safetyOfficers) && epic.safetyOfficers.length > 0 ? epic.safetyOfficers.map((s: MemberSimple) => s.name).join('、') : '-'}</td>
+                                            <td className="border px-2 py-1">{epic.status}</td>
+                                            <td className="border px-2 py-1">{epic.priority}</td>
+                                            <td className="border px-2 py-1">{epic.region}</td>
+                                            <td className="border px-2 py-1">{epic.address}</td>
+                                            <td className="border px-2 py-1">{Array.isArray(epic.workZones) && epic.workZones.length > 0 ? epic.workZones.map(z => z.title).join('、') : '-'}</td>
+                                            <td className="border px-2 py-1 flex gap-2">
+                                                <button onClick={() => handleEdit(epic)} className="bg-yellow-400 text-white px-2 py-1 rounded">編輯</button>
+                                                <button onClick={() => handleDelete(epic.epicId)} className="bg-red-500 text-white px-2 py-1 rounded">刪除</button>
+                                                <button onClick={() => handleAddWorkZone(epic)} className="bg-blue-500 text-white px-2 py-1 rounded">新增工作區</button>
+                                            </td>
+                                        </>
+                                    )}
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
             </main>
             <ManagementBottomNav />
         </>
