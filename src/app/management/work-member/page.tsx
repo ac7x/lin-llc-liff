@@ -44,14 +44,14 @@ export default function WorkMemberPage() {
   const [updatedFields, setUpdatedFields] = useState<UpdatedFields>({});
   const [skillsMap, setSkillsMap] = useState<Record<string, string>>({});
 
-  // 載入所有技能 (name -> id)
+  // 載入所有技能 (id -> name)
   useEffect(() => {
     (async () => {
       const snap = await getDocs(collection(firestore, "workSkill"));
       const map: Record<string, string> = {};
       snap.forEach(docSnap => {
         const d = docSnap.data();
-        map[d.name || ""] = docSnap.id;
+        map[docSnap.id] = d.name || "";
       });
       setSkillsMap(map);
     })();
@@ -109,7 +109,7 @@ export default function WorkMemberPage() {
                     onChange={e => setUpdatedFields(prev => ({ ...prev, name: e.target.value }))} placeholder="姓名" />
                   <input type="text" value={updatedFields.role ?? member.role}
                     onChange={e => setUpdatedFields(prev => ({ ...prev, role: e.target.value }))} placeholder="角色" />
-                  <input type="text" value={updatedFields.skills ?? member.skills.map(skillId => Object.keys(skillsMap).find(name => skillsMap[name] === skillId) || skillId).join(", ")}
+                  <input type="text" value={updatedFields.skills ?? member.skills.map(skillId => skillsMap[skillId] || skillId).join(", ")}
                     onChange={e => setUpdatedFields(prev => ({ ...prev, skills: e.target.value }))} placeholder="技能(逗號分隔)" />
                   <div className="flex gap-2 mt-2">
                     <button
@@ -130,11 +130,7 @@ export default function WorkMemberPage() {
                   <div className="font-semibold text-lg">{member.name}</div>
                   <div>角色: {member.role}</div>
                   <div>技能: {member.skills
-                    .map(skillId => {
-                      const entry = Object.entries(skillsMap)
-                        .find(entry => entry[1] === skillId);
-                      return entry ? entry[0] : skillId;
-                    })
+                    .map(skillId => skillsMap[skillId] || skillId)
                     .join(", ")}
                   </div>
                   <div className="flex gap-2 mt-2">
