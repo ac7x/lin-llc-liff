@@ -98,7 +98,7 @@ const WorkTemplatePage: React.FC = () => {
                 unit: '單位',
                 completedQuantity: 0,
                 status: '待分配',
-                title: `${stepName}` // 只剩步驟名稱
+                title: `${epic.title}-${stepName}` // <--- 已修改
             });
             for (let j = 0; j < split; j++) {
                 const loadId = shortId('ld-');
@@ -111,7 +111,7 @@ const WorkTemplatePage: React.FC = () => {
                     plannedEndTime: '',
                     actualQuantity: 0,
                     executor: [],
-                    title: `${stepName}`, // 只剩步驟名稱
+                    title: `${epic.title}-${stepName}`, // <--- 已修改
                     epicIds: [epic.epicId]
                 });
             }
@@ -250,3 +250,32 @@ const WorkTemplatePage: React.FC = () => {
                                 onChange={e => handleFlowCheckboxChange(f.flowId, e.target.checked)}
                             />
                             <span>{f.steps[0]?.stepName || ''}</span>
+                            <input
+                                type="number"
+                                value={flowQuantities[f.flowId] ?? ''}
+                                min={1}
+                                onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))}
+                                placeholder="數量"
+                                className="border w-16 mx-1"
+                            />
+                            <input
+                                type="number"
+                                value={workloadCounts[f.flowId] ?? 1}
+                                min={1}
+                                onChange={e => setWorkloadCounts(c => ({ ...c, [f.flowId]: Number(e.target.value) || 1 }))}
+                                placeholder="分割"
+                                className="border w-12"
+                            />
+                        </div>
+                    ))}
+                </div>
+                {showValidationError && <div className="text-red-500">請確保所有項目都已選擇！</div>}
+                <button onClick={handleAddToWorkEpic} className="bg-green-500 text-white px-3 py-1 mt-2">加入標的</button>
+                {/* 已從底部移除單獨的選擇工作區 */}
+            </main>
+            <ManagementBottomNav />
+        </>
+    );
+};
+
+export default WorkTemplatePage;
