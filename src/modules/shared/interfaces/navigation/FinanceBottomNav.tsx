@@ -16,10 +16,8 @@ interface FinanceBottomNavProps {
 }
 
 const defaultFinanceNavItems: NavItem[] = [
+  { href: '/finance/work-archived', icon: '🗃️', label: '資產管理', active: false },
   { href: '/finance/work-asset', icon: '🏗️', label: '資產管理', active: false },
-  { href: '/finance/dashboard', icon: '💰', label: '財務總覽', active: false },
-  { href: '/finance/invoice', icon: '🧾', label: '發票管理', active: false },
-  { href: '/finance/report', icon: '📈', label: '報表', active: false },
 ];
 
 export function FinanceBottomNav({ items = defaultFinanceNavItems }: FinanceBottomNavProps) {
@@ -50,10 +48,9 @@ export function FinanceBottomNav({ items = defaultFinanceNavItems }: FinanceBott
               flex-1 min-w-0 inline-flex flex-col items-center justify-center h-full
               px-2 sm:px-5 max-w-[120px]
               transition-colors duration-150
-              ${
-                item.active
-                  ? 'text-green-600 font-semibold border-t-2 border-green-600 bg-green-50 dark:bg-green-900 dark:text-green-400 dark:border-green-400'
-                  : 'text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400'
+              ${item.active
+                ? 'text-green-600 font-semibold border-t-2 border-green-600 bg-green-50 dark:bg-green-900 dark:text-green-400 dark:border-green-400'
+                : 'text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400'
               }
             `}
             style={{ minWidth: '76px' }}
