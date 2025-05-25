@@ -300,14 +300,14 @@ const WorkTemplatePage: React.FC = () => {
                                 ))}
                             </select>
                         )}
+                        <select
+                            value={selectedWorkTypeId}
+                            onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }}
+                            className="border p-2 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
+                        >
+                            <option value="">選擇種類</option>{typeOptions}
+                        </select>
                     </div>
-                    <select
-                        value={selectedWorkTypeId}
-                        onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }}
-                        className="border p-2 rounded mb-2 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors"
-                    >
-                        <option value="">選擇種類</option>{typeOptions}
-                    </select>
                     {filteredFlows.length > 0 && (
                         <div className="mb-2">
                             <label className="mr-2">
