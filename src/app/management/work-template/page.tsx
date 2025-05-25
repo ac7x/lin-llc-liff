@@ -413,7 +413,8 @@ const WorkTemplatePage: React.FC = () => {
                                 </label>
                             </div>
                         )}
-                        <div className="flex flex-wrap gap-2">
+                        {/* 單排顯示 flows */}
+                        <div className="flex gap-2 overflow-auto">
                             {filteredFlows.map(f => (
                                 <div key={f.flowId} className="bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 flex items-center gap-2 mb-2 min-w-[220px]">
                                     <input
