@@ -98,7 +98,7 @@ const WorkTemplatePage: React.FC = () => {
                 unit: '單位',
                 completedQuantity: 0,
                 status: '待分配',
-                title: `${epic.title}-${type.title}-${stepName}`
+                title: `${epic.title}-${stepName}` // <--- 已修改
             });
             for (let j = 0; j < split; j++) {
                 const loadId = shortId('ld-');
@@ -111,7 +111,7 @@ const WorkTemplatePage: React.FC = () => {
                     plannedEndTime: '',
                     actualQuantity: 0,
                     executor: [],
-                    title: `${epic.title}-${type.title}-${stepName}-${j + 1}`,
+                    title: `${epic.title}-${stepName}`, // <--- 已修改
                     epicIds: [epic.epicId]
                 });
             }
