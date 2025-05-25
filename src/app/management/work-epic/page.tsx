@@ -23,9 +23,7 @@ const shortId = (prefix = ''): string => `${prefix}${Math.random().toString(36).
  * @param date - 日期字串
  */
 const toISO = (date?: string | null): string => {
-    if (!date) {
-        return '';
-    }
+    if (!date) { return ''; }
     if (date.includes('T')) {
         const d = new Date(date);
         return isNaN(d.getTime()) ? '' : d.toISOString();
@@ -201,16 +199,6 @@ export default function WorkEpicPage() {
     const handleEditField = (field: keyof WorkEpicEntity, value: unknown) => {
         setEditFields(prev => ({ ...prev, [field]: value }));
     };
-    const handleEditMultiMember = (field: 'siteSupervisors' | 'safetyOfficers', memberIds: string[]) => {
-        const selectedMembers = members.filter(m => memberIds.includes(m.memberId)).map(m => ({
-            memberId: m.memberId,
-            name: m.name
-        }));
-        setEditFields(prev => ({
-            ...prev,
-            [field]: selectedMembers
-        }));
-    };
     const handleSave = async (epicId: string) => {
         const updates: Partial<WorkEpicEntity> = {
             ...editFields,
@@ -294,8 +282,6 @@ export default function WorkEpicPage() {
                             <th className="px-2 py-2 text-left">開始</th>
                             <th className="px-2 py-2 text-left">結束</th>
                             <th className="px-2 py-2 text-left">負責人</th>
-                            <th className="px-2 py-2 text-left">現場監工</th>
-                            <th className="px-2 py-2 text-left">安全人員</th>
                             <th className="px-2 py-2 text-left">狀態</th>
                             <th className="px-2 py-2 text-left">優先</th>
                             <th className="px-2 py-2 text-left">區域</th>
@@ -308,15 +294,6 @@ export default function WorkEpicPage() {
                         {workEpics.map(epic => {
                             const progress = getProgress(epic);
                             const editing = editingId === epic.epicId;
-
-                            const siteSupervisorIds = editing
-                                ? ((editFields.siteSupervisors as MemberSimple[] | undefined) || []).map(m => m.memberId)
-                                : (epic.siteSupervisors || []).map(m => m.memberId);
-
-                            const safetyOfficerIds = editing
-                                ? ((editFields.safetyOfficers as MemberSimple[] | undefined) || []).map(m => m.memberId)
-                                : (epic.safetyOfficers || []).map(m => m.memberId);
-
                             return (
                                 <tr key={epic.epicId} className="border-b border-gray-200 dark:border-gray-800">
                                     {editing ? (
@@ -354,22 +331,6 @@ export default function WorkEpicPage() {
                                                     }}
                                                     options={members}
                                                     placeholder="負責人"
-                                                />
-                                            </td>
-                                            <td className="px-2 py-1">
-                                                <MultiSelect
-                                                    value={siteSupervisorIds}
-                                                    onChange={ids => handleEditMultiMember('siteSupervisors', ids)}
-                                                    options={members}
-                                                    placeholder="現場監工"
-                                                />
-                                            </td>
-                                            <td className="px-2 py-1">
-                                                <MultiSelect
-                                                    value={safetyOfficerIds}
-                                                    onChange={ids => handleEditMultiMember('safetyOfficers', ids)}
-                                                    options={members}
-                                                    placeholder="安全人員"
                                                 />
                                             </td>
                                             <td className="px-2 py-1">
@@ -433,16 +394,6 @@ export default function WorkEpicPage() {
                                             <td className="px-2 py-1">{epic.startDate?.slice(0, 10)}</td>
                                             <td className="px-2 py-1">{epic.endDate?.slice(0, 10)}</td>
                                             <td className="px-2 py-1">{epic.owner?.name}</td>
-                                            <td className="px-2 py-1">
-                                                {epic.siteSupervisors && epic.siteSupervisors.length > 0
-                                                    ? epic.siteSupervisors.map(m => m.name).join(', ')
-                                                    : '—'}
-                                            </td>
-                                            <td className="px-2 py-1">
-                                                {epic.safetyOfficers && epic.safetyOfficers.length > 0
-                                                    ? epic.safetyOfficers.map(m => m.name).join(', ')
-                                                    : '—'}
-                                            </td>
                                             <td className="px-2 py-1">{epic.status}</td>
                                             <td className="px-2 py-1">{epic.priority}</td>
                                             <td className="px-2 py-1">{epic.region}</td>
