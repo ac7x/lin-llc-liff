@@ -10,6 +10,12 @@
 - `Priority` (優先級)：數字愈低愈優先（從0）
 - `location` (地點)
 
+### WorkZone【工作區域】
+定義：WorkEpic 中的子區塊，用於細分施工或作業區域。可用於排程、任務分配、位置追蹤等用途。
+- ZoneID (唯一識別碼)
+- EpicID (所屬的 WorkEpic)
+- Title (名稱)：例如「A 區」、「地下室」、「5F 管線區」
+
 ### WorkType[工作種類］
 定義：WorkEpic 中的分類或枚舉，代表不同類型的工作。
 - `TypeID` (唯一識別碼)
