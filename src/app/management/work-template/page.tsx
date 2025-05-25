@@ -20,10 +20,10 @@ import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 
 // Externalized user-facing strings
 const STRINGS = {
-    title: "工作種類模板",
+    title: "模板",
     addTypePlaceholder: "新種類標題",
     add: "新增",
-    workflowTitle: "流程管理",
+    workflowTitle: "流程",
     selectType: "選擇種類",
     stepName: "步驟名稱",
     order: "順序",
@@ -249,7 +249,7 @@ const WorkTemplatePage: React.FC = () => {
                         onClick={() => setTab("template")}
                         tabIndex={0}
                     >
-                        {STRINGS.title} + {STRINGS.workflowTitle}
+                        {STRINGS.workflowTitle} + {STRINGS.title}
                     </button>
                     <button
                         type="button"
