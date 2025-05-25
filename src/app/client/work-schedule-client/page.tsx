@@ -4,7 +4,7 @@ import type { WorkEpicEntity } from '@/app/actions/workepic.action'
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
 import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav'
 import { addDays, subDays } from 'date-fns'
-import { collection } from 'firebase/firestore'
+import { collection, QueryDocumentSnapshot } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataSet, Timeline } from 'vis-timeline/standalone'
@@ -20,7 +20,7 @@ interface WorkLoadEntity {
 
 type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
 
-function parseEpicSnapshot(docs: any[]): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
+function parseEpicSnapshot(docs: QueryDocumentSnapshot<WorkEpicEntity>[]): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
   const epics: WorkEpicEntity[] = docs.map(doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity))
   const unplanned: LooseWorkLoad[] = epics.flatMap(e =>
     (e.workLoads || [])
