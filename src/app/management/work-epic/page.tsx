@@ -9,6 +9,7 @@ import {
 } from '@/app/actions/workepic.action';
 import { getAllWorkMembers, WorkMember } from '@/app/actions/workmember.action';
 import { WorkZoneEntity } from '@/app/actions/workzone.action';
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
 import { useEffect, useState } from 'react';
 
 /**
@@ -383,6 +384,7 @@ export default function WorkEpicPage() {
                     </tbody>
                 </table>
             </div>
+            <ManagementBottomNav />
         </main>
     );
 }
