@@ -118,18 +118,39 @@ const ClientWorkSchedulePage = () => {
   }, [epics])
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col transition-colors duration-300">
-      <div className="flex-none h-[70vh] w-full flex items-center justify-center">
+    <div className="min-h-screen w-full bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col transition-colors duration-300 p-0 m-0">
+      {/* Timeline 區塊，固定於視窗中央且滿版 */}
+      <div
+        className="fixed top-0 left-0 right-0"
+        style={{
+          height: '70vh',
+          width: '100vw',
+          zIndex: 20,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'auto'
+        }}
+      >
         <div
-          className="w-full h-full rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-md overflow-hidden transition-colors duration-300"
           ref={timelineRef}
-          style={{ minWidth: '100vw', height: '100%' }}
+          className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-md overflow-hidden transition-colors duration-300"
+          style={{
+            width: '100vw',
+            height: '100%',
+            minWidth: '100vw'
+          }}
         />
       </div>
-      {/* 未排班工作區塊，使用 fixed、full-bleed 技巧，確保滿寬且橫向捲動 */}
+      {/* 下方預留空間，避免被 fixed 的未排班區塊蓋住 */}
+      <div style={{ height: '74vh', flex: 'none' }} />
+      {/* 未排班工作區塊，固定於視窗底部且滿版 */}
       <div
-        className="flex-none min-h-[25vh] w-screen max-w-none bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300"
-        style={{ left: 0, right: 0 }}
+        className="fixed left-0 right-0 bottom-0 flex-none min-h-[25vh] max-w-none bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300"
+        style={{
+          width: '100vw',
+          zIndex: 30
+        }}
       >
         <div className="w-full h-full flex flex-col p-4 mx-auto">
           <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors duration-300">
@@ -166,7 +187,10 @@ const ClientWorkSchedulePage = () => {
           )}
         </div>
       </div>
-      <ClientBottomNav />
+      {/* Bottom Nav，固定於最底部，不會被其他 fixed 蓋住 */}
+      <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 40 }}>
+        <ClientBottomNav />
+      </div>
     </div>
   )
 }
