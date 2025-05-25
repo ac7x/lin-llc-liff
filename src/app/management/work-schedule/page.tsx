@@ -1,3 +1,4 @@
+// src/app/client/work-schedule/page.tsx
 'use client'
 
 import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
@@ -166,7 +167,6 @@ const WorkSchedulePage: React.FC = () => {
 		await fetchEpics()
 	}
 
-	// 同步預設畫面區間
 	const now = new Date()
 	const defaultTimeStart = subDays(startOfDay(now), 7)
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
@@ -174,8 +174,10 @@ const WorkSchedulePage: React.FC = () => {
 	return (
 		<div className="min-h-screen w-full bg-black dark:bg-neutral-900 flex flex-col">
 			<div className="flex-none h-[20vh]" />
-			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
-				<div className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
+			
+			{/* Timeline 佔據所有剩餘空間 */}
+			<div className="flex-grow w-full flex items-center justify-center relative">
+				<div className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden">
 					<Timeline
 						groups={groups}
 						items={items}
@@ -185,8 +187,8 @@ const WorkSchedulePage: React.FC = () => {
 						canResize="both"
 						canChangeGroup
 						stackItems
-						minZoom={24 * 60 * 60 * 1000} // 1日
-						maxZoom={30 * 24 * 60 * 60 * 1000} // 30日
+						minZoom={24 * 60 * 60 * 1000}
+						maxZoom={30 * 24 * 60 * 60 * 1000}
 						onItemMove={handleItemMove}
 						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
 						onItemDoubleClick={handleItemRemove}
@@ -210,14 +212,9 @@ const WorkSchedulePage: React.FC = () => {
 					/>
 				</div>
 			</div>
-			{/* 未排班工作區塊，固定於視窗底部且滿版 */}
-			<div
-				className="fixed left-0 right-0 bottom-0 flex-none min-h-[25vh] max-w-none bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300"
-				style={{
-					width: '100vw',
-					zIndex: 30
-				}}
-			>
+
+			{/* 未排班區塊（正常排版，不再 fixed） */}
+			<div className="flex-none min-h-[25vh] bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300 w-full">
 				<div className="w-full h-full flex flex-col p-4 mx-auto">
 					<h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors duration-300">
 						{"未排班工作"}
@@ -233,12 +230,7 @@ const WorkSchedulePage: React.FC = () => {
 							{unplanned.map(wl => (
 								<div
 									key={wl.loadId}
-									className="
-										bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5
-										hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-300 hover:shadow-md
-										flex flex-col justify-between gap-2
-										flex-1 min-w-[180px] max-w-full
-									"
+									className="bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-300 hover:shadow-md flex flex-col justify-between gap-2 flex-1 min-w-[180px] max-w-full"
 									title={`來自 ${wl.epicTitle}`}
 								>
 									<div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors duration-300">
@@ -253,6 +245,7 @@ const WorkSchedulePage: React.FC = () => {
 					)}
 				</div>
 			</div>
+
 			<ManagementBottomNav />
 		</div>
 	)
