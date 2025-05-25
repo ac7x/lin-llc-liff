@@ -24,8 +24,7 @@ const navItems = [
         icon: '👤',
         label: '團隊',
         popover: [
-            { label: '成員列表', href: '/management/work-human-resource' },
-
+            { label: '團隊管理', href: '/management/work-human-resource' },
         ],
     },
 ];
