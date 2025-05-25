@@ -136,9 +136,9 @@ const ClientWorkSchedulePage = () => {
             {"未排班工作"}
           </h2>
           {unplanned.length === 0 ? (
-            <div className="flex w-full items-center justify-center" style={{ minHeight: '60px' }}>
+            <div className="flex items-center justify-center w-full h-full min-h-[60px]">
               <span className="text-gray-400 dark:text-gray-500 text-center transition-colors duration-300">
-                {"（無未排班工作）"}
+                （無未排班工作）
               </span>
             </div>
           ) : (
@@ -147,11 +147,11 @@ const ClientWorkSchedulePage = () => {
                 <div
                   key={wl.loadId}
                   className="
-										bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5
-										hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-300 hover:shadow-md
-										flex flex-col justify-between gap-2
-										flex-1 min-w-[180px] max-w-full
-									"
+                    bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5
+                    hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-300 hover:shadow-md
+                    flex flex-col justify-between gap-2
+                    flex-1 min-w-[180px] max-w-full
+                  "
                   title={`來自 ${wl.epicTitle}`}
                 >
                   <div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors duration-300">
