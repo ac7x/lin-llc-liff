@@ -38,7 +38,8 @@ const STRINGS = {
     quantity: "數量",
     split: "分割",
     validationError: "請確保所有項目都已選擇！",
-    addToEpic: "加入標的"
+    addToEpic: "加入標的",
+    addToEpicSuccess: "成功加入標的"
 };
 
 /** 產生短ID */
@@ -64,6 +65,32 @@ const tabActive =
 const tabInactive =
     "border-transparent text-gray-500 dark:text-neutral-400 hover:text-blue-500 hover:border-blue-300 bg-gray-100 dark:bg-neutral-800";
 
+/**
+ * 最簡易的成功提示 Modal
+ */
+const SimpleModal: React.FC<{ open: boolean; onClose: () => void; message: string }> = ({ open, onClose, message }) => {
+    if (!open) return null;
+    return (
+        <div
+            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-20 z-50"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white dark:bg-neutral-900 rounded shadow-lg p-6 min-w-[200px] text-center"
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="text-green-600 dark:text-green-400 mb-4">{message}</div>
+                <button
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                    onClick={onClose}
+                >
+                    OK
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const WorkTemplatePage: React.FC = () => {
     const [workTypes, setWorkTypes] = useState<WorkTypeEntity[]>([]);
     const [newWorkTypeTitle, setNewWorkTypeTitle] = useState("");
@@ -83,6 +110,7 @@ const WorkTemplatePage: React.FC = () => {
     const [showValidationError, setShowValidationError] = useState(false);
     const [allWorkZones, setAllWorkZones] = useState<WorkZoneEntity[]>([]);
     const [tab, setTab] = useState<"template" | "epic">("template");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -198,6 +226,7 @@ const WorkTemplatePage: React.FC = () => {
             workLoads: [...(epic.workLoads || []), ...fixedLoads]
         });
         setShowValidationError(false);
+        setShowSuccessModal(true);
     };
 
     const epicOptions = workEpics.map(e =>
@@ -454,6 +483,11 @@ const WorkTemplatePage: React.FC = () => {
                     </div>
                 )}
             </main>
+            <SimpleModal
+                open={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                message={STRINGS.addToEpicSuccess}
+            />
             <ManagementBottomNav />
         </>
     );
