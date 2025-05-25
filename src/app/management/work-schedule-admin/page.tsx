@@ -61,9 +61,7 @@ const WorkScheduleAdminPage: React.FC = () => {
 		setEpics(epics)
 		setUnplanned(unplanned)
 	}
-	useEffect(() => {
-		fetchEpics()
-	}, [])
+	useEffect(() => { fetchEpics() }, [])
 
 	const groupCount = 10
 	const groups = useMemo(() => {
@@ -212,24 +210,27 @@ const WorkScheduleAdminPage: React.FC = () => {
 					/>
 				</div>
 			</div>
-			<div className="flex-none h-[20vh] w-full bg-black dark:bg-neutral-900 px-4 py-2 overflow-y-auto">
-				<div className="max-w-7xl mx-auto h-full flex flex-col">
+			{/* 未排班工作區塊 | 滿寬、不受父容器限制、橫向捲動、深淺模式 */}
+			<div className="flex-none w-screen min-w-0 max-w-none bg-black/85 dark:bg-neutral-900/90 px-4 py-2 overflow-x-auto rounded-t-2xl shadow-inner transition-colors duration-300">
+				<div className="w-full h-full flex flex-col mx-auto">
 					<h2 className="text-lg font-bold text-center text-white dark:text-neutral-100 mb-2">未排班工作</h2>
-					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
+					<div className="flex flex-nowrap gap-3 overflow-x-auto whitespace-nowrap pb-2 w-full min-w-full">
 						{unplanned.length === 0 ? (
-							<div className="text-gray-400 dark:text-neutral-400">（無）</div>
-						) : unplanned.map(wl => (
-							<div
-								key={wl.loadId}
-								className="bg-yellow-50 dark:bg-yellow-900 border rounded px-3 py-2 text-sm"
-								title={`來自 ${wl.epicTitle}`}
-							>
-								<div className="text-neutral-900 dark:text-neutral-100">{wl.title || '(無標題)'}</div>
-								<div className="text-xs text-gray-400 dark:text-neutral-300">
-									{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
+							<div className="text-gray-400 dark:text-neutral-400 text-center w-full min-w-full">（無）</div>
+						) : (
+							unplanned.map(wl => (
+								<div
+									key={wl.loadId}
+									className="bg-yellow-50/90 dark:bg-yellow-900/80 border border-yellow-200 dark:border-yellow-800 rounded-xl px-3 py-2 flex flex-col justify-between min-w-[180px] max-w-full"
+									title={`來自 ${wl.epicTitle}`}
+								>
+									<div className="font-medium text-neutral-900 dark:text-neutral-100 text-sm line-clamp-2">{wl.title || '(無標題)'}</div>
+									<div className="text-xs text-yellow-700 dark:text-yellow-200">
+										{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
+									</div>
 								</div>
-							</div>
-						))}
+							))
+						)}
 					</div>
 				</div>
 			</div>
