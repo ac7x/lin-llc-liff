@@ -50,3 +50,15 @@ export async function updateWorkEpicWorkLoads(epicId: string, workLoads: WorkLoa
   const firestore = await getFirestoreAdmin()
   await firestore.collection('workEpic').doc(epicId).update({ workLoads })
 }
+
+export async function updateWorkLoad(epicId: string, loadId: string, updates: Partial<WorkLoadEntity>): Promise<void> {
+  const firestore = await getFirestoreAdmin()
+  const epicDoc = await firestore.collection('workEpic').doc(epicId).get()
+  if (!epicDoc.exists) return
+  const epicData = epicDoc.data() as WorkEpicEntity
+  const workLoads = epicData.workLoads || []
+  const loadIndex = workLoads.findIndex(load => load.loadId === loadId)
+  if (loadIndex === -1) return
+  workLoads[loadIndex] = { ...workLoads[loadIndex], ...updates }
+  await firestore.collection('workEpic').doc(epicId).update({ workLoads })
+}
