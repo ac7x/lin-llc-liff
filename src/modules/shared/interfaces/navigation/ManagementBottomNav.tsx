@@ -24,8 +24,6 @@ const navItems = [
         icon: '👤',
         label: '團隊',
         popover: [
-            { label: '技能管理', href: '/management/work-skill' },
-            { label: '成員列表', href: '/management/work-member' },
             { label: '成員列表', href: '/management/work-human-resource' },
 
         ],
