@@ -188,112 +188,174 @@ const WorkTemplatePage: React.FC = () => {
 
     return (
         <>
-            <main className="p-4">
-                <h1 className="text-xl font-bold mb-2">工作種類模板</h1>
-                <div>
-                    <input value={newWorkTypeTitle} onChange={e => setNewWorkTypeTitle(e.target.value)} placeholder="新種類標題" className="border p-1 mr-2" />
-                    <button onClick={handleAddWorkType} className="bg-blue-500 text-white px-2 py-1">新增</button>
+            <main className="p-4 bg-gray-100 min-h-screen">
+                <h1 className="text-xl font-bold mb-4">工作種類模板</h1>
+                {/* 種類卡片 */}
+                <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+                    <div className="flex items-center mb-2">
+                        <input
+                            value={newWorkTypeTitle}
+                            onChange={e => setNewWorkTypeTitle(e.target.value)}
+                            placeholder="新種類標題"
+                            className="border p-2 rounded mr-2 flex-1"
+                        />
+                        <button
+                            onClick={handleAddWorkType}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition"
+                        >
+                            新增
+                        </button>
+                    </div>
+                    <ul className="flex flex-wrap gap-2">
+                        {workTypes.map(t =>
+                            <li key={t.typeId} className="bg-gray-50 rounded px-3 py-1 shadow text-gray-700">{t.title}</li>
+                        )}
+                    </ul>
                 </div>
-                <ul>
-                    {workTypes.map(t => <li key={t.typeId}>{t.title}</li>)}
-                </ul>
-                <h2 className="font-bold mt-6 mb-2">流程管理</h2>
-                <div className="flex gap-2 mb-2">
-                    <select
-                        value={selectedWorkTypeId}
-                        onChange={e => setSelectedWorkTypeId(e.target.value)}
-                        className="border p-1"
-                    >
-                        <option value="">選擇種類</option>
-                        {typeOptions}
-                    </select>
+                {/* 流程管理卡片 */}
+                <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+                    <h2 className="font-bold mb-2">流程管理</h2>
+                    <div className="flex gap-2 mb-2">
+                        <select
+                            value={selectedWorkTypeId}
+                            onChange={e => setSelectedWorkTypeId(e.target.value)}
+                            className="border p-2 rounded"
+                        >
+                            <option value="">選擇種類</option>
+                            {typeOptions}
+                        </select>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                        <input
+                            value={newStepName}
+                            onChange={e => setNewStepName(e.target.value)}
+                            placeholder="步驟名稱"
+                            className="border p-2 rounded mr-1"
+                        />
+                        <input
+                            type="number"
+                            value={newStepOrder}
+                            min={1}
+                            onChange={e => setNewStepOrder(Number(e.target.value))}
+                            className="border w-20 p-2 rounded mr-1"
+                        />
+                        <input
+                            value={newStepSkills}
+                            onChange={e => setNewStepSkills(e.target.value)}
+                            placeholder="技能(逗號)"
+                            className="border p-2 rounded mr-1"
+                        />
+                        <button
+                            onClick={handleAddStep}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition"
+                        >
+                            新增步驟
+                        </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {filteredFlows.map(f =>
+                            <div key={f.flowId} className="bg-gray-50 rounded shadow px-3 py-2 mb-1 min-w-[180px]">
+                                {f.steps.map(s => (
+                                    <div key={s.stepName} className="text-gray-700">
+                                        <span className="font-semibold">{s.order}. {s.stepName}</span>
+                                        <span className="ml-2 text-xs text-gray-500">[{s.requiredSkills.join(',')}]</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <div>
-                    <input value={newStepName} onChange={e => setNewStepName(e.target.value)} placeholder="步驟名稱" className="border p-1 mr-1" />
-                    <input type="number" value={newStepOrder} min={1} onChange={e => setNewStepOrder(Number(e.target.value))} className="border w-16 p-1 mr-1" />
-                    <input value={newStepSkills} onChange={e => setNewStepSkills(e.target.value)} placeholder="技能(逗號)" className="border p-1 mr-1" />
-                    <button onClick={handleAddStep} className="bg-blue-500 text-white px-2 py-1">新增步驟</button>
-                </div>
-                <ul>
-                    {filteredFlows.map(f =>
-                        <li key={f.flowId}>
-                            {f.steps.map(s => (
-                                <div key={s.stepName}>{s.order}. {s.stepName} [{s.requiredSkills.join(',')}]</div>
-                            ))}
-                        </li>
-                    )}
-                </ul>
-                <h2 className="font-bold mt-6 mb-2">加入工作標的</h2>
-                <div className="flex gap-2 mb-2">
-                    <select value={selectedWorkEpicId} onChange={e => {
-                        setSelectedWorkEpicId(e.target.value);
-                        setSelectedWorkZoneId('');
-                    }} className="border p-1">
-                        <option value="">選擇標的</option>{epicOptions}
-                    </select>
-                    <select
-                        value={selectedRegion}
-                        onChange={e => setSelectedRegion(e.target.value as '北部' | '中部' | '南部' | '東部' | '離島')}
-                        className="border p-1"
-                    >
-                        {['北部', '中部', '南部', '東部', '離島'].map(region => (
-                            <option key={region} value={region}>{region}</option>
-                        ))}
-                    </select>
-                    {workZones.length > 0 && (
-                        <select value={selectedWorkZoneId} onChange={e => setSelectedWorkZoneId(e.target.value)} className="border p-1">
-                            <option value="">使用預設工作區</option>
-                            {workZones.map(z => (
-                                <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
+                {/* 加入標的卡片 */}
+                <div className="bg-white rounded-xl shadow-md p-4 mb-6">
+                    <h2 className="font-bold mb-2">加入工作標的</h2>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                        <select
+                            value={selectedWorkEpicId}
+                            onChange={e => {
+                                setSelectedWorkEpicId(e.target.value);
+                                setSelectedWorkZoneId('');
+                            }}
+                            className="border p-2 rounded"
+                        >
+                            <option value="">選擇標的</option>{epicOptions}
+                        </select>
+                        <select
+                            value={selectedRegion}
+                            onChange={e => setSelectedRegion(e.target.value as '北部' | '中部' | '南部' | '東部' | '離島')}
+                            className="border p-2 rounded"
+                        >
+                            {['北部', '中部', '南部', '東部', '離島'].map(region => (
+                                <option key={region} value={region}>{region}</option>
                             ))}
                         </select>
-                    )}
-                </div>
-                <select value={selectedWorkTypeId} onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }} className="border p-1 mb-2">
-                    <option value="">選擇種類</option>{typeOptions}
-                </select>
-                {filteredFlows.length > 0 && (
-                    <div className="mb-2">
-                        <label className="mr-2">
-                            <input
-                                ref={selectAllRef}
-                                type="checkbox"
-                                checked={allSelected}
-                                onChange={handleSelectAllChange}
-                            /> 全選
-                        </label>
+                        {workZones.length > 0 && (
+                            <select
+                                value={selectedWorkZoneId}
+                                onChange={e => setSelectedWorkZoneId(e.target.value)}
+                                className="border p-2 rounded"
+                            >
+                                <option value="">使用預設工作區</option>
+                                {workZones.map(z => (
+                                    <option key={z.zoneId} value={z.zoneId}>{z.title}</option>
+                                ))}
+                            </select>
+                        )}
                     </div>
-                )}
-                <div>
-                    {filteredFlows.map(f => (
-                        <div key={f.flowId}>
-                            <input
-                                type="checkbox"
-                                checked={selectedWorkFlowIds.includes(f.flowId)}
-                                onChange={e => handleFlowCheckboxChange(f.flowId, e.target.checked)}
-                            />
-                            <span>{f.steps[0]?.stepName || ''}</span>
-                            <input
-                                type="number"
-                                value={flowQuantities[f.flowId] ?? ''}
-                                min={1}
-                                onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))}
-                                placeholder="數量"
-                                className="border w-16 mx-1"
-                            />
-                            <input
-                                type="number"
-                                value={workloadCounts[f.flowId] ?? 1}
-                                min={1}
-                                onChange={e => setWorkloadCounts(c => ({ ...c, [f.flowId]: Number(e.target.value) || 1 }))}
-                                placeholder="分割"
-                                className="border w-12"
-                            />
+                    <select
+                        value={selectedWorkTypeId}
+                        onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }}
+                        className="border p-2 rounded mb-2"
+                    >
+                        <option value="">選擇種類</option>{typeOptions}
+                    </select>
+                    {filteredFlows.length > 0 && (
+                        <div className="mb-2">
+                            <label className="mr-2">
+                                <input
+                                    ref={selectAllRef}
+                                    type="checkbox"
+                                    checked={allSelected}
+                                    onChange={handleSelectAllChange}
+                                /> 全選
+                            </label>
                         </div>
-                    ))}
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                        {filteredFlows.map(f => (
+                            <div key={f.flowId} className="bg-gray-50 rounded shadow px-3 py-2 flex items-center gap-2 mb-2 min-w-[220px]">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedWorkFlowIds.includes(f.flowId)}
+                                    onChange={e => handleFlowCheckboxChange(f.flowId, e.target.checked)}
+                                />
+                                <span className="flex-1">{f.steps[0]?.stepName || ''}</span>
+                                <input
+                                    type="number"
+                                    value={flowQuantities[f.flowId] ?? ''}
+                                    min={1}
+                                    onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))}
+                                    placeholder="數量"
+                                    className="border w-16 mx-1 p-1 rounded"
+                                />
+                                <input
+                                    type="number"
+                                    value={workloadCounts[f.flowId] ?? 1}
+                                    min={1}
+                                    onChange={e => setWorkloadCounts(c => ({ ...c, [f.flowId]: Number(e.target.value) || 1 }))}
+                                    placeholder="分割"
+                                    className="border w-12 p-1 rounded"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                    {showValidationError && <div className="text-red-500 mt-2">請確保所有項目都已選擇！</div>}
+                    <button
+                        onClick={handleAddToWorkEpic}
+                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 transition"
+                    >
+                        加入標的
+                    </button>
                 </div>
-                {showValidationError && <div className="text-red-500">請確保所有項目都已選擇！</div>}
-                <button onClick={handleAddToWorkEpic} className="bg-green-500 text-white px-3 py-1 mt-2">加入標的</button>
                 {/* 已從底部移除單獨的選擇工作區 */}
             </main>
             <ManagementBottomNav />
