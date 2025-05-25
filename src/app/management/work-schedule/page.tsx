@@ -210,27 +210,47 @@ const WorkSchedulePage: React.FC = () => {
 					/>
 				</div>
 			</div>
-			<div className="flex-none w-screen min-w-0 max-w-none bg-black/85 dark:bg-neutral-900/90 px-4 py-2 overflow-x-auto rounded-t-2xl shadow-inner transition-colors duration-300">
-				<div className="w-full h-full flex flex-col mx-auto">
-					<h2 className="text-lg font-bold text-center text-white dark:text-neutral-100 mb-2">未排班工作</h2>
-					<div className="flex flex-nowrap gap-3 overflow-x-auto whitespace-nowrap pb-2 w-full min-w-full">
-						{unplanned.length === 0 ? (
-							<div className="text-gray-400 dark:text-neutral-400 text-center w-full min-w-full">（無）</div>
-						) : (
-							unplanned.map(wl => (
+			{/* 未排班工作區塊，固定於視窗底部且滿版 */}
+			<div
+				className="fixed left-0 right-0 bottom-0 flex-none min-h-[25vh] max-w-none bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300"
+				style={{
+					width: '100vw',
+					zIndex: 30
+				}}
+			>
+				<div className="w-full h-full flex flex-col p-4 mx-auto">
+					<h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors duration-300">
+						{"未排班工作"}
+					</h2>
+					{unplanned.length === 0 ? (
+						<div className="flex items-center justify-center w-full h-full min-h-[60px]">
+							<span className="text-gray-400 dark:text-gray-500 text-center transition-colors duration-300">
+								（無未排班工作）
+							</span>
+						</div>
+					) : (
+						<div className="flex flex-nowrap gap-3 overflow-x-auto pb-16 px-0.5 w-full" tabIndex={0} aria-label="unplanned-jobs">
+							{unplanned.map(wl => (
 								<div
 									key={wl.loadId}
-									className="bg-yellow-50/90 dark:bg-yellow-900/80 border border-yellow-200 dark:border-yellow-800 rounded-xl px-3 py-2 flex flex-col justify-between min-w-[180px] max-w-full"
+									className="
+										bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5
+										hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-300 hover:shadow-md
+										flex flex-col justify-between gap-2
+										flex-1 min-w-[180px] max-w-full
+									"
 									title={`來自 ${wl.epicTitle}`}
 								>
-									<div className="font-medium text-neutral-900 dark:text-neutral-100 text-sm line-clamp-2">{wl.title || '(無標題)'}</div>
-									<div className="text-xs text-yellow-700 dark:text-yellow-200">
-										{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
+									<div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors duration-300">
+										{wl.title || "(無標題)"}
+									</div>
+									<div className="text-xs text-blue-600 dark:text-blue-400 transition-colors duration-300">
+										{Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "(無執行者)"}
 									</div>
 								</div>
-							))
-						)}
-					</div>
+							))}
+						</div>
+					)}
 				</div>
 			</div>
 			<ManagementBottomNav />
