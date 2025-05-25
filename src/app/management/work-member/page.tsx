@@ -129,7 +129,11 @@ export default function WorkMemberPage() {
                 <div className="flex flex-col gap-1">
                   <div className="font-semibold text-lg">{member.name}</div>
                   <div>角色: {member.role}</div>
-                  <div>技能: {member.skills.map(skillId => Object.keys(skillsMap).find(name => skillsMap[name] === skillId) || skillId).join(", ")}</div>
+                  <div>技能: {member.skills
+                    .map(skillId => Object.entries(skillsMap)
+                      .find(([_, id]) => id === skillId)?.[0] || skillId)
+                    .join(", ")}
+                  </div>
                   <div className="flex gap-2 mt-2">
                     <button onClick={() => setEditingMember(member.memberId)}>編輯</button>
                     <button className="text-red-600" onClick={async () => {
