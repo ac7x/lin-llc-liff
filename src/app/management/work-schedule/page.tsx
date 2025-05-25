@@ -214,10 +214,10 @@ const WorkScheduleManagementPage: React.FC = () => {
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
 	return (
-		<div className="min-h-screen w-full bg-black flex flex-col">
+		<div className="min-h-screen w-full bg-black dark:bg-neutral-900 flex flex-col">
 			<div className="flex-none h-[20vh]" />
 			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
-				<div className="w-full h-full rounded-2xl bg-white border border-gray-300 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
+				<div className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
 					<Timeline
 						groups={groups}
 						items={items}
@@ -235,7 +235,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 								<div {...getItemProps({ style: { background: '#fbbf24', color: '#222' } })}>
 									<div {...leftResizeProps} />
 									<span>{item.title}</span>
-									<div className="text-xs text-gray-700">{dateStr}</div>
+									<div className="text-xs text-gray-700 dark:text-neutral-200">{dateStr}</div>
 									<div {...rightResizeProps} />
 								</div>
 							)
@@ -243,20 +243,20 @@ const WorkScheduleManagementPage: React.FC = () => {
 					/>
 				</div>
 			</div>
-			<div className="flex-none h-[20vh] w-full bg-black px-4 py-2 overflow-y-auto">
+			<div className="flex-none h-[20vh] w-full bg-black dark:bg-neutral-900 px-4 py-2 overflow-y-auto">
 				<div className="max-w-7xl mx-auto h-full flex flex-col">
-					<h2 className="text-lg font-bold text-center text-white mb-2">未排班工作</h2>
+					<h2 className="text-lg font-bold text-center text-white dark:text-neutral-100 mb-2">未排班工作</h2>
 					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
 						{unplanned.length === 0 ? (
-							<div className="text-gray-400">（無）</div>
+							<div className="text-gray-400 dark:text-neutral-400">（無）</div>
 						) : unplanned.map(wl => (
 							<div
 								key={wl.loadId}
-								className="bg-yellow-50 border rounded px-3 py-2 text-sm"
+								className="bg-yellow-50 dark:bg-yellow-900 border rounded px-3 py-2 text-sm"
 								title={`來自 ${wl.epicTitle}`}
 							>
-								<div>{wl.title || '(無標題)'}</div>
-								<div className="text-xs text-gray-400">
+								<div className="text-neutral-900 dark:text-neutral-100">{wl.title || '(無標題)'}</div>
+								<div className="text-xs text-gray-400 dark:text-neutral-300">
 									{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
 								</div>
 							</div>

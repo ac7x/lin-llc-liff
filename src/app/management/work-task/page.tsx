@@ -113,7 +113,7 @@ export default function WorkTaskPage() {
 
   return (
     <>
-      <main className="p-4 bg-background text-foreground min-h-screen">
+      <main className="p-4 bg-background dark:bg-neutral-900 text-foreground dark:text-neutral-100 min-h-screen">
         <h1 className="text-2xl font-bold mb-4">工作任務/工作量合併表</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pagedTasks.map(task => {
@@ -122,12 +122,12 @@ export default function WorkTaskPage() {
             const epic = epics.find(e => Array.isArray(e.workTasks) && e.workTasks.some(t => t.taskId === task.taskId));
             const workZoneStr = epic && Array.isArray(epic.workZones) && epic.workZones.length > 0 ? epic.workZones.map(z => z.title).join('、') : '-';
             return (
-              <div key={task.taskId} className="bg-white rounded shadow border border-border p-4 flex flex-col gap-2 relative">
+              <div key={task.taskId} className="bg-white dark:bg-neutral-800 rounded shadow border border-border dark:border-neutral-700 p-4 flex flex-col gap-2 relative">
                 <div className="flex items-center justify-between">
                   <div className="font-bold text-lg">{task.title}</div>
                   <button
                     type="button"
-                    className={`underline px-2 py-1 rounded transition-colors ${isExpanded ? 'bg-muted text-muted-foreground' : 'bg-background text-foreground'}`}
+                    className={`underline px-2 py-1 rounded transition-colors ${isExpanded ? 'bg-muted dark:bg-neutral-700 text-muted-foreground dark:text-neutral-100' : 'bg-background dark:bg-neutral-800 text-foreground dark:text-neutral-100'}`}
                     style={{ minWidth: 56 }}
                     onClick={() => toggleExpand(task.taskId)}
                   >
@@ -135,10 +135,10 @@ export default function WorkTaskPage() {
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-2 text-sm">
-                  <span className="bg-gray-100 px-2 py-0.5 rounded">目標：{task.targetQuantity} {task.unit}</span>
-                  <span className="bg-gray-100 px-2 py-0.5 rounded">已完成：{task.completedQuantity}</span>
-                  <span className="bg-gray-100 px-2 py-0.5 rounded">狀態：{task.status}</span>
-                  <span className="bg-gray-100 px-2 py-0.5 rounded">工作區：{workZoneStr}</span>
+                  <span className="bg-gray-100 dark:bg-neutral-700 px-2 py-0.5 rounded">目標：{task.targetQuantity} {task.unit}</span>
+                  <span className="bg-gray-100 dark:bg-neutral-700 px-2 py-0.5 rounded">已完成：{task.completedQuantity}</span>
+                  <span className="bg-gray-100 dark:bg-neutral-700 px-2 py-0.5 rounded">狀態：{task.status}</span>
+                  <span className="bg-gray-100 dark:bg-neutral-700 px-2 py-0.5 rounded">工作區：{workZoneStr}</span>
                 </div>
                 {isExpanded && taskWorkloads.length > 0 && (
                   <div className="mt-2">
@@ -146,7 +146,7 @@ export default function WorkTaskPage() {
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse text-sm">
                         <thead>
-                          <tr className="bg-muted">
+                          <tr className="bg-muted dark:bg-neutral-700">
                             <th className="border px-2 py-1">名稱</th>
                             <th className="border px-2 py-1">計畫數量</th>
                             <th className="border px-2 py-1">單位</th>
@@ -158,12 +158,12 @@ export default function WorkTaskPage() {
                         </thead>
                         <tbody>
                           {taskWorkloads.map(load => (
-                            <tr key={load.loadId} className="bg-background text-foreground">
+                            <tr key={load.loadId} className="bg-background dark:bg-neutral-900 text-foreground dark:text-neutral-100">
                               <td className="border px-2 py-1">{load.title || load.loadId}</td>
                               <td className="border px-2 py-1">
                                 <input
                                   type="number"
-                                  className="border p-1 w-20"
+                                  className="border p-1 w-20 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                                   value={load.plannedQuantity}
                                   onChange={e =>
                                     handleWorkLoadChange(load.loadId, { plannedQuantity: Number(e.target.value) })
@@ -175,7 +175,7 @@ export default function WorkTaskPage() {
                               <td className="border px-2 py-1">
                                 <input
                                   type="date"
-                                  className="border p-1 w-32"
+                                  className="border p-1 w-32 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                                   value={load.plannedStartTime?.slice(0, 10) || ''}
                                   onChange={e =>
                                     handleWorkLoadChange(load.loadId, { plannedStartTime: e.target.value })
@@ -185,7 +185,7 @@ export default function WorkTaskPage() {
                               <td className="border px-2 py-1">
                                 <input
                                   type="date"
-                                  className="border p-1 w-32"
+                                  className="border p-1 w-32 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                                   value={load.plannedEndTime?.slice(0, 10) || ''}
                                   onChange={e =>
                                     handleWorkLoadChange(load.loadId, { plannedEndTime: e.target.value })
@@ -195,7 +195,7 @@ export default function WorkTaskPage() {
                               <td className="border px-2 py-1">
                                 <input
                                   type="number"
-                                  className="border p-1 w-20"
+                                  className="border p-1 w-20 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
                                   value={load.actualQuantity}
                                   onChange={e =>
                                     handleActualQuantityChange(load.loadId, Number(e.target.value))
@@ -235,13 +235,13 @@ export default function WorkTaskPage() {
         <div className="flex items-center justify-center mt-4 gap-2">
           <button
             disabled={workloadPage === 1}
-            className="border rounded px-2 py-1 disabled:opacity-50"
+            className="border rounded px-2 py-1 disabled:opacity-50 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
             onClick={() => setWorkloadPage(page => Math.max(1, page - 1))}
           >上一頁</button>
           <span>第 {workloadPage} / {totalPages} 頁</span>
           <button
             disabled={workloadPage === totalPages || totalPages === 0}
-            className="border rounded px-2 py-1 disabled:opacity-50"
+            className="border rounded px-2 py-1 disabled:opacity-50 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
             onClick={() => setWorkloadPage(page => Math.min(totalPages, page + 1))}
           >下一頁</button>
         </div>
