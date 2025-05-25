@@ -45,7 +45,7 @@ const TAB_MEMBER = 'member'
 
 export default function WorkHumanPage() {
     const { isLoggedIn, firebaseLogin } = useContext(LiffContext)
-    const [activeTab, setActiveTab] = useState<typeof TAB_SKILL | typeof TAB_MEMBER>(TAB_SKILL)
+    const [activeTab, setActiveTab] = useState<typeof TAB_SKILL | typeof TAB_MEMBER>(TAB_MEMBER)
 
     // Skill state
     const skillsRef = collection(firestore, 'workSkill')
@@ -152,20 +152,101 @@ export default function WorkHumanPage() {
             <div className='max-w-3xl mx-auto px-2 py-8'>
                 <div className='flex mb-6 border-b border-gray-300 dark:border-gray-700'>
                     <button
-                        className={`px-4 py-2 font-bold ${activeTab === TAB_SKILL ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'}`}
-                        onClick={() => setActiveTab(TAB_SKILL)}
-                        type="button"
-                    >
-                        技能管理
-                    </button>
-                    <button
-                        className={`px-4 py-2 font-bold ml-4 ${activeTab === TAB_MEMBER ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'}`}
+                        className={`px-4 py-2 font-bold ${activeTab === TAB_MEMBER ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'}`}
                         onClick={() => setActiveTab(TAB_MEMBER)}
                         type="button"
                     >
                         成員管理
                     </button>
+                    <button
+                        className={`px-4 py-2 font-bold ml-4 ${activeTab === TAB_SKILL ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'}`}
+                        onClick={() => setActiveTab(TAB_SKILL)}
+                        type="button"
+                    >
+                        技能管理
+                    </button>
                 </div>
+                {activeTab === TAB_MEMBER && (
+                    <div>
+                        <h1 className='text-2xl font-bold mb-4 text-center'>工作人員列表</h1>
+                        <div className='flex flex-wrap gap-2 mb-2 items-center justify-center'>
+                            <label>角色:
+                                <select value={filter.role} onChange={e => setFilter(prev => ({ ...prev, role: e.target.value }))} className='ml-1 border rounded'>
+                                    <option value=''>全部</option>
+                                    <option value='Developer'>Developer</option>
+                                    <option value='Designer'>Designer</option>
+                                </select>
+                            </label>
+                            <label>狀態:
+                                <select value={filter.status} onChange={e => setFilter(prev => ({ ...prev, status: e.target.value }))} className='ml-1 border rounded'>
+                                    <option value=''>全部</option>
+                                    <option value='在職'>在職</option>
+                                    <option value='離職'>離職</option>
+                                    <option value='暫停合作'>暫停合作</option>
+                                    <option value='黑名單'>黑名單</option>
+                                </select>
+                            </label>
+                            <label>排序:
+                                <select value={sortKey} onChange={e => setSortKey(e.target.value as 'name' | 'role')} className='ml-1 border rounded'>
+                                    <option value='name'>名稱</option>
+                                    <option value='role'>角色</option>
+                                </select>
+                            </label>
+                        </div>
+                        {errorMembers && <div className='text-red-600'>錯誤：{errorMembers.message}</div>}
+                        <div className='flex flex-row flex-wrap gap-4 justify-start items-stretch'>
+                            {filteredMembers.map(member => (
+                                <div key={member.memberId} className='p-4 bg-card rounded-lg shadow border border-border min-w-[320px] flex-1' style={{ maxWidth: 350 }}>
+                                    {editingMember === member.memberId ? (
+                                        <div className='flex flex-col gap-2'>
+                                            <input type='text' value={updatedFields.name ?? member.name}
+                                                onChange={e => setUpdatedFields(prev => ({ ...prev, name: e.target.value }))} placeholder='姓名' className='border p-1 rounded' />
+                                            <input type='text' value={updatedFields.role ?? member.role}
+                                                onChange={e => setUpdatedFields(prev => ({ ...prev, role: e.target.value }))} placeholder='角色' className='border p-1 rounded' />
+                                            <input type='text' value={updatedFields.skills ?? member.skills.map(skillId => skillsMap[skillId] || skillId).join(', ')}
+                                                onChange={e => setUpdatedFields(prev => ({ ...prev, skills: e.target.value }))} placeholder='技能(逗號分隔)' className='border p-1 rounded' />
+                                            <div className='flex gap-2 mt-2'>
+                                                <button
+                                                    onClick={async () => {
+                                                        const { skills, ...rest } = updatedFields
+                                                        const updateData: Partial<WorkMember> = { ...rest }
+                                                        if (skills !== undefined) {
+                                                            updateData.skills = skills.split(',').map(name => name.trim())
+                                                        }
+                                                        await updateDoc(doc(firestore, 'workMember', member.memberId), updateData)
+                                                        setEditingMember(null)
+                                                        setUpdatedFields({})
+                                                    }}
+                                                    className='bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded'
+                                                    type="button"
+                                                >
+                                                    儲存
+                                                </button>
+                                                <button onClick={() => { setEditingMember(null); setUpdatedFields({}) }} className='border px-4 py-1 rounded' type="button">
+                                                    取消
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className='flex flex-col gap-1'>
+                                            <div className='font-semibold text-lg'>{member.name}</div>
+                                            <div>角色: {member.role}</div>
+                                            <div>技能: {member.skills.map(skillId => skillsMap[skillId] || skillId).join(', ')}</div>
+                                            <div className='flex gap-2 mt-2'>
+                                                <button onClick={() => setEditingMember(member.memberId)} className='text-blue-600 hover:underline' type="button">編輯</button>
+                                                <button className='text-red-600 hover:underline' onClick={async () => {
+                                                    if (window.confirm('確定要刪除嗎？')) {
+                                                        await deleteDoc(doc(firestore, 'workMember', member.memberId))
+                                                    }
+                                                }} type="button">刪除</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 {activeTab === TAB_SKILL && (
                     <div>
                         <h1 className='text-2xl font-bold mb-4'>技能表</h1>
@@ -309,87 +390,6 @@ export default function WorkHumanPage() {
                             </tbody>
                         </table>
                         {errorSkills && <div className='text-red-600'>讀取錯誤: {String(errorSkills)}</div>}
-                    </div>
-                )}
-                {activeTab === TAB_MEMBER && (
-                    <div>
-                        <h1 className='text-2xl font-bold mb-4 text-center'>工作人員列表</h1>
-                        <div className='flex flex-wrap gap-2 mb-2 items-center justify-center'>
-                            <label>角色:
-                                <select value={filter.role} onChange={e => setFilter(prev => ({ ...prev, role: e.target.value }))} className='ml-1 border rounded'>
-                                    <option value=''>全部</option>
-                                    <option value='Developer'>Developer</option>
-                                    <option value='Designer'>Designer</option>
-                                </select>
-                            </label>
-                            <label>狀態:
-                                <select value={filter.status} onChange={e => setFilter(prev => ({ ...prev, status: e.target.value }))} className='ml-1 border rounded'>
-                                    <option value=''>全部</option>
-                                    <option value='在職'>在職</option>
-                                    <option value='離職'>離職</option>
-                                    <option value='暫停合作'>暫停合作</option>
-                                    <option value='黑名單'>黑名單</option>
-                                </select>
-                            </label>
-                            <label>排序:
-                                <select value={sortKey} onChange={e => setSortKey(e.target.value as 'name' | 'role')} className='ml-1 border rounded'>
-                                    <option value='name'>名稱</option>
-                                    <option value='role'>角色</option>
-                                </select>
-                            </label>
-                        </div>
-                        {errorMembers && <div className='text-red-600'>錯誤：{errorMembers.message}</div>}
-                        <div className='flex flex-row flex-wrap gap-4 justify-start items-stretch'>
-                            {filteredMembers.map(member => (
-                                <div key={member.memberId} className='p-4 bg-card rounded-lg shadow border border-border min-w-[320px] flex-1' style={{ maxWidth: 350 }}>
-                                    {editingMember === member.memberId ? (
-                                        <div className='flex flex-col gap-2'>
-                                            <input type='text' value={updatedFields.name ?? member.name}
-                                                onChange={e => setUpdatedFields(prev => ({ ...prev, name: e.target.value }))} placeholder='姓名' className='border p-1 rounded' />
-                                            <input type='text' value={updatedFields.role ?? member.role}
-                                                onChange={e => setUpdatedFields(prev => ({ ...prev, role: e.target.value }))} placeholder='角色' className='border p-1 rounded' />
-                                            <input type='text' value={updatedFields.skills ?? member.skills.map(skillId => skillsMap[skillId] || skillId).join(', ')}
-                                                onChange={e => setUpdatedFields(prev => ({ ...prev, skills: e.target.value }))} placeholder='技能(逗號分隔)' className='border p-1 rounded' />
-                                            <div className='flex gap-2 mt-2'>
-                                                <button
-                                                    onClick={async () => {
-                                                        const { skills, ...rest } = updatedFields
-                                                        const updateData: Partial<WorkMember> = { ...rest }
-                                                        if (skills !== undefined) {
-                                                            updateData.skills = skills.split(',').map(name => name.trim())
-                                                        }
-                                                        await updateDoc(doc(firestore, 'workMember', member.memberId), updateData)
-                                                        setEditingMember(null)
-                                                        setUpdatedFields({})
-                                                    }}
-                                                    className='bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded'
-                                                    type="button"
-                                                >
-                                                    儲存
-                                                </button>
-                                                <button onClick={() => { setEditingMember(null); setUpdatedFields({}) }} className='border px-4 py-1 rounded' type="button">
-                                                    取消
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className='flex flex-col gap-1'>
-                                            <div className='font-semibold text-lg'>{member.name}</div>
-                                            <div>角色: {member.role}</div>
-                                            <div>技能: {member.skills.map(skillId => skillsMap[skillId] || skillId).join(', ')}</div>
-                                            <div className='flex gap-2 mt-2'>
-                                                <button onClick={() => setEditingMember(member.memberId)} className='text-blue-600 hover:underline' type="button">編輯</button>
-                                                <button className='text-red-600 hover:underline' onClick={async () => {
-                                                    if (window.confirm('確定要刪除嗎？')) {
-                                                        await deleteDoc(doc(firestore, 'workMember', member.memberId))
-                                                    }
-                                                }} type="button">刪除</button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
                     </div>
                 )}
             </div>
