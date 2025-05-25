@@ -135,13 +135,15 @@ const ClientWorkSchedulePage = () => {
           <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors duration-300">
             {"未排班工作"}
           </h2>
-          <div className="flex flex-nowrap gap-3 overflow-x-auto pb-16 px-0.5 w-full" tabIndex={0} aria-label="unplanned-jobs">
-            {unplanned.length === 0 ? (
-              <div className="text-gray-400 dark:text-gray-500 text-center w-full transition-colors duration-300">
+          {unplanned.length === 0 ? (
+            <div className="flex w-full items-center justify-center" style={{ minHeight: '60px' }}>
+              <span className="text-gray-400 dark:text-gray-500 text-center transition-colors duration-300">
                 {"（無未排班工作）"}
-              </div>
-            ) : (
-              unplanned.map(wl => (
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-nowrap gap-3 overflow-x-auto pb-16 px-0.5 w-full" tabIndex={0} aria-label="unplanned-jobs">
+              {unplanned.map(wl => (
                 <div
                   key={wl.loadId}
                   className="
@@ -159,9 +161,9 @@ const ClientWorkSchedulePage = () => {
                     {Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "(無執行者)"}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       <ClientBottomNav />

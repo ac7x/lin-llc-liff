@@ -1,5 +1,7 @@
 'use client'
 
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
+import '@/styles/timeline.scss';
 import {
 	addDays,
 	differenceInMilliseconds,
@@ -9,14 +11,14 @@ import {
 	parseISO,
 	startOfDay,
 	subDays
-} from 'date-fns'
-import { zhTW } from 'date-fns/locale'
-import React, { useEffect, useMemo, useState } from 'react'
-import Timeline from 'react-calendar-timeline'
+} from 'date-fns';
+import { zhTW } from 'date-fns/locale';
+import React, { useEffect, useMemo, useState } from 'react';
+import Timeline from 'react-calendar-timeline';
 import {
 	getAllWorkEpics,
 	updateWorkEpicWorkLoads
-} from '../work-schedule-admin/work-schedule-admin.action'
+} from '../work-schedule-admin/work-schedule-admin.action';
 
 interface WorkLoadEntity {
 	loadId: string
@@ -35,8 +37,10 @@ type LooseWorkLoad = WorkLoadEntity & { epicId: string, epicTitle: string }
 const parseEpicSnapshot = (
 	docs: WorkEpicEntity[]
 ): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } => {
-	const epics = docs.map(doc => ({ ...doc, epicId: doc.epicId }))
-	const unplanned = epics.flatMap(e =>
+	const epics: WorkEpicEntity[] = docs.map(
+		doc => ({ ...doc, epicId: doc.epicId } as WorkEpicEntity)
+	)
+	const unplanned: LooseWorkLoad[] = epics.flatMap(e =>
 		(e.workLoads || [])
 			.filter(l => !l.plannedStartTime || l.plannedStartTime === '')
 			.map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
@@ -45,9 +49,9 @@ const parseEpicSnapshot = (
 }
 
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) =>
-	`${wl.title || '(無標題)'} | ${(wl.executor || []).join(', ') || '(無執行者)'}`
+	`${wl.title || '(無標題)'} | ${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}`
 
-const WorkScheduleManagementPage: React.FC = () => {
+const WorkSchedulePage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 
@@ -63,13 +67,19 @@ const WorkScheduleManagementPage: React.FC = () => {
 	const groups = useMemo(() => {
 		const filledEpics = [...epics]
 		while (filledEpics.length < groupCount) {
-			filledEpics.push({ epicId: `empty-${filledEpics.length}`, title: '' })
+			filledEpics.push({
+				epicId: `empty-${filledEpics.length}`,
+				title: ''
+			})
 		}
-		return filledEpics.map(e => ({ id: e.epicId, title: e.title }))
+		return filledEpics.map(e => ({
+			id: e.epicId,
+			title: e.title
+		}))
 	}, [epics])
 
 	const items = useMemo(() =>
-		epics.flatMap(e =>
+		epics.flatMap((e) =>
 			(e.workLoads || [])
 				.filter(l => l.plannedStartTime && l.plannedStartTime !== '')
 				.map(l => {
@@ -150,19 +160,22 @@ const WorkScheduleManagementPage: React.FC = () => {
 		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
 		if (wlIdx === -1) return
 		const newWorkLoads = [...(epic.workLoads || [])]
-		newWorkLoads[wlIdx] = { ...newWorkLoads[wlIdx], plannedStartTime: '', plannedEndTime: '' }
+		const updateWL = { ...newWorkLoads[wlIdx], plannedStartTime: '', plannedEndTime: '' }
+		newWorkLoads[wlIdx] = updateWL
 		await updateWorkEpicWorkLoads(epic.epicId, newWorkLoads)
 		await fetchEpics()
 	}
 
+	// 同步預設畫面區間
 	const now = new Date()
 	const defaultTimeStart = subDays(startOfDay(now), 7)
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
 	return (
-		<div className="min-h-screen w-full bg-white dark:bg-neutral-900 flex flex-col">
-			<div className="flex-1 flex flex-col items-center justify-center">
-				<div className="w-full rounded bg-white dark:bg-neutral-800 border dark:border-neutral-700 shadow" style={{ minWidth: '100vw', height: 400 }}>
+		<div className="min-h-screen w-full bg-black dark:bg-neutral-900 flex flex-col">
+			<div className="flex-none h-[20vh]" />
+			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
+				<div className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
 					<Timeline
 						groups={groups}
 						items={items}
@@ -172,8 +185,8 @@ const WorkScheduleManagementPage: React.FC = () => {
 						canResize="both"
 						canChangeGroup
 						stackItems
-						minZoom={24 * 60 * 60 * 1000}
-						maxZoom={30 * 24 * 60 * 60 * 1000}
+						minZoom={24 * 60 * 60 * 1000} // 1日
+						maxZoom={30 * 24 * 60 * 60 * 1000} // 30日
 						onItemMove={handleItemMove}
 						onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
 						onItemDoubleClick={handleItemRemove}
@@ -196,9 +209,10 @@ const WorkScheduleManagementPage: React.FC = () => {
 						}}
 					/>
 				</div>
-				{/* 未排班工作區塊：確保滿寬、橫捲、深淺模式全域 */}
-				<div className="w-screen min-w-0 max-w-none bg-white/90 dark:bg-neutral-900/90 px-4 py-4 mt-4 rounded-t-2xl shadow-inner transition-colors duration-300">
-					<h2 className="text-lg font-bold text-center text-neutral-900 dark:text-neutral-100 mb-2">未排班工作</h2>
+			</div>
+			<div className="flex-none w-screen min-w-0 max-w-none bg-black/85 dark:bg-neutral-900/90 px-4 py-2 overflow-x-auto rounded-t-2xl shadow-inner transition-colors duration-300">
+				<div className="w-full h-full flex flex-col mx-auto">
+					<h2 className="text-lg font-bold text-center text-white dark:text-neutral-100 mb-2">未排班工作</h2>
 					<div className="flex flex-nowrap gap-3 overflow-x-auto whitespace-nowrap pb-2 w-full min-w-full">
 						{unplanned.length === 0 ? (
 							<div className="text-gray-400 dark:text-neutral-400 text-center w-full min-w-full">（無）</div>
@@ -211,7 +225,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 								>
 									<div className="font-medium text-neutral-900 dark:text-neutral-100 text-sm line-clamp-2">{wl.title || '(無標題)'}</div>
 									<div className="text-xs text-yellow-700 dark:text-yellow-200">
-										{(wl.executor || []).join(', ') || '(無執行者)'}
+										{Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '(無執行者)'}
 									</div>
 								</div>
 							))
@@ -219,8 +233,9 @@ const WorkScheduleManagementPage: React.FC = () => {
 					</div>
 				</div>
 			</div>
+			<ManagementBottomNav />
 		</div>
 	)
 }
 
-export default WorkScheduleManagementPage
+export default WorkSchedulePage
