@@ -356,7 +356,6 @@ const WorkTemplatePage: React.FC = () => {
                                     </option>
                                 ))}
                             </select>
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 dark:text-neutral-500">&#9660;</span>
                         </div>
                         {/* 種類 下拉選單 */}
                         <div className="flex-1 min-w-[120px] max-w-xs">
