@@ -156,14 +156,14 @@ export default function WorkHumanPage() {
                         onClick={() => setActiveTab(TAB_MEMBER)}
                         type="button"
                     >
-                        成員管理
+                        成員
                     </button>
                     <button
                         className={`px-4 py-2 font-bold ml-4 ${activeTab === TAB_SKILL ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'}`}
                         onClick={() => setActiveTab(TAB_SKILL)}
                         type="button"
                     >
-                        技能管理
+                        技能
                     </button>
                 </div>
                 {activeTab === TAB_MEMBER && (
