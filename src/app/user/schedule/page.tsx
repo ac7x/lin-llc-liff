@@ -73,48 +73,13 @@ const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>): str
   `<div><div>${wl.title || "（無標題）"}</div><div class="text-gray-400">${wl.executor?.length ? wl.executor.join(", ") : "（無執行者）"}</div></div>`
 
 /**
- * 比較兩個陣列或物件是否相等
- */
-const isEqual = (a: unknown, b: unknown): boolean => {
-  // 處理基本類型
-  if (a === b) return true;
-
-  // 若一個為空但另一個不為空，則不相等
-  if (!a || !b) return false;
-
-  // 處理陣列
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) return false;
-    return a.every((item, index) => isEqual(item, b[index]));
-  }
-
-  // 處理物件
-  if (typeof a === 'object' && typeof b === 'object') {
-    const keysA = Object.keys(a as object);
-    const keysB = Object.keys(b as object);
-
-    if (keysA.length !== keysB.length) return false;
-    return keysA.every(key => isEqual(
-      (a as Record<string, unknown>)[key],
-      (b as Record<string, unknown>)[key]
-    ));
-  }
-
-  return false;
-};
-
-/**
  * 使用者行事曆頁面
  */
-const WorkSchedulePage = () => {
+const SchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
   const timelineInstance = useRef<Timeline | null>(null)
-
-  // 參考儲存上一次的資料，用於比較
-  const prevEpicsRef = useRef<WorkEpicEntity[]>([])
-  // 儲存 DataSet 實例的參考
   const itemsDataset = useRef<DataSet<TimelineItem> | null>(null)
   const groupsDataset = useRef<DataSet<TimelineGroup> | null>(null)
 
@@ -122,25 +87,27 @@ const WorkSchedulePage = () => {
     collection(firestore, 'workEpic') as CollectionReference<WorkEpicEntity>
   )
 
-  // 處理 Firebase 資料更新
-  useEffect(() => {
-    if (epicSnapshot) {
-      const { epics: newEpics, unplanned: newUnplanned } = parseEpicSnapshot(
-        epicSnapshot.docs as QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[]
-      )
-      setEpics(newEpics)
-      setUnplanned(newUnplanned)
-    }
+  // 使用 useMemo 記憶化 parseEpicSnapshot 的結果
+  const { epics: parsedEpics, unplanned: parsedUnplanned } = useMemo(() => {
+    if (!epicSnapshot) return { epics: [], unplanned: [] }
+    return parseEpicSnapshot(
+      epicSnapshot.docs as QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[]
+    )
   }, [epicSnapshot])
 
-  // 為 Timeline 準備記憶化的資料
-  const timelineGroups = useMemo(() =>
-    epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` })),
-    [epics]
-  )
+  // 僅在解析後的資料變更時更新狀態
+  useEffect(() => {
+    setEpics(parsedEpics)
+    setUnplanned(parsedUnplanned)
+  }, [parsedEpics, parsedUnplanned])
 
-  const timelineItems = useMemo(() =>
-    epics.flatMap(e =>
+  // 記憶化 Timeline 資料
+  const { timelineGroups, timelineItems } = useMemo(() => ({
+    timelineGroups: epics.map(e => ({
+      id: e.epicId,
+      content: `<b>${e.title}</b>`
+    })),
+    timelineItems: epics.flatMap(e =>
       (e.workLoads ?? [])
         .filter(l => l.plannedStartTime)
         .map(l => ({
@@ -151,46 +118,40 @@ const WorkSchedulePage = () => {
           start: new Date(l.plannedStartTime),
           end: l.plannedEndTime ? new Date(l.plannedEndTime) : addDays(new Date(l.plannedStartTime), 1)
         }))
-    ),
-    [epics]
-  )
+    )
+  }), [epics])
 
-  // Timeline 初始化或更新
+  // 處理 DataSet 的更新
   useEffect(() => {
-    if (!timelineRef.current || epics.length === 0) {
+    if (itemsDataset.current && groupsDataset.current) {
+      itemsDataset.current.clear()
+      itemsDataset.current.add(timelineItems)
+      groupsDataset.current.clear()
+      groupsDataset.current.add(timelineGroups)
+    }
+  }, [timelineItems, timelineGroups])
+
+  // Timeline 初始化
+  useEffect(() => {
+    if (!timelineRef.current || epics.length === 0) return
+
+    // 修改：設定容器樣式以確保滿寬
+    timelineRef.current.style.width = '100%'
+    timelineRef.current.style.maxWidth = '100vw'
+    timelineRef.current.style.overflowX = 'hidden'
+
+    // 如果 Timeline 已存在，則不需要重新建立
+    if (timelineInstance.current) {
+      timelineInstance.current.redraw()
       return
     }
 
-    // 檢查是否需要更新 Timeline
-    const hasDifferentData = !isEqual(prevEpicsRef.current, epics);
-    prevEpicsRef.current = JSON.parse(JSON.stringify(epics)); // 深複製以進行比較
-
-    // 如果資料沒有變更且 Timeline 已存在，則不需重新建立
-    if (!hasDifferentData && timelineInstance.current) {
-      return;
-    }
-
-    // 更新現有 DataSet 而非重建 Timeline
-    if (timelineInstance.current && itemsDataset.current && groupsDataset.current) {
-      groupsDataset.current.clear();
-      groupsDataset.current.add(timelineGroups);
-
-      itemsDataset.current.clear();
-      itemsDataset.current.add(timelineItems);
-
-      return;
-    }
-
-    // 首次建立或需要完全重建的情況
-    timelineInstance.current?.destroy();
-
     // 建立新的 DataSet 實例
-    const groups = new DataSet<TimelineGroup>(timelineGroups);
-    const items = new DataSet<TimelineItem>(timelineItems);
+    const groups = new DataSet<TimelineGroup>(timelineGroups)
+    const items = new DataSet<TimelineItem>(timelineItems)
 
-    // 儲存 DataSet 參考以便之後更新
-    groupsDataset.current = groups;
-    itemsDataset.current = items;
+    itemsDataset.current = items
+    groupsDataset.current = groups
 
     const now = new Date()
     const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -202,6 +163,7 @@ const WorkSchedulePage = () => {
       stack: true,
       orientation: 'top',
       editable: false,
+      width: '100%', // 新增：確保 Timeline 寬度為 100%
       locale: 'zh-tw',
       locales: {
         'zh-tw': {
@@ -220,30 +182,32 @@ const WorkSchedulePage = () => {
     timeline.setWindow(start, end, { animation: false })
     timelineInstance.current = timeline
 
+    // 新增：監聽視窗大小變化
+    const handleResize = () => {
+      timeline.redraw()
+    }
+    window.addEventListener('resize', handleResize)
+
     return () => {
+      window.removeEventListener('resize', handleResize)
       timeline.destroy()
       timelineInstance.current = null
       itemsDataset.current = null
       groupsDataset.current = null
     }
-  }, [epics, timelineGroups, timelineItems])
+  }, [timelineGroups, timelineItems, epics.length])
 
   return (
-    <div className="min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-hidden" style={{ position: 'relative' }}>
-      {/* 將時間軸設為 position: fixed，確保滿寬且不受父層影響 */}
+    <div className="min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-hidden">
       <div
         ref={timelineRef}
-        className="bg-white dark:bg-gray-950 border rounded-md shadow timeline-container"
+        className="bg-white dark:bg-gray-950 border-b timeline-container"
         style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          margin: 'auto',
-          width: '100%',
-          minWidth: '100%',
+          position: 'relative',
           height: '65vh',
-          zIndex: 20
+          width: '100%',
+          maxWidth: '100vw',
+          overflowX: 'hidden'
         }}
       />
       {/* 保留原本的底部區塊，避免被 timeline 蓋住 */}
@@ -271,4 +235,4 @@ const WorkSchedulePage = () => {
   )
 }
 
-export default WorkSchedulePage
+export default SchedulePage
