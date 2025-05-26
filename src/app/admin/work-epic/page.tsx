@@ -8,27 +8,18 @@ import {
     WorkEpicEntity
 } from '@/app/actions/workepic.action';
 import { getAllWorkMembers, WorkMember } from '@/app/actions/workmember.action';
-import { WorkZoneEntity } from '@/app/actions/workzone.action';
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 import { useEffect, useState } from 'react';
 
-const regionOptions = ['北部', '中部', '南部', '東部', '離島'] as const;
+const regionOptions = ["北部", "中部", "南部", "東部", "離島"] as const;
 
 const shortId = (prefix = '') =>
     `${prefix}${Math.random().toString(36).slice(2, 8)}`;
 
-const toISO = (date?: string | null): string => {
-    if (!date) {
-        return '';
-    }
-    if (date.includes('T')) {
-        const d = new Date(date);
-        return isNaN(d.getTime()) ? '' : d.toISOString();
-    }
-    const d = new Date(`${date}T00:00:00.000Z`);
-    return isNaN(d.getTime()) ? '' : d.toISOString();
-};
+const toISO = (date?: string | null): string =>
+    date ? new Date(date.includes('T') ? date : `${date}T00:00:00.000Z`).toISOString() : '';
 
+/** 進度條元件 */
 const ProgressBar = ({ completed, total }: { completed: number; total: number }) => {
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
     return (
@@ -43,14 +34,38 @@ const ProgressBar = ({ completed, total }: { completed: number; total: number })
     );
 };
 
-type SelectProps = {
+type FormFields = {
+    title: string;
+    owner: { memberId: string; name: string } | null;
+    address: string;
+    siteSupervisors: string[];
+    safetyOfficers: string[];
+    region: typeof regionOptions[number];
+};
+
+const defaultForm: FormFields = {
+    title: '',
+    owner: null,
+    address: '',
+    siteSupervisors: [],
+    safetyOfficers: [],
+    region: "北部"
+};
+
+/** 通用選擇元件 */
+const Select = ({
+    value,
+    onChange,
+    options,
+    placeholder,
+    multiple
+}: {
     value: string | string[];
     onChange: (val: string | string[]) => void;
     options: WorkMember[];
     placeholder: string;
     multiple?: boolean;
-};
-const Select = ({ value, onChange, options, placeholder, multiple }: SelectProps) => (
+}) => (
     <select
         multiple={multiple}
         value={value}
@@ -70,26 +85,6 @@ const Select = ({ value, onChange, options, placeholder, multiple }: SelectProps
     </select>
 );
 
-type MemberSimple = { memberId: string; name: string };
-
-type FormFields = {
-    title: string;
-    owner: MemberSimple | null;
-    address: string;
-    siteSupervisors: string[];
-    safetyOfficers: string[];
-    region: typeof regionOptions[number];
-};
-
-const defaultFormFields: FormFields = {
-    title: '',
-    owner: null,
-    address: '',
-    siteSupervisors: [],
-    safetyOfficers: [],
-    region: '北部'
-};
-
 const getProgress = (epic: WorkEpicEntity) => {
     let total = 0, completed = 0;
     epic.workTasks?.forEach(t => {
@@ -104,10 +99,10 @@ export default function WorkEpicPage() {
     const [members, setMembers] = useState<WorkMember[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editFields, setEditFields] = useState<Partial<WorkEpicEntity>>({});
-    const [form, setForm] = useState<FormFields>(defaultFormFields);
+    const [form, setForm] = useState<FormFields>(defaultForm);
 
     useEffect(() => {
-        (async () => {
+        void (async () => {
             const [epics, allMembers] = await Promise.all([
                 getAllWorkEpics(false) as Promise<WorkEpicEntity[]>,
                 getAllWorkMembers()
@@ -126,16 +121,9 @@ export default function WorkEpicPage() {
             alert("請完整填寫標題、負責人、地址");
             return;
         }
-        const siteSupervisorsObj = members.filter(m => siteSupervisors.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name }));
-        const safetyOfficersObj = members.filter(m => safetyOfficers.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name }));
-        const defaultZone: WorkZoneEntity = {
-            zoneId: shortId('zone-'),
-            title: "預設區域",
-            address: "",
-            createdAt: new Date().toISOString(),
-            status: "啟用",
-            region
-        };
+        const toMemberObjs = (ids: string[]) =>
+            members.filter(m => ids.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name }));
+
         const newEpic: WorkEpicEntity = {
             epicId: shortId('epic-'),
             title,
@@ -143,14 +131,21 @@ export default function WorkEpicPage() {
             endDate: "",
             insuranceStatus: "無",
             owner,
-            siteSupervisors: siteSupervisorsObj,
-            safetyOfficers: safetyOfficersObj,
+            siteSupervisors: toMemberObjs(siteSupervisors),
+            safetyOfficers: toMemberObjs(safetyOfficers),
             status: "待開始",
             priority: 1,
             region,
             address,
             createdAt: new Date().toISOString(),
-            workZones: [defaultZone],
+            workZones: [{
+                zoneId: shortId('zone-'),
+                title: "預設區域",
+                address: "",
+                createdAt: new Date().toISOString(),
+                status: "啟用",
+                region
+            }],
             workTypes: [],
             workFlows: [],
             workTasks: [],
@@ -159,7 +154,7 @@ export default function WorkEpicPage() {
         try {
             await addWorkEpic(newEpic);
             setWorkEpics(prev => [...prev, newEpic]);
-            setForm(defaultFormFields);
+            setForm(defaultForm);
         } catch {
             alert("建立失敗，請稍後再試");
         }
@@ -298,10 +293,7 @@ export default function WorkEpicPage() {
                                                     value={editFields.owner?.memberId || ''}
                                                     onChange={val => {
                                                         const m = members.find(mm => mm.memberId === val);
-                                                        if (m) {
-                                                            handleEditField('owner', { memberId: m.memberId, name: m.name });
-                                                        }
-                                                        // 找不到時不做任何事，避免傳遞 null
+                                                        if (m) handleEditField('owner', { memberId: m.memberId, name: m.name });
                                                     }}
                                                     options={members}
                                                     placeholder="負責人"
