@@ -228,40 +228,40 @@ const WorkScheduleAdminPage: React.FC = () => {
 						onDragOver={handleTimelineDragOver}
 						onDrop={handleTimelineDrop}
 					>
-							<div className="w-full h-full">
-								<Timeline
-									groups={groups}
-									items={items}
-									defaultTimeStart={defaultTimeStart}
-									defaultTimeEnd={defaultTimeEnd}
-									canMove
-									canResize="both"
-									canChangeGroup
-									stackItems
-									minZoom={24 * 60 * 60 * 1000}
-									maxZoom={30 * 24 * 60 * 60 * 1000}
-									onItemMove={handleItemMove}
-									onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
-									onItemDoubleClick={handleItemRemove}
-									groupRenderer={({ group }) => (
-										<div className="px-2 py-1 text-neutral-900 dark:text-neutral-100">
-											{group.title}
+						<div className="w-full h-full">
+							<Timeline
+								groups={groups}
+								items={items}
+								defaultTimeStart={defaultTimeStart}
+								defaultTimeEnd={defaultTimeEnd}
+								canMove
+								canResize="both"
+								canChangeGroup
+								stackItems
+								minZoom={24 * 60 * 60 * 1000}
+								maxZoom={30 * 24 * 60 * 60 * 1000}
+								onItemMove={handleItemMove}
+								onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
+								onItemDoubleClick={handleItemRemove}
+								groupRenderer={({ group }) => (
+									<div className="px-2 py-1 text-neutral-900 dark:text-neutral-100">
+										{group.title}
+									</div>
+								)}
+								itemRenderer={({ item, getItemProps, getResizeProps }) => {
+									const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+									const dateStr = `${format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
+									return (
+										<div {...getItemProps({ style: { background: '#fbbf24', color: '#222' } })}>
+											<div {...leftResizeProps} />
+											<span>{item.title}</span>
+											<div className="text-xs text-gray-700 dark:text-neutral-200">{dateStr}</div>
+											<div {...rightResizeProps} />
 										</div>
-									)}
-									itemRenderer={({ item, getItemProps, getResizeProps }) => {
-										const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-										const dateStr = `${format(item.start_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
-										return (
-											<div {...getItemProps({ style: { background: '#fbbf24', color: '#222' } })}>
-												<div {...leftResizeProps} />
-												<span>{item.title}</span>
-												<div className="text-xs text-gray-700 dark:text-neutral-200">{dateStr}</div>
-												<div {...rightResizeProps} />
-											</div>
-										)
-									}}
-								/>
-							</div>
+									)
+								}}
+							/>
+						</div>
 					</div>
 				</div>
 				<div className="flex-none min-h-[25vh] max-h-[35vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors">
