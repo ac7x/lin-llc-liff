@@ -247,7 +247,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 				>
 					<div
 						ref={timelineRef}
-						className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 shadow-lg overflow-x-auto"
+						className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-x-auto"
 						style={{ width: '100vw', height: '100vh' }}
 						onDragOver={e => {
 							e.preventDefault()
