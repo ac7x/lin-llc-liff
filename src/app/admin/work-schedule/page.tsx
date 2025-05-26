@@ -215,9 +215,13 @@ const WorkScheduleManagementPage: React.FC = () => {
 
 	return (
 		<div className="min-h-screen w-full bg-black dark:bg-neutral-900 flex flex-col">
-			<div className="flex-none h-[20vh]" />
-			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
-				<div className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden" style={{ minWidth: '100vw', height: 400 }}>
+			{/* 標題列 */}
+			<header className="w-full py-4 bg-white dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700 shadow-sm">
+				<h1 className="text-xl font-bold text-center text-black dark:text-white">工作排程管理</h1>
+			</header>
+			{/* 主內容區塊（時間軸） */}
+			<main className="flex-1 w-full flex items-center justify-center relative overflow-auto">
+				<div className="w-full max-w-7xl h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden" style={{ minHeight: 400 }}>
 					<Timeline
 						groups={groups}
 						items={items}
@@ -242,8 +246,9 @@ const WorkScheduleManagementPage: React.FC = () => {
 						}}
 					/>
 				</div>
-			</div>
-			<div className="flex-none h-[20vh] w-full bg-black dark:bg-neutral-900 px-4 py-2 overflow-y-auto">
+			</main>
+			{/* 未排班工作區塊 */}
+			<section className="w-full bg-black dark:bg-neutral-900 px-4 py-2" style={{ height: 180 }}>
 				<div className="max-w-7xl mx-auto h-full flex flex-col">
 					<h2 className="text-lg font-bold text-center text-white dark:text-neutral-100 mb-2">未排班工作</h2>
 					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
@@ -263,8 +268,11 @@ const WorkScheduleManagementPage: React.FC = () => {
 						))}
 					</div>
 				</div>
-			</div>
-			<AdminBottomNav />
+			</section>
+			{/* 底部導覽列 */}
+			<footer className="w-full">
+				<AdminBottomNav />
+			</footer>
 		</div>
 	)
 }

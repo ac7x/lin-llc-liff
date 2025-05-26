@@ -223,12 +223,14 @@ const WorkScheduleAdminPage: React.FC = () => {
 
 	return (
 		<div className="min-h-screen w-full bg-black dark:bg-neutral-900 flex flex-col">
-			<div className="flex-none h-[20vh]" />
-			<div className="flex-none h-[60vh] w-full flex items-center justify-center relative">
+			{/* 可選：上方標題或留白 */}
+			<div className="flex-none h-8" />
+			{/* 中間時間軸區塊自動填滿剩餘空間 */}
+			<div className="flex-1 w-full flex items-center justify-center relative overflow-hidden">
 				<div
 					ref={timelineRef}
 					className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden"
-					style={{ minWidth: '100vw', height: 400 }}
+					style={{ minWidth: '100vw', height: '100%' }}
 					onDragOver={handleTimelineDragOver}
 					onDrop={handleTimelineDrop}
 				>
@@ -266,11 +268,10 @@ const WorkScheduleAdminPage: React.FC = () => {
 					/>
 				</div>
 			</div>
-			{/* 未排班工作區塊，固定於視窗底部且滿版 */}
+			{/* 未排班工作區塊，固定高度，置於最下方 */}
 			<div
-				className="fixed left-0 right-0 bottom-0 flex-none min-h-[25vh] max-w-none bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300"
+				className="flex-none min-h-[25vh] max-h-[35vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300"
 				style={{
-					width: '100vw',
 					zIndex: 30
 				}}
 			>
