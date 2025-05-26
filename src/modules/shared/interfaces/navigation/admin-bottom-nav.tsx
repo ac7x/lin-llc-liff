@@ -1,116 +1,68 @@
 'use client';
-import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
 
-const navItems = [
-    {
-        icon: '📆',
-        label: '日程',
-        popover: [
-            { label: '排程客戶', href: '/admin/schedule' },
-            { label: '排程後端', href: '/admin/schedule-admin' },
-        ],
-    },
-    {
-        icon: '🗂️',
-        label: '工作',
-        popover: [
-            { label: '工作任務', href: '/admin/work-task' },
-            { label: '工作標的', href: '/admin/work-epic' },
-            { label: '工作範本', href: '/admin/work-template' },
-        ],
-    },
-    {
-        icon: '👤',
-        label: '團隊',
-        popover: [
-            { label: '團隊管理', href: '/admin/work-human-resource' },
-        ],
-    },
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ReactNode } from 'react';
+
+interface NavItem {
+    href: string;
+    icon: ReactNode;
+    label: string;
+    active: boolean;
+}
+
+interface AdminBottomNavProps {
+    items?: NavItem[];
+}
+
+const defaultAdminNavItems: NavItem[] = [
+    { href: '/admin/schedule', icon: '📅', label: '排程管理', active: false },
+    { href: '/admin/work-epic', icon: '📊', label: '工作規劃', active: false },
+    { href: '/admin/work-template', icon: '📋', label: '範本管理', active: false },
+    { href: '/admin/work-task', icon: '✅', label: '任務管理', active: false },
+    { href: '/admin/work-human-resource', icon: '👥', label: '人力資源', active: false },
 ];
 
-/**
- * 管理後台底部導覽列（Tailwind 自適應深淺模式）
- */
-export function AdminBottomNav() {
-    const [open, setOpen] = useState<number | null>(null);
-    const popoverRefs = useRef<Array<HTMLDivElement | null>>([]);
+export function AdminBottomNav({ items = defaultAdminNavItems }: AdminBottomNavProps) {
+    const pathname = usePathname();
 
-    useEffect(() => {
-        const handle = (e: MouseEvent) => {
-            if (
-                open !== null &&
-                popoverRefs.current[open] &&
-                !popoverRefs.current[open]?.contains(e.target as Node)
-            ) {
-                setOpen(null);
-            }
-        };
-        if (open !== null) {
-            document.addEventListener('mousedown', handle);
-        }
-        return () => {
-            document.removeEventListener('mousedown', handle);
-        };
-    }, [open]);
+    const navItems = (items && items.length > 0 ? items : defaultAdminNavItems).map(item => ({
+        ...item,
+        active: pathname === item.href,
+    }));
 
     return (
         <nav
-            className="fixed bottom-0 left-0 w-full h-16 flex justify-center items-center border-t
-                       bg-white border-gray-200 dark:bg-gray-900 dark:border-gray-700 z-50"
+            className="
+        fixed bottom-0 left-0 z-50 w-full h-16
+        bg-white border-t border-gray-200 dark:bg-gray-900 dark:border-gray-700
+        font-sans px-safe pb-safe
+      "
+            style={{
+                paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
         >
-            {navItems.map((item, idx) => (
-                <div
-                    key={item.label}
-                    className="relative flex-1 flex justify-center"
-                >
-                    <button
-                        onClick={() => setOpen(open === idx ? null : idx)}
-                        className="bg-none border-none font-semibold flex flex-col items-center justify-center
-                                   px-6 py-2 rounded-lg text-lg min-w-[76px] cursor-pointer
-                                   text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-gray-800
-                                   transition-colors duration-200"
-                        type="button"
-                        aria-haspopup="true"
-                        aria-expanded={open === idx}
-                        aria-controls={`popover-${idx}`}
+            <div className="flex h-full mx-auto justify-center items-center overflow-x-visible w-full">
+                {navItems.map((item, index) => (
+                    <Link
+                        key={index}
+                        href={item.href}
+                        className={`
+              flex-1 min-w-0 inline-flex flex-col items-center justify-center h-full
+              px-2 sm:px-5 max-w-[120px]
+              transition-colors duration-150
+              ${item.active
+                                ? 'text-green-600 font-semibold border-t-2 border-green-600 bg-green-50 dark:bg-green-900 dark:text-green-400 dark:border-green-400'
+                                : 'text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400'
+                            }
+            `}
+                        style={{ minWidth: '76px' }}
                     >
-                        <span className="text-2xl">{item.icon}</span>
-                        <span className="text-sm">{item.label}</span>
-                    </button>
-                    {open === idx && (
-                        <div
-                            id={`popover-${idx}`}
-                            ref={(el) => {
-                                popoverRefs.current[idx] = el;
-                            }}
-                            className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2
-                                       rounded-xl p-2 min-w-[120px] flex flex-col items-center
-                                       shadow-lg z-100
-                                       bg-white border border-gray-300 text-gray-900
-                                       dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300"
-                            role="menu"
-                            aria-label={`${item.label} 選單`}
-                        >
-                            {item.popover.map(link => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    onClick={() => setOpen(null)}
-                                    className="block w-full text-center rounded-lg px-6 py-2 text-base no-underline
-                                               transition-colors duration-200
-                                               hover:bg-gray-100 dark:hover:bg-gray-700"
-                                    role="menuitem"
-                                >
-                                    {link.label}
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            ))}
+                        <div className="text-xl sm:text-2xl">{item.icon}</div>
+                        <span className="text-[11px] sm:text-xs truncate block">{item.label}</span>
+                    </Link>
+                ))}
+            </div>
         </nav>
     );
 }
-
-export default AdminBottomNav;
