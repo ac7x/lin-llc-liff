@@ -25,7 +25,6 @@ interface WorkEpicEntity {
 
 const WorkSchedulePage = (): React.ReactElement => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
-  const [unplanned, setUnplanned] = useState<(WorkLoadEntity & { epicId: string, epicTitle: string })[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
   const timelineInstance = useRef<Timeline | null>(null)
   const [epicSnapshot] = useCollection(collection(firestore, 'workEpic') as CollectionReference<DocumentData>)
@@ -35,13 +34,6 @@ const WorkSchedulePage = (): React.ReactElement => {
     const docs = epicSnapshot.docs as QueryDocumentSnapshot<DocumentData>[]
     const epicsData = docs.map(doc => ({ ...(doc.data() as Omit<WorkEpicEntity, 'epicId'>), epicId: doc.id }))
     setEpics(epicsData)
-    setUnplanned(
-      epicsData.flatMap(e =>
-        (e.workLoads ?? [])
-          .filter(l => !l.plannedStartTime)
-          .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
-      )
-    )
   }, [epicSnapshot])
 
   useEffect(() => {
@@ -98,29 +90,12 @@ const WorkSchedulePage = (): React.ReactElement => {
 
   return (
     <div className="min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-hidden">
-      <div className="flex flex-1 min-h-[320px] max-h-[600px] pb-[140px]">
+      <div className="flex flex-1 min-h-[320px] pb-16 items-center justify-center">
         <div
           ref={timelineRef}
-          className="bg-white dark:bg-gray-950 border rounded-md shadow"
-          style={{ width: '100vw', minWidth: '100vw', height: '65vh' }}
+          className="bg-white dark:bg-gray-950 border rounded-md shadow mx-auto"
+          style={{ width: '95vw', height: '85vh' }}
         />
-      </div>
-      <div className="fixed left-0 right-0 bottom-0 bg-blue-50/90 dark:bg-gray-900/90 rounded-t-2xl shadow border-t z-30 w-screen max-w-none">
-        <div className="p-4">
-          <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-2">未排班工作</h2>
-          {unplanned.length === 0 ? (
-            <div className="flex justify-center items-center h-12 text-gray-400 dark:text-gray-500">（無未排班工作）</div>
-          ) : (
-            <div className="flex gap-3 overflow-x-auto pb-8">
-              {unplanned.map(wl => (
-                <div key={wl.loadId} className="bg-white dark:bg-gray-950 border rounded-xl px-3 py-2 flex flex-col min-w-[180px]">
-                  <div className="font-medium text-gray-700 dark:text-gray-200 text-sm">{wl.title || "（無標題）"}</div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">{wl.executor.length > 0 ? wl.executor.join(", ") : "（無執行者）"}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
       <div className="fixed left-0 right-0 bottom-0 z-40 w-screen max-w-none">
         <UserBottomNav />
