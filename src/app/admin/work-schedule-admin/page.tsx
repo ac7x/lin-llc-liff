@@ -20,9 +20,6 @@ import {
 	updateWorkEpicWorkLoads
 } from './work-schedule-admin.action'
 
-/**
- * 工作負載資料結構
- */
 interface WorkLoadEntity {
 	loadId: string
 	title: string
@@ -31,24 +28,14 @@ interface WorkLoadEntity {
 	plannedEndTime: string
 }
 
-/**
- * 工作Epic資料結構
- */
 interface WorkEpicEntity {
 	epicId: string
 	title: string
 	workLoads?: WorkLoadEntity[]
 }
 
-/**
- * 加入 Epic 資訊的未排班工作型別
- */
 type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
 
-/**
- * 解析 Epic 資料快照
- * @param docs Epic 資料陣列
- */
 const parseEpicSnapshot = (
 	docs: WorkEpicEntity[]
 ): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } => {
@@ -61,10 +48,6 @@ const parseEpicSnapshot = (
 	return { epics, unplanned }
 }
 
-/**
- * 顯示工作負載資訊內容
- * @param wl 工作負載資料
- */
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) => {
 	const title = wl.title || t("No Title")
 	const executor = Array.isArray(wl.executor) && wl.executor.length > 0
@@ -73,17 +56,10 @@ const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) => {
 	return `${title} | ${executor}`
 }
 
-/**
- * i18n 字串轉換器（請根據專案實際整合）
- * @param str 字串
- */
 function t(str: string): string {
 	return str
 }
 
-/**
- * 行事曆管理元件（支援 Tailwind CSS v4 深淺模式、拖曳未排班工作至日曆）
- */
 const WorkScheduleAdminPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
@@ -130,9 +106,6 @@ const WorkScheduleAdminPage: React.FC = () => {
 		), [epics]
 	)
 
-	/**
-	 * Timeline 上拖曳移動工作
-	 */
 	const handleItemMove = useCallback(async (itemId: string, dragTime: number, newGroupOrder: number): Promise<void> => {
 		const item = items.find(i => i.id === itemId)
 		if (!item) return
@@ -169,9 +142,6 @@ const WorkScheduleAdminPage: React.FC = () => {
 		await fetchEpics()
 	}, [epics, groups, items, fetchEpics])
 
-	/**
-	 * Timeline 上調整工作時間
-	 */
 	const handleItemResize = useCallback(async (itemId: string, time: number, edge: 'left' | 'right'): Promise<void> => {
 		const epic = epics.find(e => (e.workLoads ?? []).some(wl => wl.loadId === itemId))
 		if (!epic) return
@@ -192,9 +162,6 @@ const WorkScheduleAdminPage: React.FC = () => {
 		await fetchEpics()
 	}, [epics, fetchEpics])
 
-	/**
-	 * Timeline 上移除工作
-	 */
 	const handleItemRemove = useCallback(async (itemId: string): Promise<void> => {
 		const epic = epics.find(e => (e.workLoads ?? []).some(wl => wl.loadId === itemId))
 		if (!epic) return
@@ -212,23 +179,14 @@ const WorkScheduleAdminPage: React.FC = () => {
 
 	const timelineRef = useRef<HTMLDivElement>(null)
 
-	/**
-	 * 拖曳開始：將未排班工作資訊放入 DataTransfer
-	 */
 	const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad): void => {
 		e.dataTransfer.setData('application/json', JSON.stringify(wl))
 	}, [])
 
-	/**
-	 * Timeline 可拖曳區：避免預設行為
-	 */
 	const handleTimelineDragOver = useCallback((e: React.DragEvent<HTMLDivElement>): void => {
 		e.preventDefault()
 	}, [])
 
-	/**
-	 * Timeline 放下：將未排班工作新增至指定日期
-	 */
 	const handleTimelineDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
 		e.preventDefault()
 		const data = e.dataTransfer.getData('application/json')
@@ -260,12 +218,12 @@ const WorkScheduleAdminPage: React.FC = () => {
 	}, [groups, defaultTimeEnd, defaultTimeStart, epics, fetchEpics])
 
 	return (
-		<div className="min-h-screen w-[100vw] bg-white dark:bg-neutral-900 flex flex-col">
+		<div className="min-h-screen w-full bg-white dark:bg-neutral-900 flex flex-col">
 			<div className="flex-1 w-full flex items-center justify-center relative overflow-visible">
 				<div
 					ref={timelineRef}
-					className="w-[100vw] h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-x-auto"
-					style={{ minWidth: '100vw', height: '100%' }}
+					className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-x-auto"
+					style={{ height: '100%' }} // 這裡移除 minWidth/w-[100vw]
 					onDragOver={handleTimelineDragOver}
 					onDrop={handleTimelineDrop}
 				>
@@ -315,11 +273,15 @@ const WorkScheduleAdminPage: React.FC = () => {
 							</span>
 						</div>
 					) : (
-						<div className="flex flex-nowrap gap-3 overflow-x-auto pb-16 px-0.5 w-full" tabIndex={0} aria-label="unplanned-jobs">
+						<div
+							className="flex flex-nowrap gap-3 overflow-x-auto pb-16 px-0.5 w-full max-w-full"
+							tabIndex={0}
+							aria-label="unplanned-jobs"
+						>
 							{unplanned.map(wl => (
 								<div
 									key={wl.loadId}
-									className="bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors hover:shadow-md flex flex-col min-w-[180px] cursor-grab"
+									className="bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors hover:shadow-md flex-shrink-0"
 									title={`${t("From")} ${wl.epicTitle}`}
 									draggable
 									onDragStart={e => handleDragStart(e, wl)}
