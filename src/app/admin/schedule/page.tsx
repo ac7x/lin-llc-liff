@@ -140,7 +140,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 
 	return (
 		<div className="min-h-screen bg-white dark:bg-neutral-900 transition-colors">
-			<main className="w-full h-[500px] bg-white dark:bg-neutral-800">
+			<main style={{ width: '100vw', height: '100vh', background: '#fff' }}>
 				<Timeline
 					groups={groups}
 					items={items}

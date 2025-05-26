@@ -141,8 +141,8 @@ const WorkScheduleManagementPage: React.FC = () => {
 	}
 
 	return (
-		<div style={{ minHeight: '100vh', background: '#111' }}>
-			<main style={{ width: '100%', height: 500, background: '#fff' }}>
+		<div style={{ width: '100vw', height: '100vh', background: '#111' }}>
+			<main style={{ width: '100vw', height: '100vh', background: '#fff' }}>
 				<Timeline
 					groups={groups}
 					items={items}
