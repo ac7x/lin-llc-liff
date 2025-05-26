@@ -1,8 +1,7 @@
 'use client'
 
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
-import { addDays, differenceInMilliseconds, endOfDay, format, isValid, parseISO, startOfDay, subDays } from 'date-fns'
-import { zhTW } from 'date-fns/locale'
+import { addDays, differenceInMilliseconds, endOfDay, isValid, parseISO, startOfDay, subDays } from 'date-fns'
 import { getApp, getApps, initializeApp } from 'firebase/app'
 import {
 	collection,
@@ -289,12 +288,10 @@ const WorkScheduleManagementPage: React.FC = () => {
 					onItemDoubleClick={handleItemRemove}
 					itemRenderer={({ item, getItemProps, getResizeProps }) => {
 						const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-						const dateStr = `${format(item.start_time as Date, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time as Date, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
 						return (
 							<div {...getItemProps({ style: { background: '#fbbf24', color: '#222', borderRadius: 6 } })}>
 								<div {...leftResizeProps} />
 								<span>{item.title}</span>
-								<div>{dateStr}</div>
 								<div {...rightResizeProps} />
 							</div>
 						)
