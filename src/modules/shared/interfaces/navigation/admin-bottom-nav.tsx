@@ -8,16 +8,14 @@ const navItems = [
         label: '日程',
         popover: [
             { label: '排程', href: '/admin/schedule' },
-            { label: '排程', href: '/admin/schedule-test' },
-            { label: '排程客戶', href: '/admin/work-schedule' },
-            { label: '排程後端', href: '/admin/work-schedule-admin' },
+            { label: '排程客戶', href: '/admin/schedule-test' },
+            { label: '排程後端', href: '/admin/schedule-admin' },
         ],
     },
     {
         icon: '🗂️',
         label: '工作',
         popover: [
-            { label: '工作任務', href: '/admin/work-task-test' },
             { label: '工作任務', href: '/admin/work-task' },
             { label: '工作標的', href: '/admin/work-epic-test' },
             { label: '工作標的', href: '/admin/work-epic' },

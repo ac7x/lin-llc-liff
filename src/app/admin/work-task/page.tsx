@@ -113,150 +113,135 @@ export default function WorkTaskPage() {
 
   return (
     <>
-      <main className="p-4 bg-background text-foreground min-h-screen">
+      <main className="p-4 bg-background dark:bg-neutral-900 text-foreground dark:text-neutral-100 min-h-screen">
         <h1 className="text-2xl font-bold mb-4">工作任務/工作量合併表</h1>
-        <table className="table-auto w-full border-collapse border border-border mb-8">
-          <thead>
-            <tr>
-              <th className="border px-2 py-1">#</th>
-              <th className="border px-2 py-1">任務名稱</th>
-              <th className="border px-2 py-1">目標數量</th>
-              <th className="border px-2 py-1">單位</th>
-              <th className="border px-2 py-1">已完成</th>
-              <th className="border px-2 py-1">狀態</th>
-              <th className="border px-2 py-1">工作區</th>
-              <th className="border px-2 py-1">展開</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pagedTasks.map((task, idx) => {
-              const taskWorkloads = workloads.filter(w => w.taskId === task.taskId);
-              const isExpanded = expandedTaskIds.includes(task.taskId);
-              const epic = epics.find(e => Array.isArray(e.workTasks) && e.workTasks.some(t => t.taskId === task.taskId));
-              const workZoneStr = epic && Array.isArray(epic.workZones) && epic.workZones.length > 0 ? epic.workZones.map(z => z.title).join('、') : '-';
-              return (
-                <>
-                  <tr className="bg-card hover:bg-muted transition-colors" key={task.taskId}>
-                    <td className="border px-2 py-1">{(workloadPage - 1) * workloadsPerPage + idx + 1}</td>
-                    <td className="border px-2 py-1">{task.title}</td>
-                    <td className="border px-2 py-1">{task.targetQuantity}</td>
-                    <td className="border px-2 py-1">{task.unit}</td>
-                    <td className="border px-2 py-1">{task.completedQuantity}</td>
-                    <td className="border px-2 py-1">{task.status}</td>
-                    <td className="border px-2 py-1">{workZoneStr}</td>
-                    <td className="border px-2 py-1 text-center">
-                      <button
-                        type="button"
-                        className={`underline px-2 py-1 rounded transition-colors ${isExpanded ? 'bg-muted text-muted-foreground' : 'bg-background text-foreground'}`}
-                        style={{ minWidth: 56 }}
-                        onClick={() => toggleExpand(task.taskId)}
-                      >
-                        {isExpanded ? '收合' : '展開'}
-                      </button>
-                    </td>
-                  </tr>
-                  {isExpanded && taskWorkloads.length > 0 && (
-                    <tr key={task.taskId + '_workloads'} className="bg-muted text-muted-foreground">
-                      <td colSpan={7} className="p-0">
-                        <table className="w-full border-collapse">
-                          <thead>
-                            <tr className="bg-muted">
-                              <th className="border px-2 py-1">工作量名稱</th>
-                              <th className="border px-2 py-1">計畫數量</th>
-                              <th className="border px-2 py-1">單位</th>
-                              <th className="border px-2 py-1">計畫開始</th>
-                              <th className="border px-2 py-1">計畫結束</th>
-                              <th className="border px-2 py-1">實際完成</th>
-                              <th className="border px-2 py-1">執行者</th>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {pagedTasks.map(task => {
+            const taskWorkloads = workloads.filter(w => w.taskId === task.taskId);
+            const isExpanded = expandedTaskIds.includes(task.taskId);
+            const epic = epics.find(e => Array.isArray(e.workTasks) && e.workTasks.some(t => t.taskId === task.taskId));
+            const workZoneStr = epic && Array.isArray(epic.workZones) && epic.workZones.length > 0 ? epic.workZones.map(z => z.title).join('、') : '-';
+            return (
+              <div key={task.taskId} className="bg-white dark:bg-neutral-800 rounded shadow border border-border dark:border-neutral-700 p-4 flex flex-col gap-2 relative">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-lg">{task.title}</div>
+                  <button
+                    type="button"
+                    className={`underline px-2 py-1 rounded transition-colors ${isExpanded ? 'bg-muted dark:bg-neutral-700 text-muted-foreground dark:text-neutral-100' : 'bg-background dark:bg-neutral-800 text-foreground dark:text-neutral-100'}`}
+                    style={{ minWidth: 56 }}
+                    onClick={() => toggleExpand(task.taskId)}
+                  >
+                    {isExpanded ? '收合' : '展開'}
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2 text-sm">
+                  <span className="bg-gray-100 dark:bg-neutral-700 px-2 py-0.5 rounded">目標：{task.targetQuantity} {task.unit}</span>
+                  <span className="bg-gray-100 dark:bg-neutral-700 px-2 py-0.5 rounded">已完成：{task.completedQuantity}</span>
+                  <span className="bg-gray-100 dark:bg-neutral-700 px-2 py-0.5 rounded">狀態：{task.status}</span>
+                  <span className="bg-gray-100 dark:bg-neutral-700 px-2 py-0.5 rounded">工作區：{workZoneStr}</span>
+                </div>
+                {isExpanded && taskWorkloads.length > 0 && (
+                  <div className="mt-2">
+                    <div className="font-semibold mb-1">工作量</div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse text-sm">
+                        <thead>
+                          <tr className="bg-muted dark:bg-neutral-700">
+                            <th className="border px-2 py-1">名稱</th>
+                            <th className="border px-2 py-1">計畫數量</th>
+                            <th className="border px-2 py-1">單位</th>
+                            <th className="border px-2 py-1">計畫開始</th>
+                            <th className="border px-2 py-1">計畫結束</th>
+                            <th className="border px-2 py-1">實際完成</th>
+                            <th className="border px-2 py-1">執行者</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {taskWorkloads.map(load => (
+                            <tr key={load.loadId} className="bg-background dark:bg-neutral-900 text-foreground dark:text-neutral-100">
+                              <td className="border px-2 py-1">{load.title || load.loadId}</td>
+                              <td className="border px-2 py-1">
+                                <input
+                                  type="number"
+                                  className="border p-1 w-20 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                                  value={load.plannedQuantity}
+                                  onChange={e =>
+                                    handleWorkLoadChange(load.loadId, { plannedQuantity: Number(e.target.value) })
+                                  }
+                                  min={0}
+                                />
+                              </td>
+                              <td className="border px-2 py-1">{load.unit}</td>
+                              <td className="border px-2 py-1">
+                                <input
+                                  type="date"
+                                  className="border p-1 w-32 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                                  value={load.plannedStartTime?.slice(0, 10) || ''}
+                                  onChange={e =>
+                                    handleWorkLoadChange(load.loadId, { plannedStartTime: e.target.value })
+                                  }
+                                />
+                              </td>
+                              <td className="border px-2 py-1">
+                                <input
+                                  type="date"
+                                  className="border p-1 w-32 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                                  value={load.plannedEndTime?.slice(0, 10) || ''}
+                                  onChange={e =>
+                                    handleWorkLoadChange(load.loadId, { plannedEndTime: e.target.value })
+                                  }
+                                />
+                              </td>
+                              <td className="border px-2 py-1">
+                                <input
+                                  type="number"
+                                  className="border p-1 w-20 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                                  value={load.actualQuantity}
+                                  onChange={e =>
+                                    handleActualQuantityChange(load.loadId, Number(e.target.value))
+                                  }
+                                  min={0}
+                                />
+                              </td>
+                              <td className="border px-2 py-1">
+                                <select
+                                  multiple
+                                  value={getExecutorArray(load.executor)}
+                                  onChange={async e => {
+                                    const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
+                                    await handleWorkLoadChange(load.loadId, { executor: selected });
+                                  }}
+                                  className="border rounded px-1 py-0.5 w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+                                >
+                                  {members.map(member => (
+                                    <option key={member.memberId} value={member.name}>{member.name}</option>
+                                  ))}
+                                </select>
+                                <div className="text-xs mt-1 text-blue-700 dark:text-blue-300">
+                                  {getExecutorArray(load.executor).join('、')}
+                                </div>
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {taskWorkloads.map(load => (
-                              <tr key={load.loadId} className="bg-background text-foreground">
-                                <td className="border px-2 py-1">{load.title || load.loadId}</td>
-                                <td className="border px-2 py-1">
-                                  <input
-                                    type="number"
-                                    className="border p-1 w-20"
-                                    value={load.plannedQuantity}
-                                    onChange={e =>
-                                      handleWorkLoadChange(load.loadId, { plannedQuantity: Number(e.target.value) })
-                                    }
-                                    min={0}
-                                  />
-                                </td>
-                                <td className="border px-2 py-1">{load.unit}</td>
-                                <td className="border px-2 py-1">
-                                  <input
-                                    type="date"
-                                    className="border p-1 w-32"
-                                    value={load.plannedStartTime?.slice(0, 10) || ''}
-                                    onChange={e =>
-                                      handleWorkLoadChange(load.loadId, { plannedStartTime: e.target.value })
-                                    }
-                                  />
-                                </td>
-                                <td className="border px-2 py-1">
-                                  <input
-                                    type="date"
-                                    className="border p-1 w-32"
-                                    value={load.plannedEndTime?.slice(0, 10) || ''}
-                                    onChange={e =>
-                                      handleWorkLoadChange(load.loadId, { plannedEndTime: e.target.value })
-                                    }
-                                  />
-                                </td>
-                                <td className="border px-2 py-1">
-                                  <input
-                                    type="number"
-                                    className="border p-1 w-20"
-                                    value={load.actualQuantity}
-                                    onChange={e =>
-                                      handleActualQuantityChange(load.loadId, Number(e.target.value))
-                                    }
-                                    min={0}
-                                  />
-                                </td>
-                                <td className="border px-2 py-1">
-                                  <select
-                                    multiple
-                                    value={getExecutorArray(load.executor)}
-                                    onChange={async e => {
-                                      const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-                                      await handleWorkLoadChange(load.loadId, { executor: selected });
-                                    }}
-                                    className="border rounded px-1 py-0.5 w-full bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-                                  >
-                                    {members.map(member => (
-                                      <option key={member.memberId} value={member.name}>{member.name}</option>
-                                    ))}
-                                  </select>
-                                  <div className="text-xs mt-1 text-blue-700 dark:text-blue-300">
-                                    {getExecutorArray(load.executor).join('、')}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  )}
-                </>
-              );
-            })}
-          </tbody>
-        </table>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
         <div className="flex items-center justify-center mt-4 gap-2">
           <button
             disabled={workloadPage === 1}
-            className="border rounded px-2 py-1 disabled:opacity-50"
+            className="border rounded px-2 py-1 disabled:opacity-50 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
             onClick={() => setWorkloadPage(page => Math.max(1, page - 1))}
           >上一頁</button>
           <span>第 {workloadPage} / {totalPages} 頁</span>
           <button
             disabled={workloadPage === totalPages || totalPages === 0}
-            className="border rounded px-2 py-1 disabled:opacity-50"
+            className="border rounded px-2 py-1 disabled:opacity-50 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
             onClick={() => setWorkloadPage(page => Math.min(totalPages, page + 1))}
           >下一頁</button>
         </div>
