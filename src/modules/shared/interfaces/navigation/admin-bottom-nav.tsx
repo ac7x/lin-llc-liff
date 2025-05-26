@@ -7,8 +7,7 @@ const navItems = [
         icon: '📆',
         label: '日程',
         popover: [
-            { label: '排程', href: '/admin/schedule' },
-            { label: '排程客戶', href: '/admin/schedule-test' },
+            { label: '排程客戶', href: '/admin/schedule' },
             { label: '排程後端', href: '/admin/schedule-admin' },
         ],
     },
