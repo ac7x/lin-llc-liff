@@ -4,13 +4,16 @@ import type { WorkEpicEntity } from '@/app/actions/workepic.action'
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client'
 import { UserBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav'
 import { addDays, subDays } from 'date-fns'
-import { collection, CollectionReference, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
-import * as React from "react"
+import type { CollectionReference, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
+import { collection } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataSet, Timeline } from 'vis-timeline/standalone'
 import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 
+/**
+ * 工作負載資料型別
+ */
 interface WorkLoadEntity {
   loadId: string
   title: string
@@ -19,34 +22,44 @@ interface WorkLoadEntity {
   plannedEndTime: string
 }
 
+/**
+ * 未排班工作型別
+ */
 interface LooseWorkLoad extends WorkLoadEntity {
   epicId: string
   epicTitle: string
 }
 
 /**
- * 解析 Epic 資料快照，取得 Epic 列表與未排班工作
+ * 解析 Epic 資料
  */
-function parseEpicSnapshot(
-  docs: QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[]
-): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
-  const epics = docs.map(doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity))
+const parseEpicSnapshot = (docs: QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[]): {
+  epics: WorkEpicEntity[]
+  unplanned: LooseWorkLoad[]
+} => {
+  const epics = docs.map(doc => ({ ...doc.data(), epicId: doc.id }))
   const unplanned = epics.flatMap(e =>
     (e.workLoads ?? [])
       .filter(l => !l.plannedStartTime)
       .map(l => ({
         ...l,
         epicId: e.epicId,
-        epicTitle: e.title,
+        epicTitle: e.title
       }))
   )
   return { epics, unplanned }
 }
 
+/**
+ * 產生顯示內容
+ */
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>): string =>
-  `<div><div>${wl.title || "（無標題）"}</div><div class="text-gray-400">${Array.isArray(wl.executor) ? wl.executor.join(", ") : "（無執行者）"}</div></div>`
+  `<div><div>${wl.title || "（無標題）"}</div><div class="text-gray-400">${wl.executor?.length ? wl.executor.join(", ") : "（無執行者）"}</div></div>`
 
-const WorkSchedulePage = (): React.ReactElement => {
+/**
+ * 使用者行事曆頁面
+ */
+const WorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
@@ -56,22 +69,18 @@ const WorkSchedulePage = (): React.ReactElement => {
   )
 
   useEffect(() => {
-    if (!epicSnapshot) {
-      return
+    if (epicSnapshot) {
+      const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs as QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[])
+      setEpics(epics)
+      setUnplanned(unplanned)
     }
-    const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs as QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[])
-    setEpics(epics)
-    setUnplanned(unplanned)
   }, [epicSnapshot])
 
   useEffect(() => {
     if (!timelineRef.current || epics.length === 0) {
       return
     }
-    if (timelineInstance.current) {
-      timelineInstance.current.destroy()
-      timelineInstance.current = null
-    }
+    timelineInstance.current?.destroy()
     const groups = new DataSet(
       epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
     )
@@ -94,7 +103,6 @@ const WorkSchedulePage = (): React.ReactElement => {
     const start = subDays(today0, 3)
     const end = addDays(today0, 4)
     end.setHours(23, 59, 59, 999)
-
     const timeline = new Timeline(timelineRef.current, items, groups, {
       stack: true,
       orientation: 'top',
@@ -102,26 +110,10 @@ const WorkSchedulePage = (): React.ReactElement => {
       locale: 'zh-tw',
       locales: {
         'zh-tw': {
-          current: "當前",
-          year: "年",
-          month: "月",
-          week: "週",
-          day: "日",
-          hour: "時",
-          minute: "分",
-          second: "秒",
-          millisecond: "毫秒",
-          months: [
-            "一月", "二月", "三月", "四月", "五月", "六月",
-            "七月", "八月", "九月", "十月", "十一月", "十二月"
-          ],
-          monthsShort: [
-            "1月", "2月", "3月", "4月", "5月", "6月",
-            "7月", "8月", "9月", "10月", "11月", "12月"
-          ],
-          days: [
-            "星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"
-          ],
+          current: "當前", year: "年", month: "月", week: "週", day: "日", hour: "時", minute: "分", second: "秒", millisecond: "毫秒",
+          months: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
+          monthsShort: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+          days: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
           daysShort: ["日", "一", "二", "三", "四", "五", "六"]
         }
       },
@@ -131,7 +123,6 @@ const WorkSchedulePage = (): React.ReactElement => {
     })
     timeline.setWindow(start, end, { animation: false })
     timelineInstance.current = timeline
-
     return () => {
       timeline.destroy()
       timelineInstance.current = null
@@ -139,45 +130,43 @@ const WorkSchedulePage = (): React.ReactElement => {
   }, [epics])
 
   return (
-    <div className="relative min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-x-hidden">
-      {/* 固定在上方的 timeline，滿屏但不溢出 */}
+    <div className="min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-hidden">
+      {/* 將時間軸設為 position: fixed，確保滿寬且不受父層影響 */}
       <div
         ref={timelineRef}
-        className="fixed top-0 left-0 w-full max-w-full overflow-x-auto h-[65vh] bg-white dark:bg-gray-950 border-b z-20 rounded-b-2xl shadow"
+        className="bg-white dark:bg-gray-950 border rounded-md shadow"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          width: '100vw',
+          minWidth: '100vw',
+          height: '65vh',
+          zIndex: 20
+        }}
       />
-      {/* 固定在下方的未排班工作，滿屏 */}
-      <div className="fixed left-0 right-0 bottom-0 bg-blue-50/90 dark:bg-gray-900/90 rounded-t-2xl shadow border-t z-30 w-full max-w-full">
+      {/* 保留原本的底部區塊，避免被 timeline 蓋住 */}
+      <div className="fixed left-0 right-0 bottom-0 bg-blue-50/90 dark:bg-gray-900/90 rounded-t-2xl shadow border-t z-30 w-screen max-w-none">
         <div className="p-4">
-          <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-2">
-            未排班工作
-          </h2>
+          <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-2">未排班工作</h2>
           {unplanned.length === 0 ? (
-            <div className="flex justify-center items-center h-12 text-gray-400 dark:text-gray-500">
-              （無未排班工作）
-            </div>
+            <div className="flex justify-center items-center h-12 text-gray-400 dark:text-gray-500">（無未排班工作）</div>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-8">
               {unplanned.map(wl => (
                 <div key={wl.loadId} className="bg-white dark:bg-gray-950 border rounded-xl px-3 py-2 flex flex-col min-w-[180px]">
-                  <div className="font-medium text-gray-700 dark:text-gray-200 text-sm">
-                    {wl.title || "（無標題）"}
-                  </div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">
-                    {wl.executor.length > 0 ? wl.executor.join(", ") : "（無執行者）"}
-                  </div>
+                  <div className="font-medium text-gray-700 dark:text-gray-200 text-sm">{wl.title || "（無標題）"}</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">{wl.executor.length ? wl.executor.join(", ") : "（無執行者）"}</div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
-      {/* 固定底部導航 */}
-      <div className="fixed left-0 right-0 bottom-0 z-40 w-full max-w-full pointer-events-none">
+      <div className="fixed left-0 right-0 bottom-0 z-40 w-screen max-w-none">
         <UserBottomNav />
       </div>
-      {/* 佔位空間，避免內容被固定區塊遮蓋 */}
-      <div className="h-[65vh]" />
-      <div className="h-[220px]" />
     </div>
   )
 }
