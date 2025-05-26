@@ -233,7 +233,7 @@ const WorkTemplatePage: React.FC = () => {
                         </div>
                         {filteredFlows.length > 0 && (
                             <div className="mb-2">
-                                <div>
+                                <div className="mb-2">
                                     <label>
                                         <input
                                             ref={selectAllRef}
@@ -250,7 +250,7 @@ const WorkTemplatePage: React.FC = () => {
                                         {STRINGS.selectAll}
                                     </label>
                                 </div>
-                                <div className="flex flex-col gap-2 mt-2">
+                                <div className="flex flex-col gap-2 mt-0">
                                     {filteredFlows.map(f => (
                                         <div key={f.flowId} className="flex items-center gap-2 bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 min-w-[220px]">
                                             <input
