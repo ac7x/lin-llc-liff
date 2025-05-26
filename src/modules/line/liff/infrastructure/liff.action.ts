@@ -1,6 +1,6 @@
 "use server"
-import "@/modules/shared/infrastructure/persistence/firebase-admin/adminApp";
-import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/adminApp";
+import "@/modules/shared/infrastructure/persistence/firebase/firebase-admin-client";
+import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase/firebase-admin-client";
 import { Auth, getAuth, UserRecord } from "firebase-admin/auth";
 
 class LineLoginError extends Error {

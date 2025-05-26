@@ -3,7 +3,7 @@
 import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity, WorkEpicTemplate } from '@/app/actions/workepic.action';
 import { WorkLoadEntity } from '@/app/actions/workload.action';
 import { WorkTaskEntity } from '@/app/actions/worktask.action';
-import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp';
+import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client';
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 import { collection, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';

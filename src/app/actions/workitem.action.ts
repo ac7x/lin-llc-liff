@@ -1,6 +1,6 @@
 "use server";
 
-import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/adminApp";
+import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase/firebase-admin-client";
 
 /**
  * WorkItemTemplate 代表一個工作項目的基本資料結構

@@ -1,6 +1,6 @@
 "use server";
 
-import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase-admin/adminApp";
+import { firestoreAdmin } from "@/modules/shared/infrastructure/persistence/firebase/firebase-admin-client";
 
 export interface WorkLevel {
     levelID: string; // 唯一識別碼

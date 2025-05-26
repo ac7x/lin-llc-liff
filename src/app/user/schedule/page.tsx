@@ -1,7 +1,7 @@
 'use client'
 
 import type { WorkEpicEntity } from '@/app/actions/workepic.action'
-import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
+import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client'
 import { UserBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav'
 import { addDays, subDays } from 'date-fns'
 import { collection, CollectionReference, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
@@ -53,12 +53,10 @@ const ClientWorkSchedulePage = () => {
 
   useEffect(() => {
     if (!timelineRef.current || !epics.length) return
-
     if (timelineInstance.current) {
       timelineInstance.current.destroy()
       timelineInstance.current = null
     }
-
     const groups = new DataSet(epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` })))
     const items = new DataSet(
       epics.flatMap(e =>
@@ -74,13 +72,11 @@ const ClientWorkSchedulePage = () => {
           }))
       )
     )
-
     const now = new Date()
     const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const start = subDays(today0, 3)
     const end = addDays(today0, 4)
     end.setHours(23, 59, 59, 999)
-
     const tl = new Timeline(timelineRef.current, items, groups, {
       stack: true,
       orientation: 'top',
@@ -112,9 +108,7 @@ const ClientWorkSchedulePage = () => {
       }
     })
     tl.setWindow(start, end, { animation: false })
-
     timelineInstance.current = tl
-
     return () => {
       tl.destroy()
       timelineInstance.current = null
@@ -130,7 +124,7 @@ const ClientWorkSchedulePage = () => {
           minHeight: 320,
           maxHeight: 600,
           marginTop: 0,
-          marginBottom: '28vh',
+          marginBottom: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -139,7 +133,7 @@ const ClientWorkSchedulePage = () => {
       >
         <div
           ref={timelineRef}
-          className="rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-md overflow-hidden transition-colors duration-300"
+          className="rounded-t-2xl rounded-b-none bg-white dark:bg-gray-900 border-x border-t border-b-0 border-gray-200 dark:border-gray-700 shadow-md overflow-hidden transition-colors duration-300"
           style={{
             width: '100vw',
             height: '100%',
@@ -148,7 +142,7 @@ const ClientWorkSchedulePage = () => {
         />
       </div>
       <div
-        className="fixed left-0 right-0 bottom-0 flex-none min-h-[22vh] max-h-[32vh] bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300"
+        className="fixed left-0 right-0 bottom-0 flex-none min-h-[22vh] max-h-[32vh] bg-blue-50/90 dark:bg-gray-800/90 rounded-t-3xl rounded-b-none shadow-xl transition-colors duration-300 border-x border-t border-b-0 border-blue-200 dark:border-blue-700"
         style={{ width: '100vw', zIndex: 30, overflowY: 'auto' }}
       >
         <div className="w-full h-full flex flex-col p-4 mx-auto">

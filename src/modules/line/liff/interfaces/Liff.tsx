@@ -1,6 +1,6 @@
 'use client'
 
-import { firebaseApp } from "@/modules/shared/infrastructure/persistence/firebase/clientApp"
+import { firebaseApp } from "@/modules/shared/infrastructure/persistence/firebase/firebase-client"
 import { getProfile, type Profile } from "@liff/get-profile"
 import { login as liffLogin } from "@liff/login"
 import { logout as liffLogout } from "@liff/logout"
