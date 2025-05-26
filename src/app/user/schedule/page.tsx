@@ -5,6 +5,7 @@ import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/
 import { UserBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav'
 import { addDays, subDays } from 'date-fns'
 import { collection, CollectionReference, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
+import * as React from "react"; // 必須加這行
 import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataSet, Timeline } from 'vis-timeline/standalone'
@@ -18,24 +19,31 @@ interface WorkLoadEntity {
   plannedEndTime: string
 }
 
-type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
+interface LooseWorkLoad extends WorkLoadEntity {
+  epicId: string
+  epicTitle: string
+}
 
 function parseEpicSnapshot(
   docs: QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[]
 ): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
   const epics = docs.map(doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity))
   const unplanned = epics.flatMap(e =>
-    (e.workLoads || [])
-      .filter(l => !l.plannedStartTime || l.plannedStartTime === '')
-      .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
+    (e.workLoads ?? [])
+      .filter(l => !l.plannedStartTime)
+      .map(l => ({
+        ...l,
+        epicId: e.epicId,
+        epicTitle: e.title,
+      }))
   )
   return { epics, unplanned }
 }
 
-const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) =>
-  `<div><div>${wl.title || "（無標題）"}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "（無執行者）"}</div></div>`
+const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>): string =>
+  `<div><div>${wl.title || "（無標題）"}</div><div class="text-gray-400">${Array.isArray(wl.executor) ? wl.executor.join(", ") : "（無執行者）"}</div></div>`
 
-const WorkSchedulePage = () => {
+const WorkSchedulePage = (): React.ReactElement => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
@@ -52,23 +60,26 @@ const WorkSchedulePage = () => {
   }, [epicSnapshot])
 
   useEffect(() => {
-    if (!timelineRef.current || !epics.length) return
+    if (!timelineRef.current || epics.length === 0) return
+
     if (timelineInstance.current) {
       timelineInstance.current.destroy()
       timelineInstance.current = null
     }
-    const groups = new DataSet(epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` })))
+    const groups = new DataSet(
+      epics.map(e => ({ id: e.epicId, content: `<b>${e.title}</b>` }))
+    )
     const items = new DataSet(
       epics.flatMap(e =>
-        (e.workLoads || [])
-          .filter(l => l.plannedStartTime && l.plannedStartTime !== '')
+        (e.workLoads ?? [])
+          .filter(l => l.plannedStartTime)
           .map(l => ({
             id: l.loadId,
             group: e.epicId,
             type: 'range',
             content: getWorkloadContent(l),
             start: new Date(l.plannedStartTime),
-            end: l.plannedEndTime && l.plannedEndTime !== '' ? new Date(l.plannedEndTime) : addDays(new Date(l.plannedStartTime), 1)
+            end: l.plannedEndTime ? new Date(l.plannedEndTime) : addDays(new Date(l.plannedStartTime), 1)
           }))
       )
     )
@@ -77,7 +88,8 @@ const WorkSchedulePage = () => {
     const start = subDays(today0, 3)
     const end = addDays(today0, 4)
     end.setHours(23, 59, 59, 999)
-    const tl = new Timeline(timelineRef.current, items, groups, {
+
+    const timeline = new Timeline(timelineRef.current, items, groups, {
       stack: true,
       orientation: 'top',
       editable: false,
@@ -93,9 +105,17 @@ const WorkSchedulePage = () => {
           minute: "分",
           second: "秒",
           millisecond: "毫秒",
-          months: ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"],
-          monthsShort: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
-          days: ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"],
+          months: [
+            "一月", "二月", "三月", "四月", "五月", "六月",
+            "七月", "八月", "九月", "十月", "十一月", "十二月"
+          ],
+          monthsShort: [
+            "1月", "2月", "3月", "4月", "5月", "6月",
+            "7月", "8月", "9月", "10月", "11月", "12月"
+          ],
+          days: [
+            "星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"
+          ],
           daysShort: ["日", "一", "二", "三", "四", "五", "六"]
         }
       },
@@ -103,37 +123,47 @@ const WorkSchedulePage = () => {
       zoomMax: 30 * 24 * 60 * 60 * 1000,
       timeAxis: { scale: 'day', step: 1 }
     })
-    tl.setWindow(start, end, { animation: false })
-    timelineInstance.current = tl
+    timeline.setWindow(start, end, { animation: false })
+    timelineInstance.current = timeline
+
     return () => {
-      tl.destroy()
+      timeline.destroy()
       timelineInstance.current = null
     }
   }, [epics])
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col">
-      <div className="w-full" style={{ height: '65vh', minHeight: 320, maxHeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div ref={timelineRef} className="bg-white dark:bg-gray-900 border rounded-md shadow" style={{ width: '100vw', height: '100%' }} />
+      {/* Timeline 區塊 */}
+      <div className="w-full flex-grow flex items-center justify-center" style={{ minHeight: 320, maxHeight: 600 }}>
+        <div
+          ref={timelineRef}
+          className="bg-white dark:bg-gray-900 border rounded-md shadow w-full"
+          style={{ height: '65vh' }}
+        />
       </div>
-      <div className="fixed left-0 right-0 bottom-0 bg-blue-50/90 dark:bg-gray-800/90 rounded-t-2xl shadow border-t" style={{ width: '100vw', zIndex: 30 }}>
+
+      {/* 未排班工作區塊 */}
+      <div className="fixed left-0 right-0 bottom-0 bg-blue-50/90 dark:bg-gray-800/90 rounded-t-2xl shadow border-t z-30">
         <div className="p-4">
           <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-2">{"未排班工作"}</h2>
           {unplanned.length === 0 ? (
-            <div className="flex justify-center items-center h-12 text-gray-400 dark:text-gray-500">（無未排班工作）</div>
+            <div className="flex justify-center items-center h-12 text-gray-400 dark:text-gray-500">{"（無未排班工作）"}</div>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-8">
               {unplanned.map(wl => (
                 <div key={wl.loadId} className="bg-white dark:bg-gray-900 border rounded-xl px-3 py-2 flex flex-col min-w-[180px]">
                   <div className="font-medium text-gray-700 dark:text-gray-300 text-sm">{wl.title || "（無標題）"}</div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">{Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "（無執行者）"}</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">{wl.executor.length > 0 ? wl.executor.join(", ") : "（無執行者）"}</div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 40 }}>
+
+      {/* 底部導航 */}
+      <div className="fixed left-0 right-0 bottom-0 z-40">
         <UserBottomNav />
       </div>
     </div>
