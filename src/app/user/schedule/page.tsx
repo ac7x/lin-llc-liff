@@ -130,18 +130,19 @@ const WorkSchedulePage = () => {
   }, [epics])
 
   return (
-    <div className="min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-hidden">
+    <div className="min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-hidden" style={{ position: 'relative' }}>
       {/* 將時間軸設為 position: fixed，確保滿寬且不受父層影響 */}
       <div
         ref={timelineRef}
         className="bg-white dark:bg-gray-950 border rounded-md shadow"
         style={{
-          position: 'fixed',
+          position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
-          width: '100vw',
-          minWidth: '100vw',
+          margin: 'auto',
+          width: '100%',
+          minWidth: '100%',
           height: '65vh',
           zIndex: 20
         }}
