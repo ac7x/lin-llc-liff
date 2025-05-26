@@ -8,6 +8,9 @@ import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bot
 import { collection, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
+/**
+ * 任務成員型別
+ */
 interface WorkMember {
   taskId?: string;
   memberId: string;
@@ -22,96 +25,84 @@ interface WorkMember {
 
 const workloadsPerPage = 10;
 
-const toISO = (date?: string | null) => {
+/**
+ * 將日期轉換為 ISO 格式
+ */
+const toISO = (date?: string | null): string => {
   if (!date) return '';
-  if (date.includes('T')) {
-    const d = new Date(date);
-    return isNaN(d.getTime()) ? '' : d.toISOString();
-  }
-  const d = new Date(date + 'T00:00:00.000Z');
+  const d = new Date(date.includes('T') ? date : `${date}T00:00:00.000Z`);
   return isNaN(d.getTime()) ? '' : d.toISOString();
 };
 
-const getExecutorArray = (executor: string[] | string | undefined) =>
-  Array.isArray(executor) ? executor : (typeof executor === 'string' && executor ? [executor] : []);
-
-const getEpicByTaskId = (epics: WorkEpicEntity[], taskId: string) =>
-  epics.find(e => Array.isArray(e.workTasks) && e.workTasks.some(t => t.taskId === taskId));
-
-const getEpicByLoadId = (epics: WorkEpicEntity[], loadId: string) =>
-  epics.find(e => Array.isArray(e.workLoads) && e.workLoads.some(l => l.loadId === loadId));
-
-const getWorkZoneStr = (epic?: WorkEpicEntity) =>
-  epic && Array.isArray(epic.workZones) && epic.workZones.length > 0
-    ? epic.workZones.map(z => z.title).join('、')
-    : '-';
-
-const WorkTaskPage = () => {
-  const [tasks, setTasks] = useState<WorkTaskEntity[]>([]);
-  const [workloads, setWorkloads] = useState<WorkLoadEntity[]>([]);
-  const [members, setMembers] = useState<WorkMember[]>([]);
+export default function WorkTaskPage() {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([]);
+  const [members, setMembers] = useState<WorkMember[]>([]);
   const [workloadPage, setWorkloadPage] = useState(1);
   const [expandedTaskIds, setExpandedTaskIds] = useState<string[]>([]);
 
+  // 拉取 Epic & Member
   useEffect(() => {
     getAllWorkEpics(false).then(data => {
-      const epicArr = (data as (WorkEpicEntity | WorkEpicTemplate)[]).filter(
-        (e): e is WorkEpicEntity =>
-          'owner' in e && 'status' in e && 'priority' in e && 'region' in e && 'address' in e && 'createdAt' in e
+      const epicArr = (data as (WorkEpicEntity | WorkEpicTemplate)[]).filter((e): e is WorkEpicEntity =>
+        'owner' in e && 'status' in e && 'priority' in e && 'region' in e && 'address' in e && 'createdAt' in e
       );
       setEpics(epicArr);
-      setTasks(epicArr.flatMap(e => Array.isArray(e.workTasks) ? e.workTasks : []));
-      setWorkloads(epicArr.flatMap(e => Array.isArray(e.workLoads) ? e.workLoads : []));
     });
     getDocs(collection(firestore, 'workMember')).then(snapshot => {
       setMembers(snapshot.docs.map(doc => doc.data() as WorkMember));
     });
   }, []);
 
+  const allTasks = epics.flatMap(e => e.workTasks ?? []);
+  const allWorkloads = epics.flatMap(e => e.workLoads ?? []);
+
+  /**
+   * 任務修改
+   */
   const handleWorkTaskChange = async (taskId: string, changes: Partial<WorkTaskEntity>) => {
-    const epic = getEpicByTaskId(epics, taskId);
+    const epic = epics.find(e => e.workTasks?.some(t => t.taskId === taskId));
     if (!epic) return;
-    const updatedTasks = (epic.workTasks || []).map(task => task.taskId === taskId ? { ...task, ...changes } : task);
+    const updatedTasks = (epic.workTasks ?? []).map(task => task.taskId === taskId ? { ...task, ...changes } : task);
     await updateWorkEpic(epic.epicId, { workTasks: updatedTasks });
     setEpics(prev => prev.map(e => e.epicId === epic.epicId ? { ...e, workTasks: updatedTasks } : e));
-    setTasks(prev => prev.map(task => task.taskId === taskId ? { ...task, ...changes } : task));
   };
 
+  /**
+   * 工作量修改
+   */
   const handleWorkLoadChange = async (loadId: string, changes: Partial<WorkLoadEntity>) => {
-    const changesFixed: Partial<WorkLoadEntity> = {
-      ...changes,
-      ...(typeof changes.plannedStartTime !== 'undefined' ? { plannedStartTime: toISO(changes.plannedStartTime) } : {}),
-      ...(typeof changes.plannedEndTime !== 'undefined' ? { plannedEndTime: toISO(changes.plannedEndTime) } : {}),
-    };
-    const epic = getEpicByLoadId(epics, loadId);
+    const epic = epics.find(e => e.workLoads?.some(l => l.loadId === loadId));
     if (!epic) return;
-    const updatedLoads = (epic.workLoads || []).map(load => load.loadId === loadId ? { ...load, ...changesFixed } : load);
+    const updates: Partial<WorkLoadEntity> = {
+      ...changes,
+      ...(changes.plannedStartTime !== undefined ? { plannedStartTime: toISO(changes.plannedStartTime) } : {}),
+      ...(changes.plannedEndTime !== undefined ? { plannedEndTime: toISO(changes.plannedEndTime) } : {}),
+    };
+    const updatedLoads = (epic.workLoads ?? []).map(load => load.loadId === loadId ? { ...load, ...updates } : load);
     await updateWorkEpic(epic.epicId, { workLoads: updatedLoads });
     setEpics(prev => prev.map(e => e.epicId === epic.epicId ? { ...e, workLoads: updatedLoads } : e));
-    setWorkloads(prev => prev.map(load => load.loadId === loadId ? { ...load, ...changesFixed } : load));
   };
 
+  /**
+   * 實際完成數量同步更新 Task
+   */
   const handleActualQuantityChange = async (loadId: string, actualQuantity: number) => {
+    const epic = epics.find(e => e.workLoads?.some(l => l.loadId === loadId));
+    if (!epic) return;
     await handleWorkLoadChange(loadId, { actualQuantity });
-    setWorkloads(prev => {
-      const updated = prev.map(load => load.loadId === loadId ? { ...load, actualQuantity } : load);
-      const updatedLoad = updated.find(load => load.loadId === loadId);
-      if (!updatedLoad) return prev;
-      const relatedLoads = updated.filter(load => load.taskId === updatedLoad.taskId);
-      const totalActual = relatedLoads.reduce((sum, load) => sum + (load.actualQuantity || 0), 0);
-      handleWorkTaskChange(updatedLoad.taskId, { completedQuantity: totalActual });
-      setTasks(prevTask =>
-        prevTask.map(task =>
-          task.taskId === updatedLoad.taskId ? { ...task, completedQuantity: totalActual } : task
-        )
-      );
-      return updated;
-    });
+    const updatedLoads = (epic.workLoads ?? []).map(load => load.loadId === loadId ? { ...load, actualQuantity } : load);
+    const updatedLoad = updatedLoads.find(load => load.loadId === loadId);
+    if (!updatedLoad) return;
+    const relatedLoads = updatedLoads.filter(load => load.taskId === updatedLoad.taskId);
+    const totalActual = relatedLoads.reduce((sum, load) => sum + (load.actualQuantity || 0), 0);
+    await handleWorkTaskChange(updatedLoad.taskId, { completedQuantity: totalActual });
   };
 
-  const pagedTasks = tasks.slice((workloadPage - 1) * workloadsPerPage, workloadPage * workloadsPerPage);
-  const totalPages = Math.ceil(tasks.length / workloadsPerPage);
+  const getExecutorArray = (executor?: string[] | string) =>
+    Array.isArray(executor) ? executor : typeof executor === 'string' && executor ? [executor] : [];
+
+  const pagedTasks = allTasks.slice((workloadPage - 1) * workloadsPerPage, workloadPage * workloadsPerPage);
+  const totalPages = Math.ceil(allTasks.length / workloadsPerPage);
 
   const toggleExpand = (taskId: string) => {
     setExpandedTaskIds(ids =>
@@ -123,13 +114,14 @@ const WorkTaskPage = () => {
     <>
       <main className="p-4 bg-white dark:bg-gray-900 min-h-screen">
         <h1 className="text-2xl font-bold mb-4 text-center md:text-left text-gray-900 dark:text-gray-100">
-          工作任務/工作量合併表
+          {"工作任務/工作量合併表"}
         </h1>
         <div className="flex flex-wrap gap-4 justify-center">
           {pagedTasks.map(task => {
-            const taskWorkloads = workloads.filter(w => w.taskId === task.taskId);
+            const taskWorkloads = allWorkloads.filter(w => w.taskId === task.taskId);
             const isExpanded = expandedTaskIds.includes(task.taskId);
-            const epic = getEpicByTaskId(epics, task.taskId);
+            const epic = epics.find(e => e.workTasks?.some(t => t.taskId === task.taskId));
+            const workZoneStr = epic?.workZones && epic.workZones.length > 0 ? epic.workZones.map(z => z.title).join('、') : '-';
             return (
               <div key={task.taskId} className="w-full max-w-xl bg-white dark:bg-gray-900 rounded-lg border border-gray-300 dark:border-gray-700 p-4 shadow-sm flex flex-col">
                 <div className="flex items-center justify-between mb-2">
@@ -151,11 +143,11 @@ const WorkTaskPage = () => {
                   <span className="text-gray-500 dark:text-gray-400">狀態：</span>
                   <span>{task.status}</span>
                   <span className="text-gray-500 dark:text-gray-400">工作區：</span>
-                  <span>{getWorkZoneStr(epic)}</span>
+                  <span>{workZoneStr}</span>
                 </div>
                 {isExpanded && taskWorkloads.length > 0 && (
                   <div className="mt-2">
-                    <div className="font-semibold mb-1 text-gray-900 dark:text-gray-100">工作量</div>
+                    <div className="font-semibold mb-1 text-gray-900 dark:text-gray-100">{"工作量"}</div>
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse text-sm">
                         <thead>
@@ -262,6 +254,4 @@ const WorkTaskPage = () => {
       <AdminBottomNav />
     </>
   );
-};
-
-export default WorkTaskPage;
+}

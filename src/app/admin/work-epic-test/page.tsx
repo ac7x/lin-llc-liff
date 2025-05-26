@@ -12,18 +12,15 @@ import { WorkZoneEntity } from '@/app/actions/workzone.action';
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 import { useEffect, useState } from 'react';
 
-/**
- * 產生簡短唯一 ID
- * @param prefix 前綴字串
- */
-const shortId = (prefix = ''): string => `${prefix}${Math.random().toString(36).slice(2, 8)}`;
+const regionOptions = ['北部', '中部', '南部', '東部', '離島'] as const;
 
-/**
- * 轉換日期為 ISO 格式
- * @param date - 日期字串
- */
+const shortId = (prefix = '') =>
+    `${prefix}${Math.random().toString(36).slice(2, 8)}`;
+
 const toISO = (date?: string | null): string => {
-    if (!date) { return ''; }
+    if (!date) {
+        return '';
+    }
     if (date.includes('T')) {
         const d = new Date(date);
         return isNaN(d.getTime()) ? '' : d.toISOString();
@@ -32,13 +29,6 @@ const toISO = (date?: string | null): string => {
     return isNaN(d.getTime()) ? '' : d.toISOString();
 };
 
-type MemberSimple = { memberId: string; name: string };
-
-const regionOptions = ['北部', '中部', '南部', '東部', '離島'] as const;
-
-/**
- * 進度條元件
- */
 const ProgressBar = ({ completed, total }: { completed: number; total: number }) => {
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
     return (
@@ -46,131 +36,119 @@ const ProgressBar = ({ completed, total }: { completed: number; total: number })
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded h-2">
                 <div className="bg-green-500 dark:bg-green-600 h-2 rounded" style={{ width: `${percent}%` }} />
             </div>
-            <div className="text-xs text-right text-gray-500 dark:text-gray-300">{completed}/{total}（{percent}%）</div>
+            <div className="text-xs text-right text-gray-500 dark:text-gray-300">
+                {completed}/{total}（{percent}%）
+            </div>
         </div>
     );
 };
 
-/**
- * 單選下拉元件
- */
-const SingleSelect = ({
-    value, onChange, options, placeholder
-}: {
-    value: string;
-    onChange: (val: string) => void;
+type SelectProps = {
+    value: string | string[];
+    onChange: (val: string | string[]) => void;
     options: WorkMember[];
-    placeholder: string
-}) => (
+    placeholder: string;
+    multiple?: boolean;
+};
+const Select = ({ value, onChange, options, placeholder, multiple }: SelectProps) => (
     <select
+        multiple={multiple}
         value={value}
-        onChange={e => onChange(e.target.value)}
-        className="border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
+        onChange={e =>
+            onChange(
+                multiple
+                    ? Array.from(e.target.selectedOptions).map(opt => opt.value)
+                    : e.target.value
+            )
+        }
+        className={`border rounded px-2 py-1 ${multiple ? 'min-w-[100px] h-20' : ''} bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none`}
     >
-        <option value="">{placeholder}</option>
+        <option value="" disabled={!!multiple}>{placeholder}</option>
         {options.map(opt => (
             <option key={opt.memberId} value={opt.memberId}>{opt.name}</option>
         ))}
     </select>
 );
 
-/**
- * 多選下拉元件
- */
-const MultiSelect = ({
-    value, onChange, options, placeholder
-}: {
-    value: string[];
-    onChange: (selected: string[]) => void;
-    options: WorkMember[];
-    placeholder: string
-}) => (
-    <select
-        multiple
-        value={value}
-        onChange={e => {
-            const selected = Array.from(e.target.selectedOptions).map(opt => opt.value);
-            onChange(selected);
-        }}
-        className="border rounded px-2 py-1 min-w-[100px] h-20 bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
-    >
-        <option disabled value="">{placeholder}</option>
-        {options.map(opt => (
-            <option key={opt.memberId} value={opt.memberId}>{opt.name}</option>
-        ))}
-    </select>
-);
+type MemberSimple = { memberId: string; name: string };
 
-/**
- * 工作標的管理頁面
- */
+type FormFields = {
+    title: string;
+    owner: MemberSimple | null;
+    address: string;
+    siteSupervisors: string[];
+    safetyOfficers: string[];
+    region: typeof regionOptions[number];
+};
+
+const defaultFormFields: FormFields = {
+    title: '',
+    owner: null,
+    address: '',
+    siteSupervisors: [],
+    safetyOfficers: [],
+    region: '北部'
+};
+
+const getProgress = (epic: WorkEpicEntity) => {
+    let total = 0, completed = 0;
+    epic.workTasks?.forEach(t => {
+        total += t.targetQuantity;
+        completed += t.completedQuantity;
+    });
+    return { completed, total };
+};
+
 export default function WorkEpicPage() {
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
     const [members, setMembers] = useState<WorkMember[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editFields, setEditFields] = useState<Partial<WorkEpicEntity>>({});
-    const [newTitle, setNewTitle] = useState('');
-    const [newOwner, setNewOwner] = useState<MemberSimple | null>(null);
-    const [newAddress, setNewAddress] = useState('');
-    const [newSiteSupervisors, setNewSiteSupervisors] = useState<string[]>([]);
-    const [newSafetyOfficers, setNewSafetyOfficers] = useState<string[]>([]);
-    const [newRegion, setNewRegion] = useState<'北部' | '中部' | '南部' | '東部' | '離島'>('北部');
+    const [form, setForm] = useState<FormFields>(defaultFormFields);
 
     useEffect(() => {
-        const fetchData = async () => {
+        (async () => {
             const [epics, allMembers] = await Promise.all([
                 getAllWorkEpics(false) as Promise<WorkEpicEntity[]>,
                 getAllWorkMembers()
             ]);
             setWorkEpics(epics);
             setMembers(allMembers);
-        };
-        fetchData();
+        })();
     }, []);
 
-    const getProgress = (epic: WorkEpicEntity) => {
-        let total = 0, completed = 0;
-        if (epic.workTasks) {
-            epic.workTasks.forEach(t => {
-                total += t.targetQuantity;
-                completed += t.completedQuantity;
-            });
-        }
-        return { completed, total };
-    };
+    const handleFormChange = <K extends keyof FormFields>(key: K, value: FormFields[K]) =>
+        setForm(f => ({ ...f, [key]: value }));
 
     const handleAdd = async () => {
-        if (!newTitle.trim() || !newOwner || !newAddress.trim()) {
+        const { title, owner, address, siteSupervisors, safetyOfficers, region } = form;
+        if (!title.trim() || !owner || !address.trim()) {
             alert("請完整填寫標題、負責人、地址");
             return;
         }
-        const siteSupervisors = members.filter(m => newSiteSupervisors.includes(m.memberId)).map(m => ({
-            memberId: m.memberId, name: m.name
-        }));
-        const safetyOfficers = members.filter(m => newSafetyOfficers.includes(m.memberId)).map(m => ({
-            memberId: m.memberId, name: m.name
-        }));
+        const siteSupervisorsObj = members.filter(m => siteSupervisors.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name }));
+        const safetyOfficersObj = members.filter(m => safetyOfficers.includes(m.memberId)).map(m => ({ memberId: m.memberId, name: m.name }));
         const defaultZone: WorkZoneEntity = {
             zoneId: shortId('zone-'),
             title: "預設區域",
             address: "",
             createdAt: new Date().toISOString(),
             status: "啟用",
-            region: newRegion
+            region
         };
         const newEpic: WorkEpicEntity = {
             epicId: shortId('epic-'),
-            title: newTitle,
+            title,
             startDate: "",
             endDate: "",
             insuranceStatus: "無",
-            owner: newOwner,
-            siteSupervisors,
-            safetyOfficers,
+            owner,
+            siteSupervisors: siteSupervisorsObj,
+            safetyOfficers: safetyOfficersObj,
             status: "待開始",
             priority: 1,
-            region: newRegion,
-            address: newAddress,
+            region,
+            address,
             createdAt: new Date().toISOString(),
             workZones: [defaultZone],
             workTypes: [],
@@ -181,12 +159,7 @@ export default function WorkEpicPage() {
         try {
             await addWorkEpic(newEpic);
             setWorkEpics(prev => [...prev, newEpic]);
-            setNewTitle('');
-            setNewOwner(null);
-            setNewAddress('');
-            setNewSiteSupervisors([]);
-            setNewSafetyOfficers([]);
-            setNewRegion('北部');
+            setForm(defaultFormFields);
         } catch {
             alert("建立失敗，請稍後再試");
         }
@@ -196,9 +169,11 @@ export default function WorkEpicPage() {
         setEditingId(epic.epicId);
         setEditFields({ ...epic });
     };
-    const handleEditField = (field: keyof WorkEpicEntity, value: unknown) => {
+
+    const handleEditField = <K extends keyof WorkEpicEntity>(field: K, value: WorkEpicEntity[K]) => {
         setEditFields(prev => ({ ...prev, [field]: value }));
     };
+
     const handleSave = async (epicId: string) => {
         const updates: Partial<WorkEpicEntity> = {
             ...editFields,
@@ -209,10 +184,12 @@ export default function WorkEpicPage() {
         setWorkEpics(prev => prev.map(e => e.epicId === epicId ? { ...e, ...updates } : e));
         setEditingId(null);
     };
+
     const handleCancel = () => {
         setEditingId(null);
         setEditFields({});
     };
+
     const handleDelete = async (epicId: string) => {
         if (window.confirm("確定要刪除這個標的嗎？")) {
             await deleteWorkEpic(epicId);
@@ -225,35 +202,37 @@ export default function WorkEpicPage() {
             <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">工作標的列表</h1>
             <div className="mb-4 flex flex-wrap gap-2 items-center">
                 <input
-                    value={newTitle}
-                    onChange={e => setNewTitle(e.target.value)}
+                    value={form.title}
+                    onChange={e => handleFormChange('title', e.target.value)}
                     placeholder="標的標題"
                     className="border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
                 />
-                <SingleSelect
-                    value={newOwner?.memberId || ''}
+                <Select
+                    value={form.owner?.memberId || ''}
                     onChange={val => {
                         const m = members.find(mm => mm.memberId === val);
-                        setNewOwner(m ? { memberId: m.memberId, name: m.name } : null);
+                        handleFormChange('owner', m ? { memberId: m.memberId, name: m.name } : null);
                     }}
                     options={members}
                     placeholder="負責人"
                 />
-                <MultiSelect
-                    value={newSiteSupervisors}
-                    onChange={setNewSiteSupervisors}
+                <Select
+                    value={form.siteSupervisors}
+                    onChange={selected => handleFormChange('siteSupervisors', selected as string[])}
                     options={members}
                     placeholder="現場監工"
+                    multiple
                 />
-                <MultiSelect
-                    value={newSafetyOfficers}
-                    onChange={setNewSafetyOfficers}
+                <Select
+                    value={form.safetyOfficers}
+                    onChange={selected => handleFormChange('safetyOfficers', selected as string[])}
                     options={members}
                     placeholder="安全人員"
+                    multiple
                 />
                 <select
-                    value={newRegion}
-                    onChange={e => setNewRegion(e.target.value as typeof regionOptions[number])}
+                    value={form.region}
+                    onChange={e => handleFormChange('region', e.target.value as typeof regionOptions[number])}
                     className="border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
                 >
                     {regionOptions.map(r => (
@@ -261,8 +240,8 @@ export default function WorkEpicPage() {
                     ))}
                 </select>
                 <input
-                    value={newAddress}
-                    onChange={e => setNewAddress(e.target.value)}
+                    value={form.address}
+                    onChange={e => handleFormChange('address', e.target.value)}
                     placeholder="地址"
                     className="border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
                 />
@@ -277,19 +256,9 @@ export default function WorkEpicPage() {
                 <table className="min-w-full text-sm">
                     <thead>
                         <tr className="bg-gray-100 dark:bg-gray-800">
-                            <th className="px-2 py-2 text-left">進度</th>
-                            <th className="px-2 py-2 text-left">標題</th>
-                            <th className="px-2 py-2 text-left">開始</th>
-                            <th className="px-2 py-2 text-left">結束</th>
-                            <th className="px-2 py-2 text-left">負責人</th>
-                            <th className="px-2 py-2 text-left">現場監工</th>
-                            <th className="px-2 py-2 text-left">安全人員</th>
-                            <th className="px-2 py-2 text-left">狀態</th>
-                            <th className="px-2 py-2 text-left">優先</th>
-                            <th className="px-2 py-2 text-left">區域</th>
-                            <th className="px-2 py-2 text-left">地址</th>
-                            <th className="px-2 py-2 text-left">工作區</th>
-                            <th className="px-2 py-2">操作</th>
+                            {["進度", "標題", "開始", "結束", "負責人", "現場監工", "安全人員", "狀態", "優先", "區域", "地址", "工作區", "操作"].map(t =>
+                                <th key={t} className="px-2 py-2 text-left">{t}</th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
@@ -325,48 +294,51 @@ export default function WorkEpicPage() {
                                                 />
                                             </td>
                                             <td className="px-2 py-1">
-                                                <SingleSelect
+                                                <Select
                                                     value={editFields.owner?.memberId || ''}
                                                     onChange={val => {
                                                         const m = members.find(mm => mm.memberId === val);
-                                                        handleEditField('owner', m ? { memberId: m.memberId, name: m.name } : undefined);
+                                                        if (m) {
+                                                            handleEditField('owner', { memberId: m.memberId, name: m.name });
+                                                        }
+                                                        // 找不到時不做任何事，避免傳遞 null
                                                     }}
                                                     options={members}
                                                     placeholder="負責人"
                                                 />
                                             </td>
                                             <td className="px-2 py-1">
-                                                <MultiSelect
+                                                <Select
                                                     value={Array.isArray(editFields.siteSupervisors) ? editFields.siteSupervisors.map(s => s.memberId) : []}
                                                     onChange={selected => {
-                                                        const selectedMembers = members.filter(m => selected.includes(m.memberId)).map(m => ({
-                                                            memberId: m.memberId,
-                                                            name: m.name
+                                                        const selectedMembers = members.filter(m => (selected as string[]).includes(m.memberId)).map(m => ({
+                                                            memberId: m.memberId, name: m.name
                                                         }));
                                                         handleEditField('siteSupervisors', selectedMembers);
                                                     }}
                                                     options={members}
                                                     placeholder="現場監工"
+                                                    multiple
                                                 />
                                             </td>
                                             <td className="px-2 py-1">
-                                                <MultiSelect
+                                                <Select
                                                     value={Array.isArray(editFields.safetyOfficers) ? editFields.safetyOfficers.map(s => s.memberId) : []}
                                                     onChange={selected => {
-                                                        const selectedMembers = members.filter(m => selected.includes(m.memberId)).map(m => ({
-                                                            memberId: m.memberId,
-                                                            name: m.name
+                                                        const selectedMembers = members.filter(m => (selected as string[]).includes(m.memberId)).map(m => ({
+                                                            memberId: m.memberId, name: m.name
                                                         }));
                                                         handleEditField('safetyOfficers', selectedMembers);
                                                     }}
                                                     options={members}
                                                     placeholder="安全人員"
+                                                    multiple
                                                 />
                                             </td>
                                             <td className="px-2 py-1">
                                                 <select
                                                     value={editFields.status || '待開始'}
-                                                    onChange={e => handleEditField('status', e.target.value)}
+                                                    onChange={e => handleEditField('status', e.target.value as WorkEpicEntity['status'])}
                                                     className="border rounded px-2 py-1 w-full bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
                                                 >
                                                     <option value="待開始">待開始</option>
@@ -402,7 +374,7 @@ export default function WorkEpicPage() {
                                                 />
                                             </td>
                                             <td className="px-2 py-1">
-                                                {(editFields.workZones && editFields.workZones.length > 0)
+                                                {editFields.workZones?.length
                                                     ? editFields.workZones.map(z => z.title).join(', ')
                                                     : '—'}
                                             </td>
@@ -424,25 +396,13 @@ export default function WorkEpicPage() {
                                             <td className="px-2 py-1">{epic.startDate?.slice(0, 10)}</td>
                                             <td className="px-2 py-1">{epic.endDate?.slice(0, 10)}</td>
                                             <td className="px-2 py-1">{epic.owner?.name}</td>
-                                            <td className="px-2 py-1">
-                                                {(epic.siteSupervisors && epic.siteSupervisors.length > 0)
-                                                    ? epic.siteSupervisors.map(s => s.name).join(', ')
-                                                    : '—'}
-                                            </td>
-                                            <td className="px-2 py-1">
-                                                {(epic.safetyOfficers && epic.safetyOfficers.length > 0)
-                                                    ? epic.safetyOfficers.map(s => s.name).join(', ')
-                                                    : '—'}
-                                            </td>
+                                            <td className="px-2 py-1">{epic.siteSupervisors?.length ? epic.siteSupervisors.map(s => s.name).join(', ') : '—'}</td>
+                                            <td className="px-2 py-1">{epic.safetyOfficers?.length ? epic.safetyOfficers.map(s => s.name).join(', ') : '—'}</td>
                                             <td className="px-2 py-1">{epic.status}</td>
                                             <td className="px-2 py-1">{epic.priority}</td>
                                             <td className="px-2 py-1">{epic.region}</td>
                                             <td className="px-2 py-1">{epic.address}</td>
-                                            <td className="px-2 py-1">
-                                                {(epic.workZones && epic.workZones.length > 0)
-                                                    ? epic.workZones.map(z => z.title).join(', ')
-                                                    : '—'}
-                                            </td>
+                                            <td className="px-2 py-1">{epic.workZones?.length ? epic.workZones.map(z => z.title).join(', ') : '—'}</td>
                                             <td className="px-2 py-1 flex gap-2">
                                                 <button
                                                     onClick={() => handleEdit(epic)}
