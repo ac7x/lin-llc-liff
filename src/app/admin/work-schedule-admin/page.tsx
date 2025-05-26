@@ -223,7 +223,7 @@ const WorkScheduleAdminPage: React.FC = () => {
 				<div
 					ref={timelineRef}
 					className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-x-auto"
-					style={{ height: '100%' }} // 這裡移除 minWidth/w-[100vw]
+					style={{ width: '100vw', height: '100vh' }}
 					onDragOver={handleTimelineDragOver}
 					onDrop={handleTimelineDrop}
 				>
