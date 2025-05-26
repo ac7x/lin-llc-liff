@@ -90,10 +90,10 @@ const WorkSchedulePage = (): React.ReactElement => {
 
   return (
     <div className="min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-hidden">
-      <div className="flex flex-1 min-h-[320px] pb-16 items-center justify-center">
+      <div className="flex flex-1 min-h-screen items-center justify-center pb-16">
         <div
           ref={timelineRef}
-          className="bg-white dark:bg-gray-950 border rounded-md shadow mx-auto"
+          className="bg-white dark:bg-gray-950 border rounded-md shadow mx-auto my-auto"
           style={{ width: '95vw', height: '85vh' }}
         />
       </div>
