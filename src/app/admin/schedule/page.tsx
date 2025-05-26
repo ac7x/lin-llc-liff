@@ -290,7 +290,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 								stackItems
 								minZoom={7 * 24 * 60 * 60 * 1000}    // 改為 7 天最小縮放
 								maxZoom={30 * 24 * 60 * 60 * 1000}   // 最大縮放 30 天
-								lineHeight={40}                       // 設定行高
+								lineHeight={40}                       // 調整為更小的行高
 								sidebarWidth={150}                   // 設定側邊欄寬度
 								timeSteps={{
 									second: 1,
@@ -322,7 +322,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 						</div>
 					</div>
 				</div>
-				<div className="flex-none min-h-[25vh] max-h-[35vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors">
+				<div className="flex-none min-h-[15vh] max-h-[25vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors">
 					<div className="w-full h-full flex flex-col p-4 mx-auto">
 						<h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors">
 							未排程工作
