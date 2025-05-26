@@ -134,7 +134,7 @@ const WorkSchedulePage = () => {
       {/* 將時間軸設為 position: fixed，確保滿寬且不受父層影響 */}
       <div
         ref={timelineRef}
-        className="bg-white dark:bg-gray-950 border rounded-md shadow"
+        className="bg-white dark:bg-gray-950 border rounded-md shadow timeline-container"
         style={{
           position: 'absolute',
           top: 0,

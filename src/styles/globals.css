@@ -63,10 +63,15 @@ video {
   display: block;
 }
 
+.timeline-container {
+  overflow-x: auto;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
 
-
-
-
+.timeline-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
 
 .react-calendar-timeline * {
 	box-sizing: border-box;
