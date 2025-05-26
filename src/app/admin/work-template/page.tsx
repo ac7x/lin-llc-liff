@@ -286,7 +286,7 @@ const WorkTemplatePage: React.FC = () => {
                         onClick={() => setTab("template")}
                         tabIndex={0}
                     >
-                        {STRINGS.workflowTitle} + {STRINGS.title}
+                        {STRINGS.title}
                     </button>
                 </div>
                 {/* Tab panels */}
