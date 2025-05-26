@@ -16,9 +16,9 @@ interface UserBottomNavProps {
 }
 
 const defaultNavItems: NavItem[] = [
-  { href: '/user/work-schedule-client', icon: '📅', label: '排程用戶端', active: false },
-  { href: '/user/work-task', icon: '📝', label: '工作任務', active: false },
-  { href: '/user/work-epic', icon: '📖', label: '工作史詩', active: false },
+  { href: '/user/schedule', icon: '📅', label: '排程用戶端', active: false },
+  { href: '/user/task', icon: '📝', label: '工作任務', active: false },
+  { href: '/user/epic', icon: '📖', label: '工作史詩', active: false },
   { href: '/user/profile', icon: '🧑‍💼', label: '用戶', active: false },
 ];
 
