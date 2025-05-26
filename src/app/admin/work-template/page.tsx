@@ -315,8 +315,23 @@ const WorkTemplatePage: React.FC = () => {
                         </div>
                         {filteredFlows.length > 0 && (
                             <div className="mb-2">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <input
+                                        ref={selectAllRef}
+                                        type="checkbox"
+                                        checked={allSelected}
+                                        onChange={e =>
+                                            setSelectedWorkFlowIds(
+                                                e.target.checked
+                                                    ? filteredFlows.map(f => f.flowId)
+                                                    : []
+                                            )
+                                        }
+                                    />
+                                    <span className="font-semibold">{STRINGS.selectAll}</span>
+                                </div>
                                 {filteredFlows.map(f => (
-                                    <div key={f.flowId} className="flex items-center gap-2 mb-2">
+                                    <div key={f.flowId} className="flex items-center gap-2 mb-2 bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 min-w-[220px]">
                                         <input
                                             type="checkbox"
                                             checked={selectedWorkFlowIds.includes(f.flowId)}
@@ -328,26 +343,25 @@ const WorkTemplatePage: React.FC = () => {
                                                 )
                                             }
                                         />
-                                        <span>{f.steps[0]?.stepName || ""}</span>
+                                        <span className="flex-1">{f.steps[0]?.stepName || ""}</span>
+                                        <input
+                                            type="number"
+                                            value={flowQuantities[f.flowId] ?? ""}
+                                            min={1}
+                                            onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))}
+                                            placeholder={STRINGS.quantity}
+                                            className="border w-16 p-1 rounded"
+                                        />
+                                        <input
+                                            type="number"
+                                            value={workloadCounts[f.flowId] ?? 1}
+                                            min={1}
+                                            onChange={e => setWorkloadCounts(c => ({ ...c, [f.flowId]: Number(e.target.value) || 1 }))}
+                                            placeholder={STRINGS.split}
+                                            className="border w-16 p-1 rounded"
+                                        />
                                     </div>
                                 ))}
-                                <div>
-                                    <label>
-                                        <input
-                                            ref={selectAllRef}
-                                            type="checkbox"
-                                            checked={allSelected}
-                                            onChange={e =>
-                                                setSelectedWorkFlowIds(
-                                                    e.target.checked
-                                                        ? filteredFlows.map(f => f.flowId)
-                                                        : []
-                                                )
-                                            }
-                                        />{" "}
-                                        {STRINGS.selectAll}
-                                    </label>
-                                </div>
                             </div>
                         )}
                         <div className="flex gap-2 overflow-auto">
