@@ -236,8 +236,18 @@ const WorkScheduleAdminPage: React.FC = () => {
 								canResize="both"
 								canChangeGroup
 								stackItems
-								minZoom={24 * 60 * 60 * 1000}
-								maxZoom={30 * 24 * 60 * 60 * 1000}
+								minZoom={7 * 24 * 60 * 60 * 1000}    // 改為 7 天最小縮放
+								maxZoom={30 * 24 * 60 * 60 * 1000}   // 最大縮放 30 天
+								lineHeight={40}                       // 設定行高
+								sidebarWidth={150}                   // 設定側邊欄寬度
+								timeSteps={{
+									second: 1,
+									minute: 1,
+									hour: 1,
+									day: 1,
+									month: 1,
+									year: 1
+								}}
 								onItemMove={handleItemMove}
 								onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
 								onItemDoubleClick={handleItemRemove}
