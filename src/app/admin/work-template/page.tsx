@@ -351,20 +351,19 @@ const WorkTemplatePage: React.FC = () => {
                                 </select>
                             </div>
                         </div>
-                        {filteredFlows.length > 0 && (
-                            <div className="mb-2">
-                                <label className="mr-2">
+                        {/* flows 及全選：每一列一個 */}
+                        <div className="flex flex-col gap-2">
+                            {filteredFlows.length > 0 && (
+                                <div className="bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 flex items-center gap-2 mb-2 min-w-[220px]">
                                     <input
                                         ref={selectAllRef}
                                         type="checkbox"
                                         checked={allSelected}
                                         onChange={handleSelectAllChange}
-                                    /> {STRINGS.selectAll}
-                                </label>
-                            </div>
-                        )}
-                        {/* 單排顯示 flows -> 改為一行一個 */}
-                        <div className="flex flex-col gap-2">
+                                    />
+                                    <span className="flex-1">{STRINGS.selectAll}</span>
+                                </div>
+                            )}
                             {filteredFlows.map(f => (
                                 <div key={f.flowId} className="bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 flex items-center gap-2 mb-2 min-w-[220px]">
                                     <input

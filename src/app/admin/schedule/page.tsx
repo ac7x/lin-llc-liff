@@ -1,9 +1,17 @@
 'use client'
 
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
-import { addDays, differenceInMilliseconds, parseISO } from 'date-fns'
+import { addDays, differenceInMilliseconds, endOfDay, format, isValid, parseISO, startOfDay, subDays } from 'date-fns'
+import { zhTW } from 'date-fns/locale'
 import { getApp, getApps, initializeApp } from 'firebase/app'
-import { collection, doc, getFirestore, updateDoc } from 'firebase/firestore'
+import {
+	collection,
+	doc,
+	DocumentData,
+	getFirestore,
+	QueryDocumentSnapshot,
+	updateDoc
+} from 'firebase/firestore'
 import React, { useEffect, useMemo, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
 import 'react-calendar-timeline/style.css'
@@ -22,10 +30,6 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
 const firestore = getFirestore(app)
 
-/**
- * @typedef WorkLoadEntity
- * 工作負載實體
- */
 interface WorkLoadEntity {
 	loadId: string
 	title: string
@@ -34,85 +38,86 @@ interface WorkLoadEntity {
 	plannedEndTime: string
 }
 
-/**
- * @typedef WorkEpicEntity
- * 史詩實體
- */
 interface WorkEpicEntity {
 	epicId: string
 	title: string
 	workLoads?: WorkLoadEntity[]
 }
 
+type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
+
+/** 解析 Epic Snapshot，取得 epics 與未排班工作 */
+const parseEpicSnapshot = (
+	docs: QueryDocumentSnapshot<DocumentData, DocumentData>[]
+): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } => {
+	const epics: WorkEpicEntity[] = docs.map(
+		doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity)
+	)
+	const unplanned: LooseWorkLoad[] = epics.flatMap(e =>
+		(e.workLoads || [])
+			.filter(l => !l.plannedStartTime)
+			.map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
+	)
+	return { epics, unplanned }
+}
+
+const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>): string =>
+	`${wl.title || '（無標題）'} | ${Array.isArray(wl.executor) ? wl.executor.join(', ') : '（無執行者）'}`
+
 const WorkScheduleManagementPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
+	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 	const [epicSnapshot] = useCollection(collection(firestore, 'workEpic'))
 
 	useEffect(() => {
-		if (!epicSnapshot) return
-		const es: WorkEpicEntity[] = epicSnapshot.docs.map(
-			doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity)
-		)
-		setEpics(es)
+		if (!epicSnapshot) { return }
+		const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs)
+		setEpics(epics)
+		setUnplanned(unplanned)
 	}, [epicSnapshot])
 
-	const groups = useMemo<TimelineGroupBase[]>(
-		() => epics.map(e => ({ id: e.epicId, title: e.title })),
-		[epics]
-	)
-
-	const items = useMemo<TimelineItemBase<Date>[]>(
-		() =>
-			epics.flatMap(e =>
-				(e.workLoads || [])
-					.filter(l => l.plannedStartTime)
-					.map(l => {
-						const start = parseISO(l.plannedStartTime)
-						const end = l.plannedEndTime ? parseISO(l.plannedEndTime) : addDays(start, 1)
-						return {
-							id: l.loadId,
-							group: e.epicId,
-							title: l.title,
-							start_time: start,
-							end_time: end
-						}
-					})
-			),
-		[epics]
-	)
-
-	const { defaultTimeStart, defaultTimeEnd } = useMemo(() => {
-		if (items.length === 0) {
-			const now = new Date()
-			return {
-				defaultTimeStart: addDays(now, -1),
-				defaultTimeEnd: addDays(now, 2)
-			}
+	const groupCount = 15
+	const groups: TimelineGroupBase[] = useMemo(() => {
+		const filledEpics: WorkEpicEntity[] = [...epics]
+		while (filledEpics.length < groupCount) {
+			filledEpics.push({
+				epicId: `empty-${filledEpics.length}`,
+				title: ''
+			})
 		}
-		const startTimes = items.map(i => i.start_time as Date)
-		const endTimes = items.map(i => i.end_time as Date)
-		const minStart = new Date(Math.min(...startTimes.map(d => d.getTime())))
-		const maxEnd = new Date(Math.max(...endTimes.map(d => d.getTime())))
-		return {
-			defaultTimeStart: addDays(minStart, -1),
-			defaultTimeEnd: addDays(maxEnd, 1)
-		}
-	}, [items])
+		return filledEpics.map(e => ({
+			id: e.epicId,
+			title: e.title
+		}))
+	}, [epics])
 
-	const handleItemMove = async (
-		itemId: string,
-		dragTime: number,
-		newGroupOrder: number
-	): Promise<void> => {
+	const items: TimelineItemBase<Date>[] = useMemo(() =>
+		epics.flatMap(e =>
+			(e.workLoads || [])
+				.filter(l => l.plannedStartTime)
+				.map(l => {
+					const start = parseISO(l.plannedStartTime)
+					const end = l.plannedEndTime ? parseISO(l.plannedEndTime) : addDays(start, 1)
+					return {
+						id: l.loadId,
+						group: e.epicId,
+						title: getWorkloadContent(l),
+						start_time: start,
+						end_time: end
+					}
+				})
+		), [epics])
+
+	const handleItemMove = async (itemId: string, dragTime: number, newGroupOrder: number): Promise<void> => {
 		const item = items.find(i => i.id === itemId)
-		if (!item) return
+		if (!item) { return }
 		const oldEpic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
-		if (!oldEpic) return
+		if (!oldEpic) { return }
 		const wlIdx = (oldEpic.workLoads || []).findIndex(wl => wl.loadId === itemId)
-		if (wlIdx === -1) return
+		if (wlIdx === -1) { return }
 		const newGroupId = groups[newGroupOrder].id as string
 		const newEpic = epics.find(e => e.epicId === newGroupId)
-		if (!newEpic) return
+		if (!newEpic) { return }
 		const newStart = new Date(dragTime)
 		const duration = differenceInMilliseconds(item.end_time as Date, item.start_time as Date)
 		const newEnd = new Date(newStart.getTime() + duration)
@@ -138,21 +143,110 @@ const WorkScheduleManagementPage: React.FC = () => {
 		}
 	}
 
+	const handleItemResize = async (itemId: string, time: number, edge: 'left' | 'right'): Promise<void> => {
+		const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+		if (!epic) { return }
+		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+		if (wlIdx === -1) { return }
+		const wl = (epic.workLoads || [])[wlIdx]
+		let newStart = parseISO(wl.plannedStartTime)
+		let newEnd = wl.plannedEndTime ? parseISO(wl.plannedEndTime) : undefined
+		if (edge === 'left') { newStart = new Date(time) }
+		if (edge === 'right') { newEnd = new Date(time) }
+		const newWorkLoads = [...(epic.workLoads || [])]
+		newWorkLoads[wlIdx] = {
+			...wl,
+			plannedStartTime: newStart.toISOString(),
+			plannedEndTime: newEnd && isValid(newEnd) ? newEnd.toISOString() : ''
+		}
+		await updateDoc(doc(firestore, 'workEpic', epic.epicId), { workLoads: newWorkLoads })
+	}
+
+	const handleItemRemove = async (itemId: string): Promise<void> => {
+		const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+		if (!epic) { return }
+		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+		if (wlIdx === -1) { return }
+		const newWorkLoads = [...(epic.workLoads || [])]
+		const updateWL = { ...newWorkLoads[wlIdx], plannedStartTime: '', plannedEndTime: '' }
+		newWorkLoads[wlIdx] = updateWL
+		await updateDoc(doc(firestore, 'workEpic', epic.epicId), { workLoads: newWorkLoads })
+	}
+
+	const handleUnplannedClick = (wl: LooseWorkLoad) => {
+		const now = new Date()
+		const todayStart = startOfDay(now)
+		const tomorrow = addDays(todayStart, 1)
+		handleAssignToTimeline(wl, wl.epicId, todayStart, tomorrow)
+	}
+
+	const handleAssignToTimeline = async (
+		wl: LooseWorkLoad,
+		groupId: string,
+		start: Date,
+		end: Date
+	) => {
+		const epic = epics.find(e => e.epicId === groupId)
+		if (!epic) { return }
+		const wlIdx = (epic.workLoads || []).findIndex(x => x.loadId === wl.loadId)
+		if (wlIdx === -1) { return }
+		const newWorkLoads = [...(epic.workLoads || [])]
+		newWorkLoads[wlIdx] = {
+			...newWorkLoads[wlIdx],
+			plannedStartTime: start.toISOString(),
+			plannedEndTime: end.toISOString()
+		}
+		await updateDoc(doc(firestore, 'workEpic', epic.epicId), { workLoads: newWorkLoads })
+	}
+
+	const now = new Date()
+	const defaultTimeStart = subDays(startOfDay(now), 7)
+	const defaultTimeEnd = addDays(endOfDay(now), 14)
+
 	return (
-		<div className="min-h-screen bg-white dark:bg-neutral-900 transition-colors">
-			<main style={{ width: '100vw', height: '100vh', background: '#fff' }}>
-				<Timeline
-					groups={groups}
-					items={items}
-					canMove
-					canResize={false}
-					canChangeGroup
-					stackItems
-					onItemMove={handleItemMove}
-					defaultTimeStart={defaultTimeStart}
-					defaultTimeEnd={defaultTimeEnd}
-				/>
-			</main>
+		<div>
+			<h1>工作排程管理</h1>
+			<Timeline
+				groups={groups}
+				items={items}
+				defaultTimeStart={defaultTimeStart}
+				defaultTimeEnd={defaultTimeEnd}
+				canMove
+				canResize="both"
+				canChangeGroup
+				stackItems
+				onItemMove={handleItemMove}
+				onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
+				onItemDoubleClick={handleItemRemove}
+				itemRenderer={({ item, getItemProps, getResizeProps }) => {
+					const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+					const dateStr = `${format(item.start_time as Date, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time as Date, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
+					return (
+						<div {...getItemProps({ style: { background: '#fbbf24', color: '#222', borderRadius: 6 } })}>
+							<div {...leftResizeProps} />
+							<span>{item.title}</span>
+							<div>{dateStr}</div>
+							<div {...rightResizeProps} />
+						</div>
+					)
+				}}
+			/>
+			<div>
+				<h2>未排班工作</h2>
+				{unplanned.length === 0 ? (
+					<div>（無）</div>
+				) : unplanned.map(wl => (
+					<button
+						key={wl.loadId}
+						type="button"
+						onClick={() => handleUnplannedClick(wl)}
+					>
+						<span>{wl.title || '（無標題）'}</span>
+						<span>{wl.executor.join(', ') || '（無執行者）'}</span>
+						<span>點擊快速排入今日</span>
+					</button>
+				))}
+			</div>
 			<AdminBottomNav />
 		</div>
 	)
