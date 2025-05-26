@@ -1,4 +1,4 @@
-import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/ClientBottomNav';
+import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav';
 import React from 'react';
 
 const ClientPage: React.FC = () => {

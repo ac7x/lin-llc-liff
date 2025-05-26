@@ -1,7 +1,7 @@
 'use client'
 import { LiffContext } from '@/modules/line/liff/interfaces/Liff'
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
-import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav'
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
 import { addDoc, arrayUnion, collection, deleteDoc, doc, getDocs, query, updateDoc } from 'firebase/firestore'
 import { ChangeEvent, FormEvent, useContext, useEffect, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'

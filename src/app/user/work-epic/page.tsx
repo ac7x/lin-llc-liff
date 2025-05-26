@@ -1,7 +1,7 @@
 "use client";
 
 import { getAllWorkEpics, WorkEpicEntity } from "@/app/actions/workepic.action";
-import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
+import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/user-bottom-nav";
 import { useEffect, useState } from "react";
 
 export default function WorkEpicPage() {

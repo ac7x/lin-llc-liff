@@ -1,7 +1,7 @@
 // src/app/client/work-schedule/page.tsx
 'use client'
 
-import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 import '@/styles/timeline.scss';
 import {
 	addDays,
@@ -174,7 +174,7 @@ const WorkSchedulePage: React.FC = () => {
 	return (
 		<div className="min-h-screen w-full bg-black dark:bg-neutral-900 flex flex-col">
 			<div className="flex-none h-[20vh]" />
-			
+
 			{/* Timeline 佔據所有剩餘空間 */}
 			<div className="flex-grow w-full flex items-center justify-center relative">
 				<div className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden">

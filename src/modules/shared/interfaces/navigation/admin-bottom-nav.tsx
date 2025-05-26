@@ -7,24 +7,24 @@ const navItems = [
         icon: '📆',
         label: '日程',
         popover: [
-            { label: '排程客戶', href: '/management/work-schedule' },
-            { label: '排程後端', href: '/management/work-schedule-admin' },
+            { label: '排程客戶', href: '/admin/work-schedule' },
+            { label: '排程後端', href: '/admin/work-schedule-admin' },
         ],
     },
     {
         icon: '🗂️',
         label: '工作',
         popover: [
-            { label: '工作任務', href: '/management/work-task' },
-            { label: '工作標的', href: '/management/work-epic' },
-            { label: '工作範本', href: '/management/work-template' },
+            { label: '工作任務', href: '/admin/work-task' },
+            { label: '工作標的', href: '/admin/work-epic' },
+            { label: '工作範本', href: '/admin/work-template' },
         ],
     },
     {
         icon: '👤',
         label: '團隊',
         popover: [
-            { label: '團隊管理', href: '/management/work-human-resource' },
+            { label: '團隊管理', href: '/admin/work-human-resource' },
         ],
     },
 ];

@@ -9,7 +9,7 @@ import {
 } from '@/app/actions/workepic.action';
 import { getAllWorkMembers, WorkMember } from '@/app/actions/workmember.action';
 import { WorkZoneEntity } from '@/app/actions/workzone.action';
-import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 import { useEffect, useState } from 'react';
 
 /**

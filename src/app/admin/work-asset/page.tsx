@@ -1,4 +1,4 @@
-import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 import React from 'react';
 
 const AdminWorkAssetPage: React.FC = () => {

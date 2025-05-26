@@ -2,7 +2,7 @@
 
 import { LineBotStatus } from "@/modules/line/lineBot/interfaces/LineBot";
 import { LinePayChargeBox } from "@/modules/line/linePay/interfaces/LinePayChargeBox";
-import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/ClientBottomNav";
+import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/user-bottom-nav";
 
 export default function HomePage() {
   return (

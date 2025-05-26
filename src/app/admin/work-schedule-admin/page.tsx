@@ -1,6 +1,6 @@
 'use client'
 
-import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav'
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
 import '@/styles/timeline.scss'
 import {
 	addDays,

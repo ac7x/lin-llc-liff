@@ -4,7 +4,7 @@ import { getAllWorkEpics, updateWorkEpic, WorkEpicEntity, WorkEpicTemplate } fro
 import { WorkLoadEntity } from '@/app/actions/workload.action';
 import { WorkTaskEntity } from '@/app/actions/worktask.action';
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp';
-import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/ManagementBottomNav';
+import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 import { collection, getDocs } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
