@@ -233,22 +233,6 @@ const WorkTemplatePage: React.FC = () => {
                         </div>
                         {filteredFlows.length > 0 && (
                             <div className="mb-2">
-                                {filteredFlows.map(f => (
-                                    <div key={f.flowId} className="flex items-center gap-2 mb-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedWorkFlowIds.includes(f.flowId)}
-                                            onChange={e =>
-                                                setSelectedWorkFlowIds(ids =>
-                                                    e.target.checked
-                                                        ? [...ids, f.flowId]
-                                                        : ids.filter(id => id !== f.flowId)
-                                                )
-                                            }
-                                        />
-                                        <span>{f.steps[0]?.stepName || ""}</span>
-                                    </div>
-                                ))}
                                 <div>
                                     <label>
                                         <input
@@ -266,18 +250,42 @@ const WorkTemplatePage: React.FC = () => {
                                         {STRINGS.selectAll}
                                     </label>
                                 </div>
+                                <div className="flex flex-col gap-2 mt-2">
+                                    {filteredFlows.map(f => (
+                                        <div key={f.flowId} className="flex items-center gap-2 bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 min-w-[220px]">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedWorkFlowIds.includes(f.flowId)}
+                                                onChange={e =>
+                                                    setSelectedWorkFlowIds(ids =>
+                                                        e.target.checked
+                                                            ? [...ids, f.flowId]
+                                                            : ids.filter(id => id !== f.flowId)
+                                                    )
+                                                }
+                                            />
+                                            <span className="flex-1">{f.steps[0]?.stepName || ""}</span>
+                                            <input
+                                                type="number"
+                                                value={flowQuantities[f.flowId] ?? ""}
+                                                min={1}
+                                                onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))}
+                                                placeholder={STRINGS.quantity}
+                                                className="border w-16 mx-1 p-1 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                                            />
+                                            <input
+                                                type="number"
+                                                value={workloadCounts[f.flowId] ?? 1}
+                                                min={1}
+                                                onChange={e => setWorkloadCounts(c => ({ ...c, [f.flowId]: Number(e.target.value) || 1 }))}
+                                                placeholder={STRINGS.split}
+                                                className="border w-12 p-1 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         )}
-                        <div className="flex gap-2 overflow-auto">
-                            {filteredFlows.map(f => (
-                                <div key={f.flowId} className="bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 flex items-center gap-2 mb-2 min-w-[220px]">
-                                    <input type="checkbox" checked={selectedWorkFlowIds.includes(f.flowId)} onChange={e => setSelectedWorkFlowIds(ids => e.target.checked ? [...ids, f.flowId] : ids.filter(id => id !== f.flowId))} />
-                                    <span className="flex-1">{f.steps[0]?.stepName || ""}</span>
-                                    <input type="number" value={flowQuantities[f.flowId] ?? ""} min={1} onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))} placeholder={STRINGS.quantity} className="border w-16 mx-1 p-1 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100" />
-                                    <input type="number" value={workloadCounts[f.flowId] ?? 1} min={1} onChange={e => setWorkloadCounts(c => ({ ...c, [f.flowId]: Number(e.target.value) || 1 }))} placeholder={STRINGS.split} className="border w-12 p-1 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100" />
-                                </div>
-                            ))}
-                        </div>
                         {showValidationError && <div className="text-red-500 mt-2">{STRINGS.validationError}</div>}
                         <button onClick={handleAddToWorkEpic} className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4">{STRINGS.addToEpic}</button>
                     </div>
