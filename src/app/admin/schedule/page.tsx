@@ -1,6 +1,7 @@
 'use client'
 
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
+import '@/styles/timeline.scss'
 import { addDays, differenceInMilliseconds, endOfDay, isValid, parseISO, startOfDay, subDays } from 'date-fns'
 import { getApp, getApps, initializeApp } from 'firebase/app'
 import {
