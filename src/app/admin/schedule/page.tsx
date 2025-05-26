@@ -12,7 +12,7 @@ import {
 	QueryDocumentSnapshot,
 	updateDoc
 } from 'firebase/firestore'
-import React, { DragEvent, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
 import 'react-calendar-timeline/style.css'
 import { useCollection } from 'react-firebase-hooks/firestore'
@@ -240,11 +240,15 @@ const WorkScheduleManagementPage: React.FC = () => {
 	return (
 		<div className="w-full">
 			<div className="min-h-screen w-full bg-white dark:bg-neutral-900 flex flex-col">
-				<div className="flex-1 w-full flex items-center justify-center relative overflow-visible">
+				{/* Timeline 區塊高度自動扣除底部未排程工作區塊 */}
+				<div
+					className="flex-1 w-full flex items-center justify-center relative overflow-visible"
+					style={{ paddingBottom: '22vh' }} // 預留底部空間，避免被 fixed 區塊蓋住
+				>
 					<div
 						ref={timelineRef}
 						className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-x-auto"
-						style={{ width: '100vw', height: '100vh' }}
+						style={{ width: '100vw', height: '100%' }}
 						onDragOver={e => {
 							e.preventDefault()
 						}}
@@ -254,18 +258,15 @@ const WorkScheduleManagementPage: React.FC = () => {
 								const jsonData = e.dataTransfer.getData('application/json')
 								if (!jsonData) { return }
 								const droppedWl = JSON.parse(jsonData) as LooseWorkLoad
-								// 取得滑鼠座標，推算 groupId
 								const timelineElement = document.querySelector('.react-calendar-timeline')
 								if (!timelineElement) { return }
 								const rect = timelineElement.getBoundingClientRect()
 								const y = e.clientY - rect.top
-								// 計算 group index
 								const groupHeight = rect.height / groups.length
 								const groupIndex = Math.floor(y / groupHeight)
 								const group = groups[groupIndex]
 								if (!group) { return }
 								const groupId = group.id as string
-								// 取得時間
 								const timelineWidth = rect.width
 								const x = e.clientX - rect.left
 								const percent = x / timelineWidth
@@ -275,7 +276,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 								const endTime = addDays(startTime, 1)
 								handleAssignToTimeline(droppedWl, groupId, startTime, endTime)
 							} catch (error) {
-								console.error("Error processing dropped item:", error)
+								console.error('Error processing dropped item:', error)
 							}
 						}}
 					>
@@ -289,10 +290,10 @@ const WorkScheduleManagementPage: React.FC = () => {
 								canResize="both"
 								canChangeGroup
 								stackItems
-								minZoom={7 * 24 * 60 * 60 * 1000}    // 改為 7 天最小縮放
-								maxZoom={30 * 24 * 60 * 60 * 1000}   // 最大縮放 30 天
-								lineHeight={40}                       // 調整為更小的行高
-								sidebarWidth={150}                   // 設定側邊欄寬度
+								minZoom={7 * 24 * 60 * 60 * 1000}
+								maxZoom={30 * 24 * 60 * 60 * 1000}
+								lineHeight={40}
+								sidebarWidth={150}
 								timeSteps={{
 									second: 1,
 									minute: 1,
@@ -323,7 +324,11 @@ const WorkScheduleManagementPage: React.FC = () => {
 						</div>
 					</div>
 				</div>
-				<div className="flex-none min-h-[15vh] max-h-[25vh] w-full bg-white dark:bg-neutral-800 rounded-t-3xl shadow-inner transition-colors">
+				{/* 未排程工作區塊固定在底部 */}
+				<div
+					className="fixed left-0 right-0 bottom-0 z-50 min-h-[15vh] max-h-[25vh] w-full bg-white dark:bg-neutral-800 rounded-t-3xl shadow-inner transition-colors"
+					style={{ boxShadow: '0 -2px 16px rgba(0,0,0,0.08)' }}
+				>
 					<div className="w-full h-full flex flex-col p-4 mx-auto">
 						<h2 className="text-lg font-bold text-center text-neutral-800 dark:text-neutral-200 mb-4 tracking-wide transition-colors">
 							未排程工作
@@ -344,7 +349,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 									<div
 										key={wl.loadId}
 										draggable={true}
-										onDragStart={(e: DragEvent<HTMLDivElement>) => {
+										onDragStart={e => {
 											e.dataTransfer.setData('application/json', JSON.stringify(wl))
 										}}
 										className="bg-white/90 dark:bg-neutral-900/90 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors hover:shadow-md flex-shrink-0 cursor-grab"
