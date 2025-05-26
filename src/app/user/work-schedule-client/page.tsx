@@ -2,7 +2,7 @@
 
 import type { WorkEpicEntity } from '@/app/actions/workepic.action'
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/clientApp'
-import { ClientBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav'
+import { UserBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav'
 import { addDays, subDays } from 'date-fns'
 import { collection, CollectionReference, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
 import { useEffect, useRef, useState } from 'react'
@@ -124,11 +124,13 @@ const ClientWorkSchedulePage = () => {
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col transition-colors duration-300 p-0 m-0">
       <div
-        className="fixed top-0 left-0 right-0"
+        className="w-full"
         style={{
-          height: '70vh',
-          width: '100vw',
-          zIndex: 20,
+          height: '65vh',
+          minHeight: 320,
+          maxHeight: 600,
+          marginTop: 0,
+          marginBottom: '28vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -145,10 +147,9 @@ const ClientWorkSchedulePage = () => {
           }}
         />
       </div>
-      <div style={{ height: '74vh', flex: 'none' }} />
       <div
-        className="fixed left-0 right-0 bottom-0 flex-none min-h-[25vh] max-w-none bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300"
-        style={{ width: '100vw', zIndex: 30 }}
+        className="fixed left-0 right-0 bottom-0 flex-none min-h-[22vh] max-h-[32vh] bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors duration-300"
+        style={{ width: '100vw', zIndex: 30, overflowY: 'auto' }}
       >
         <div className="w-full h-full flex flex-col p-4 mx-auto">
           <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors duration-300">
@@ -186,7 +187,7 @@ const ClientWorkSchedulePage = () => {
         </div>
       </div>
       <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 40 }}>
-        <ClientBottomNav />
+        <UserBottomNav />
       </div>
     </div>
   )

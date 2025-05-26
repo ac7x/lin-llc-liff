@@ -1,6 +1,6 @@
 'use client'
 
-import { ManagementBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
+import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
 import '@/styles/timeline.scss'
 import {
 	addDays,
@@ -311,7 +311,7 @@ const WorkScheduleAdminPage: React.FC = () => {
 					)}
 				</div>
 			</div>
-			<ManagementBottomNav />
+			<AdminBottomNav />
 		</div>
 	)
 }

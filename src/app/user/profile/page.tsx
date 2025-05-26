@@ -1,7 +1,7 @@
 'use client'
 import { LiffContext } from "@/modules/line/liff/interfaces/Liff"
 import { firebaseApp } from "@/modules/shared/infrastructure/persistence/firebase/clientApp"
-import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/user-bottom-nav"
+import { UserBottomNav } from "@/modules/shared/interfaces/navigation/user-bottom-nav"
 import { doc, getDoc, getFirestore } from "firebase/firestore"
 import Image from "next/image"
 import { useContext, useEffect, useRef, useState } from "react"
@@ -104,7 +104,7 @@ export default function UserProfilePage() {
           )}
         </div>
       </main>
-      <ClientBottomNav />
+      <UserBottomNav />
     </>
   )
 }

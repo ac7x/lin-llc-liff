@@ -5,7 +5,7 @@ import type { WorkFlowEntity } from "@/app/actions/workflow.action";
 import { WorkLoadEntity } from "@/app/actions/workload.action";
 import { getAllWorkTasks, WorkTaskEntity } from "@/app/actions/worktask.action";
 import { getAllWorkTypes, WorkTypeEntity } from "@/app/actions/worktype.action";
-import { ClientBottomNav } from "@/modules/shared/interfaces/navigation/user-bottom-nav";
+import { UserBottomNav } from "@/modules/shared/interfaces/navigation/user-bottom-nav";
 import { useEffect, useState } from "react";
 
 export default function WorkTaskPage() {
@@ -126,7 +126,7 @@ export default function WorkTaskPage() {
             })}
         </div>
       </main>
-      <ClientBottomNav />
+      <UserBottomNav />
     </>
   );
 }

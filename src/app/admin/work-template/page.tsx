@@ -15,7 +15,7 @@ import {
 } from "@/app/actions/worktype.action";
 import type { WorkZoneEntity } from "@/app/actions/workzone.action";
 import { getAllWorkZones } from "@/app/actions/workzone.action";
-import { ManagementBottomNav } from "@/modules/shared/interfaces/navigation/admin-bottom-nav";
+import { AdminBottomNav } from "@/modules/shared/interfaces/navigation/admin-bottom-nav";
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 
 // Externalized user-facing strings
@@ -488,7 +488,7 @@ const WorkTemplatePage: React.FC = () => {
                 onClose={() => setShowSuccessModal(false)}
                 message={STRINGS.addToEpicSuccess}
             />
-            <ManagementBottomNav />
+            <AdminBottomNav />
         </>
     );
 };

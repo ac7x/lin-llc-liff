@@ -11,7 +11,7 @@ interface NavItem {
   active: boolean;
 }
 
-interface ClientBottomNavProps {
+interface UserBottomNavProps {
   items?: NavItem[];
 }
 
@@ -22,7 +22,7 @@ const defaultNavItems: NavItem[] = [
   { href: '/user/profile', icon: '🧑‍💼', label: '用戶', active: false },
 ];
 
-export function ClientBottomNav({ items = defaultNavItems }: ClientBottomNavProps) {
+export function UserBottomNav({ items = defaultNavItems }: UserBottomNavProps) {
   const pathname = usePathname();
 
   const navItems = (items && items.length > 0 ? items : defaultNavItems).map(item => ({
@@ -50,10 +50,9 @@ export function ClientBottomNav({ items = defaultNavItems }: ClientBottomNavProp
               flex-1 min-w-0 inline-flex flex-col items-center justify-center h-full
               px-2 sm:px-5 max-w-[120px]
               transition-colors duration-150
-              ${
-                item.active
-                  ? 'text-green-600 font-semibold border-t-2 border-green-600 bg-green-50 dark:bg-green-900 dark:text-green-400 dark:border-green-400'
-                  : 'text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400'
+              ${item.active
+                ? 'text-green-600 font-semibold border-t-2 border-green-600 bg-green-50 dark:bg-green-900 dark:text-green-400 dark:border-green-400'
+                : 'text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400'
               }
             `}
             style={{ minWidth: '76px' }}

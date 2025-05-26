@@ -32,7 +32,7 @@ const navItems = [
 /**
  * 管理後台底部導覽列（Tailwind 自適應深淺模式）
  */
-export function ManagementBottomNav() {
+export function AdminBottomNav() {
     const [open, setOpen] = useState<number | null>(null);
     const popoverRefs = useRef<Array<HTMLDivElement | null>>([]);
 
@@ -113,4 +113,4 @@ export function ManagementBottomNav() {
     );
 }
 
-export default ManagementBottomNav;
+export default AdminBottomNav;
