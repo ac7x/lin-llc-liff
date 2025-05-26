@@ -116,7 +116,7 @@ const SchedulePage = () => {
           type: 'range',
           content: getWorkloadContent(l),
           start: new Date(l.plannedStartTime),
-          end: l.plannedEndTime ? new Date(l.plannedEndTime) : addDays(new Date(l.plannedStartTime), 1)
+          end: l.plannedEndTime ? new Date(l.plannedEndTime) : addDays(new Date(l.plannedStartTime), 0.5)
         }))
     )
   }), [epics])
