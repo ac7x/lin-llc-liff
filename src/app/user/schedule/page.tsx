@@ -23,8 +23,8 @@ type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
 function parseEpicSnapshot(
   docs: QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[]
 ): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
-  const epics: WorkEpicEntity[] = docs.map(doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity))
-  const unplanned: LooseWorkLoad[] = epics.flatMap(e =>
+  const epics = docs.map(doc => ({ ...doc.data(), epicId: doc.id } as WorkEpicEntity))
+  const unplanned = epics.flatMap(e =>
     (e.workLoads || [])
       .filter(l => !l.plannedStartTime || l.plannedStartTime === '')
       .map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
@@ -33,9 +33,9 @@ function parseEpicSnapshot(
 }
 
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) =>
-  `<div><div>${wl.title || "(無標題)"}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "(無執行者)"}</div></div>`
+  `<div><div>${wl.title || "（無標題）"}</div><div style="color:#888">${Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "（無執行者）"}</div></div>`
 
-const ClientWorkSchedulePage = () => {
+const WorkSchedulePage = () => {
   const [epics, setEpics] = useState<WorkEpicEntity[]>([])
   const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
   const timelineRef = useRef<HTMLDivElement>(null)
@@ -68,7 +68,7 @@ const ClientWorkSchedulePage = () => {
             type: 'range',
             content: getWorkloadContent(l),
             start: new Date(l.plannedStartTime),
-            end: l.plannedEndTime && l.plannedEndTime !== '' ? new Date(l.plannedEndTime) : addDays(new Date(l.plannedStartTime), 1),
+            end: l.plannedEndTime && l.plannedEndTime !== '' ? new Date(l.plannedEndTime) : addDays(new Date(l.plannedStartTime), 1)
           }))
       )
     )
@@ -101,11 +101,7 @@ const ClientWorkSchedulePage = () => {
       },
       zoomMin: 7 * 24 * 60 * 60 * 1000,
       zoomMax: 30 * 24 * 60 * 60 * 1000,
-      timeAxis: { scale: 'day', step: 1 },
-      format: {
-        minorLabels: { minute: '', hour: '', day: 'D', month: 'MMM', year: 'YYYY' },
-        majorLabels: { day: 'YYYY/MM/DD', month: 'YYYY/MM', year: 'YYYY' }
-      }
+      timeAxis: { scale: 'day', step: 1 }
     })
     tl.setWindow(start, end, { animation: false })
     timelineInstance.current = tl
@@ -116,64 +112,21 @@ const ClientWorkSchedulePage = () => {
   }, [epics])
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col transition-colors duration-300 p-0 m-0">
-      <div
-        className="w-full"
-        style={{
-          height: '65vh',
-          minHeight: 320,
-          maxHeight: 600,
-          marginTop: 0,
-          marginBottom: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'auto'
-        }}
-      >
-        <div
-          ref={timelineRef}
-          className="rounded-t-2xl rounded-b-none bg-white dark:bg-gray-900 border-x border-t border-b-0 border-gray-200 dark:border-gray-700 shadow-md overflow-hidden transition-colors duration-300"
-          style={{
-            width: '100vw',
-            height: '100%',
-            minWidth: '100vw'
-          }}
-        />
+    <div className="min-h-screen bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col">
+      <div className="w-full" style={{ height: '65vh', minHeight: 320, maxHeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div ref={timelineRef} className="bg-white dark:bg-gray-900 border rounded-md shadow" style={{ width: '100vw', height: '100%' }} />
       </div>
-      <div
-        className="fixed left-0 right-0 bottom-0 flex-none min-h-[22vh] max-h-[32vh] bg-blue-50/90 dark:bg-gray-800/90 rounded-t-3xl rounded-b-none shadow-xl transition-colors duration-300 border-x border-t border-b-0 border-blue-200 dark:border-blue-700"
-        style={{ width: '100vw', zIndex: 30, overflowY: 'auto' }}
-      >
-        <div className="w-full h-full flex flex-col p-4 mx-auto">
-          <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors duration-300">
-            {"未排班工作"}
-          </h2>
+      <div className="fixed left-0 right-0 bottom-0 bg-blue-50/90 dark:bg-gray-800/90 rounded-t-2xl shadow border-t" style={{ width: '100vw', zIndex: 30 }}>
+        <div className="p-4">
+          <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-2">{"未排班工作"}</h2>
           {unplanned.length === 0 ? (
-            <div className="flex items-center justify-center w-full h-full min-h-[60px]">
-              <span className="text-gray-400 dark:text-gray-500 text-center transition-colors duration-300">
-                （無未排班工作）
-              </span>
-            </div>
+            <div className="flex justify-center items-center h-12 text-gray-400 dark:text-gray-500">（無未排班工作）</div>
           ) : (
-            <div className="flex flex-nowrap gap-3 overflow-x-auto pb-16 px-0.5 w-full" tabIndex={0} aria-label="unplanned-jobs">
+            <div className="flex gap-3 overflow-x-auto pb-8">
               {unplanned.map(wl => (
-                <div
-                  key={wl.loadId}
-                  className="
-                    bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5
-                    hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-300 hover:shadow-md
-                    flex flex-col justify-between gap-2
-                    flex-1 min-w-[180px] max-w-full
-                  "
-                  title={`來自 ${wl.epicTitle}`}
-                >
-                  <div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors duration-300">
-                    {wl.title || "(無標題)"}
-                  </div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400 transition-colors duration-300">
-                    {Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "(無執行者)"}
-                  </div>
+                <div key={wl.loadId} className="bg-white dark:bg-gray-900 border rounded-xl px-3 py-2 flex flex-col min-w-[180px]">
+                  <div className="font-medium text-gray-700 dark:text-gray-300 text-sm">{wl.title || "（無標題）"}</div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">{Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "（無執行者）"}</div>
                 </div>
               ))}
             </div>
@@ -187,4 +140,4 @@ const ClientWorkSchedulePage = () => {
   )
 }
 
-export default ClientWorkSchedulePage
+export default WorkSchedulePage
