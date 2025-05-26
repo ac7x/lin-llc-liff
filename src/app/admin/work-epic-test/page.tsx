@@ -12,18 +12,14 @@ import { WorkZoneEntity } from '@/app/actions/workzone.action';
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 import { useEffect, useState } from 'react';
 
-/**
- * 產生簡短唯一 ID
- * @param prefix 前綴字串
- */
-const shortId = (prefix = ''): string => `${prefix}${Math.random().toString(36).slice(2, 8)}`;
+type MemberSimple = { memberId: string; name: string };
+const regionOptions = ['北部', '中部', '南部', '東部', '離島'] as const;
 
-/**
- * 轉換日期為 ISO 格式
- * @param date - 日期字串
- */
+const shortId = (prefix = ''): string =>
+    `${prefix}${Math.random().toString(36).slice(2, 8)}`;
+
 const toISO = (date?: string | null): string => {
-    if (!date) { return ''; }
+    if (!date) return '';
     if (date.includes('T')) {
         const d = new Date(date);
         return isNaN(d.getTime()) ? '' : d.toISOString();
@@ -32,13 +28,6 @@ const toISO = (date?: string | null): string => {
     return isNaN(d.getTime()) ? '' : d.toISOString();
 };
 
-type MemberSimple = { memberId: string; name: string };
-
-const regionOptions = ['北部', '中部', '南部', '東部', '離島'] as const;
-
-/**
- * 進度條元件
- */
 const ProgressBar = ({ completed, total }: { completed: number; total: number }) => {
     const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
     return (
@@ -46,21 +35,20 @@ const ProgressBar = ({ completed, total }: { completed: number; total: number })
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded h-2">
                 <div className="bg-green-500 dark:bg-green-600 h-2 rounded" style={{ width: `${percent}%` }} />
             </div>
-            <div className="text-xs text-right text-gray-500 dark:text-gray-300">{completed}/{total}（{percent}%）</div>
+            <div className="text-xs text-right text-gray-500 dark:text-gray-300">
+                {completed}/{total}（{percent}%）
+            </div>
         </div>
     );
 };
 
-/**
- * 單選下拉元件
- */
 const SingleSelect = ({
     value, onChange, options, placeholder
 }: {
     value: string;
     onChange: (val: string) => void;
     options: WorkMember[];
-    placeholder: string
+    placeholder: string;
 }) => (
     <select
         value={value}
@@ -74,16 +62,13 @@ const SingleSelect = ({
     </select>
 );
 
-/**
- * 多選下拉元件
- */
 const MultiSelect = ({
     value, onChange, options, placeholder
 }: {
     value: string[];
     onChange: (selected: string[]) => void;
     options: WorkMember[];
-    placeholder: string
+    placeholder: string;
 }) => (
     <select
         multiple
@@ -101,9 +86,6 @@ const MultiSelect = ({
     </select>
 );
 
-/**
- * 工作標的管理頁面
- */
 export default function WorkEpicPage() {
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
     const [members, setMembers] = useState<WorkMember[]>([]);
@@ -114,7 +96,7 @@ export default function WorkEpicPage() {
     const [newAddress, setNewAddress] = useState('');
     const [newSiteSupervisors, setNewSiteSupervisors] = useState<string[]>([]);
     const [newSafetyOfficers, setNewSafetyOfficers] = useState<string[]>([]);
-    const [newRegion, setNewRegion] = useState<'北部' | '中部' | '南部' | '東部' | '離島'>('北部');
+    const [newRegion, setNewRegion] = useState<typeof regionOptions[number]>('北部');
 
     useEffect(() => {
         const fetchData = async () => {

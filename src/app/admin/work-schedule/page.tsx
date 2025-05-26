@@ -1,34 +1,14 @@
 'use client'
 
+import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client'
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
 import { addDays, differenceInMilliseconds, endOfDay, format, isValid, parseISO, startOfDay, subDays } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
-import { getApp, getApps, initializeApp } from 'firebase/app'
-import {
-	collection,
-	doc,
-	DocumentData,
-	getFirestore,
-	QueryDocumentSnapshot,
-	updateDoc
-} from 'firebase/firestore'
+import { collection, doc, DocumentData, QueryDocumentSnapshot, updateDoc } from 'firebase/firestore'
 import React, { useEffect, useMemo, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
 import 'react-calendar-timeline/style.css'
 import { useCollection } from 'react-firebase-hooks/firestore'
-
-const firebaseConfig = {
-	apiKey: 'AIzaSyDsJP6_bjWLQ0SQiarhe3UIApnqx60vCqg',
-	authDomain: 'lin-llc-liff.firebaseapp.com',
-	projectId: 'lin-llc-liff',
-	storageBucket: 'lin-llc-liff.firbasestorage.app',
-	messagingSenderId: '734381604026',
-	appId: '1:734381604026:web:a07a50fe85c6c5acd25683',
-	measurementId: 'G-KBMLTJL6KK'
-}
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
-const firestore = getFirestore(app)
 
 interface WorkLoadEntity {
 	loadId: string
