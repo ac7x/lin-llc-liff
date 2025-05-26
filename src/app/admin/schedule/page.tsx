@@ -11,7 +11,7 @@ import {
 	QueryDocumentSnapshot,
 	updateDoc
 } from 'firebase/firestore'
-import React, { DragEvent, useEffect, useMemo, useState } from 'react'
+import React, { DragEvent, useEffect, useMemo, useRef, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
 import 'react-calendar-timeline/style.css'
 import { useCollection } from 'react-firebase-hooks/firestore'
@@ -67,6 +67,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 	const [epicSnapshot] = useCollection(collection(firestore, 'workEpic'))
+	const timelineRef = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
 		if (!epicSnapshot) { return }
@@ -240,6 +241,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 			<div className="min-h-screen w-full bg-white dark:bg-neutral-900 flex flex-col">
 				<div className="flex-1 w-full flex items-center justify-center relative overflow-visible">
 					<div
+						ref={timelineRef}
 						className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-x-auto"
 						style={{ width: '100vw', height: '100vh' }}
 						onDragOver={e => {
@@ -276,36 +278,38 @@ const WorkScheduleManagementPage: React.FC = () => {
 							}
 						}}
 					>
-						<Timeline
-							groups={groups}
-							items={items}
-							defaultTimeStart={defaultTimeStart}
-							defaultTimeEnd={defaultTimeEnd}
-							canMove
-							canResize="both"
-							canChangeGroup
-							stackItems
-							minZoom={24 * 60 * 60 * 1000}
-							maxZoom={30 * 24 * 60 * 60 * 1000}
-							onItemMove={handleItemMove}
-							onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
-							onItemDoubleClick={handleItemRemove}
-							groupRenderer={({ group }) => (
-								<div className="px-2 py-1 text-neutral-900 dark:text-neutral-100">
-									{group.title}
-								</div>
-							)}
-							itemRenderer={({ item, getItemProps, getResizeProps }) => {
-								const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-								return (
-									<div {...getItemProps({ style: { background: '#fbbf24', color: '#222' } })}>
-										<div {...leftResizeProps} />
-										<span className="line-clamp-2">{item.title}</span>
-										<div {...rightResizeProps} />
+						<div className="w-full h-full">
+							<Timeline
+								groups={groups}
+								items={items}
+								defaultTimeStart={defaultTimeStart}
+								defaultTimeEnd={defaultTimeEnd}
+								canMove
+								canResize="both"
+								canChangeGroup
+								stackItems
+								minZoom={24 * 60 * 60 * 1000}
+								maxZoom={30 * 24 * 60 * 60 * 1000}
+								onItemMove={handleItemMove}
+								onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
+								onItemDoubleClick={handleItemRemove}
+								groupRenderer={({ group }) => (
+									<div className="px-2 py-1 text-neutral-900 dark:text-neutral-100">
+										{group.title}
 									</div>
-								)
-							}}
-						/>
+								)}
+								itemRenderer={({ item, getItemProps, getResizeProps }) => {
+									const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+									return (
+										<div {...getItemProps({ style: { background: '#fbbf24', color: '#222' } })}>
+											<div {...leftResizeProps} />
+											<span className="line-clamp-2">{item.title}</span>
+											<div {...rightResizeProps} />
+										</div>
+									)
+								}}
+							/>
+						</div>
 					</div>
 				</div>
 				<div className="flex-none min-h-[25vh] max-h-[35vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors">
