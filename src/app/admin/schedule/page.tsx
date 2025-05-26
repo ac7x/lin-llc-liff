@@ -12,7 +12,7 @@ import {
 	QueryDocumentSnapshot,
 	updateDoc
 } from 'firebase/firestore'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { DragEvent, useEffect, useMemo, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
 import 'react-calendar-timeline/style.css'
 import { useCollection } from 'react-firebase-hooks/firestore'
@@ -173,30 +173,63 @@ const WorkScheduleManagementPage: React.FC = () => {
 		await updateDoc(doc(firestore, 'workEpic', epic.epicId), { workLoads: newWorkLoads })
 	}
 
-	const handleUnplannedClick = (wl: LooseWorkLoad) => {
-		const now = new Date()
-		const todayStart = startOfDay(now)
-		const tomorrow = addDays(todayStart, 1)
-		handleAssignToTimeline(wl, wl.epicId, todayStart, tomorrow)
-	}
-
 	const handleAssignToTimeline = async (
-		wl: LooseWorkLoad,
-		groupId: string,
-		start: Date,
-		end: Date
+		wlDragged: LooseWorkLoad, // Item from the unplanned list
+		targetGroupId: string,    // epicId of the row it was dropped on
+		startTime: Date,
+		endTime: Date
 	) => {
-		const epic = epics.find(e => e.epicId === groupId)
-		if (!epic) { return }
-		const wlIdx = (epic.workLoads || []).findIndex(x => x.loadId === wl.loadId)
-		if (wlIdx === -1) { return }
-		const newWorkLoads = [...(epic.workLoads || [])]
-		newWorkLoads[wlIdx] = {
-			...newWorkLoads[wlIdx],
-			plannedStartTime: start.toISOString(),
-			plannedEndTime: end.toISOString()
+		const originalEpicId = wlDragged.epicId
+		const workLoadId = wlDragged.loadId
+
+		const originalEpicState = epics.find(e => e.epicId === originalEpicId)
+		if (!originalEpicState || !originalEpicState.workLoads) {
+			console.error('Original epic or its workloads not found in state:', originalEpicId)
+			return
 		}
-		await updateDoc(doc(firestore, 'workEpic', epic.epicId), { workLoads: newWorkLoads })
+
+		const workloadWithNewTimes: WorkLoadEntity = {
+			loadId: workLoadId,
+			title: wlDragged.title,
+			executor: wlDragged.executor,
+			plannedStartTime: startTime.toISOString(),
+			plannedEndTime: endTime.toISOString()
+		}
+
+		if (originalEpicId === targetGroupId) {
+			// Case 1: Dropped onto its own epic's row
+			const newWorkLoads = originalEpicState.workLoads.map(wl =>
+				wl.loadId === workLoadId ? workloadWithNewTimes : wl
+			)
+			await updateDoc(doc(firestore, 'workEpic', originalEpicId), { workLoads: newWorkLoads })
+		} else {
+			// Case 2: Dropped onto a different epic's row
+			const targetEpicState = epics.find(e => e.epicId === targetGroupId)
+			if (!targetEpicState) {
+				console.warn(`Target epic ${targetGroupId} not found. Item will be scheduled in its original epic.`)
+				// Fallback: schedule in original epic
+				const newWorkLoads = originalEpicState.workLoads.map(wl =>
+					wl.loadId === workLoadId ? workloadWithNewTimes : wl
+				)
+				await updateDoc(doc(firestore, 'workEpic', originalEpicId), { workLoads: newWorkLoads })
+				return
+			}
+
+			// Proceed with move:
+			// 1. Remove from original epic's workloads (actually, update the item in original epic to be planned)
+			// The item wlDragged is defined by not having plannedStartTime.
+			// So, we need to find it in originalEpicState.workLoads and update it or move it.
+			const updatedOriginalWorkLoads = originalEpicState.workLoads.filter(
+				wl => wl.loadId !== workLoadId
+			)
+
+			// 2. Add to target epic's workloads
+			const newTargetWorkLoads = [...(targetEpicState.workLoads || []), workloadWithNewTimes]
+
+			// Perform Firestore updates
+			await updateDoc(doc(firestore, 'workEpic', originalEpicId), { workLoads: updatedOriginalWorkLoads })
+			await updateDoc(doc(firestore, 'workEpic', targetGroupId), { workLoads: newTargetWorkLoads })
+		}
 	}
 
 	const now = new Date()
@@ -206,7 +239,42 @@ const WorkScheduleManagementPage: React.FC = () => {
 	return (
 		<div className="w-full h-full">
 			<h1>工作排程管理</h1>
-			<div className="w-full h-full">
+			<div
+				className="w-full h-full"
+				onDragOver={e => {
+					e.preventDefault()
+				}}
+				onDrop={e => {
+					e.preventDefault()
+					try {
+						const jsonData = e.dataTransfer.getData('application/json')
+						if (!jsonData) { return }
+						const droppedWl = JSON.parse(jsonData) as LooseWorkLoad
+						// 取得滑鼠座標，推算 groupId
+						const timelineElement = document.querySelector('.react-calendar-timeline')
+						if (!timelineElement) { return }
+						const rect = timelineElement.getBoundingClientRect()
+						const y = e.clientY - rect.top
+						// 計算 group index
+						const groupHeight = rect.height / groups.length
+						const groupIndex = Math.floor(y / groupHeight)
+						const group = groups[groupIndex]
+						if (!group) { return }
+						const groupId = group.id as string
+						// 取得時間
+						const timelineWidth = rect.width
+						const x = e.clientX - rect.left
+						const percent = x / timelineWidth
+						const timeRange = defaultTimeEnd.getTime() - defaultTimeStart.getTime()
+						const dropTime = new Date(defaultTimeStart.getTime() + percent * timeRange)
+						const startTime = dropTime
+						const endTime = addDays(startTime, 1)
+						handleAssignToTimeline(droppedWl, groupId, startTime, endTime)
+					} catch (error) {
+						console.error("Error processing dropped item:", error)
+					}
+				}}
+			>
 				<Timeline
 					groups={groups}
 					items={items}
@@ -238,15 +306,19 @@ const WorkScheduleManagementPage: React.FC = () => {
 				{unplanned.length === 0 ? (
 					<div>（無）</div>
 				) : unplanned.map(wl => (
-					<button
+					<div
 						key={wl.loadId}
-						type="button"
-						onClick={() => handleUnplannedClick(wl)}
+						draggable={true}
+						onDragStart={(e: DragEvent<HTMLDivElement>) => {
+							e.dataTransfer.setData('application/json', JSON.stringify(wl))
+						}}
+						style={{ cursor: 'grab', padding: '8px', border: '1px solid #ccc', margin: '4px', backgroundColor: 'white', borderRadius: '4px' }}
+						className="flex flex-col p-2 m-1 border rounded shadow hover:shadow-md"
 					>
-						<span>{wl.title || '（無標題）'}</span>
-						<span>{wl.executor.join(', ') || '（無執行者）'}</span>
-						<span>點擊快速排入今日</span>
-					</button>
+						<span className="font-semibold">{wl.title || '（無標題）'}</span>
+						<span className="text-sm text-gray-600">{Array.isArray(wl.executor) && wl.executor.length > 0 ? wl.executor.join(', ') : '（無執行者）'}</span>
+						<span className="mt-1 text-xs text-blue-500">拖曳以排程</span>
+					</div>
 				))}
 			</div>
 			<AdminBottomNav />
