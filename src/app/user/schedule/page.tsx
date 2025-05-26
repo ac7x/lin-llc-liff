@@ -68,7 +68,6 @@ const WorkSchedulePage = (): React.ReactElement => {
     if (!timelineRef.current || epics.length === 0) {
       return
     }
-
     if (timelineInstance.current) {
       timelineInstance.current.destroy()
       timelineInstance.current = null
@@ -140,15 +139,14 @@ const WorkSchedulePage = (): React.ReactElement => {
   }, [epics])
 
   return (
-    <div className="relative min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-hidden">
-      {/* 固定在上方的 timeline，滿屏 */}
+    <div className="relative min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-x-hidden">
+      {/* 固定在上方的 timeline，滿屏但不溢出 */}
       <div
         ref={timelineRef}
-        className="fixed top-0 left-0 w-screen h-[65vh] bg-white dark:bg-gray-950 border-b z-20 rounded-b-2xl shadow"
-        style={{ minWidth: '100vw' }}
+        className="fixed top-0 left-0 w-full max-w-full overflow-x-auto h-[65vh] bg-white dark:bg-gray-950 border-b z-20 rounded-b-2xl shadow"
       />
       {/* 固定在下方的未排班工作，滿屏 */}
-      <div className="fixed left-0 right-0 bottom-0 bg-blue-50/90 dark:bg-gray-900/90 rounded-t-2xl shadow border-t z-30 w-screen max-w-none">
+      <div className="fixed left-0 right-0 bottom-0 bg-blue-50/90 dark:bg-gray-900/90 rounded-t-2xl shadow border-t z-30 w-full max-w-full">
         <div className="p-4">
           <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-2">
             未排班工作
@@ -174,7 +172,7 @@ const WorkSchedulePage = (): React.ReactElement => {
         </div>
       </div>
       {/* 固定底部導航 */}
-      <div className="fixed left-0 right-0 bottom-0 z-40 w-screen max-w-none pointer-events-none">
+      <div className="fixed left-0 right-0 bottom-0 z-40 w-full max-w-full pointer-events-none">
         <UserBottomNav />
       </div>
       {/* 佔位空間，避免內容被固定區塊遮蓋 */}
