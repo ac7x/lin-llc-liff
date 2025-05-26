@@ -236,118 +236,89 @@ const WorkScheduleManagementPage: React.FC = () => {
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
 	return (
-		<div className="w-full">
-			<div className="min-h-screen w-full bg-white dark:bg-neutral-900 flex flex-col">
-				<div className="flex-1 w-full flex items-center justify-center relative overflow-visible">
-					<div
-						className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-x-auto"
-						style={{ width: '100vw', height: '100vh' }}
-						onDragOver={e => {
-							e.preventDefault()
-						}}
-						onDrop={e => {
-							e.preventDefault()
-							try {
-								const jsonData = e.dataTransfer.getData('application/json')
-								if (!jsonData) { return }
-								const droppedWl = JSON.parse(jsonData) as LooseWorkLoad
-								// 取得滑鼠座標，推算 groupId
-								const timelineElement = document.querySelector('.react-calendar-timeline')
-								if (!timelineElement) { return }
-								const rect = timelineElement.getBoundingClientRect()
-								const y = e.clientY - rect.top
-								// 計算 group index
-								const groupHeight = rect.height / groups.length
-								const groupIndex = Math.floor(y / groupHeight)
-								const group = groups[groupIndex]
-								if (!group) { return }
-								const groupId = group.id as string
-								// 取得時間
-								const timelineWidth = rect.width
-								const x = e.clientX - rect.left
-								const percent = x / timelineWidth
-								const timeRange = defaultTimeEnd.getTime() - defaultTimeStart.getTime()
-								const dropTime = new Date(defaultTimeStart.getTime() + percent * timeRange)
-								const startTime = dropTime
-								const endTime = addDays(startTime, 1)
-								handleAssignToTimeline(droppedWl, groupId, startTime, endTime)
-							} catch (error) {
-								console.error("Error processing dropped item:", error)
-							}
-						}}
-					>
-						<Timeline
-							groups={groups}
-							items={items}
-							defaultTimeStart={defaultTimeStart}
-							defaultTimeEnd={defaultTimeEnd}
-							canMove
-							canResize="both"
-							canChangeGroup
-							stackItems
-							minZoom={24 * 60 * 60 * 1000}
-							maxZoom={30 * 24 * 60 * 60 * 1000}
-							onItemMove={handleItemMove}
-							onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
-							onItemDoubleClick={handleItemRemove}
-							groupRenderer={({ group }) => (
-								<div className="px-2 py-1 text-neutral-900 dark:text-neutral-100">
-									{group.title}
-								</div>
-							)}
-							itemRenderer={({ item, getItemProps, getResizeProps }) => {
-								const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-								return (
-									<div {...getItemProps({ style: { background: '#fbbf24', color: '#222' } })}>
-										<div {...leftResizeProps} />
-										<span className="line-clamp-2">{item.title}</span>
-										<div {...rightResizeProps} />
-									</div>
-								)
-							}}
-						/>
-					</div>
-				</div>
-				<div className="flex-none min-h-[25vh] max-h-[35vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors">
-					<div className="w-full h-full flex flex-col p-4 mx-auto">
-						<h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors">
-							未排程工作
-						</h2>
-						{unplanned.length === 0 ? (
-							<div className="flex items-center justify-center w-full h-full min-h-[60px]">
-								<span className="text-gray-400 dark:text-gray-500 text-center transition-colors">
-									（無未排程工作）
-								</span>
+		<div className="w-full h-full">
+			<h1>工作排程管理</h1>
+			<div
+				className="w-full h-full"
+				onDragOver={e => {
+					e.preventDefault()
+				}}
+				onDrop={e => {
+					e.preventDefault()
+					try {
+						const jsonData = e.dataTransfer.getData('application/json')
+						if (!jsonData) { return }
+						const droppedWl = JSON.parse(jsonData) as LooseWorkLoad
+						// 取得滑鼠座標，推算 groupId
+						const timelineElement = document.querySelector('.react-calendar-timeline')
+						if (!timelineElement) { return }
+						const rect = timelineElement.getBoundingClientRect()
+						const y = e.clientY - rect.top
+						// 計算 group index
+						const groupHeight = rect.height / groups.length
+						const groupIndex = Math.floor(y / groupHeight)
+						const group = groups[groupIndex]
+						if (!group) { return }
+						const groupId = group.id as string
+						// 取得時間
+						const timelineWidth = rect.width
+						const x = e.clientX - rect.left
+						const percent = x / timelineWidth
+						const timeRange = defaultTimeEnd.getTime() - defaultTimeStart.getTime()
+						const dropTime = new Date(defaultTimeStart.getTime() + percent * timeRange)
+						const startTime = dropTime
+						const endTime = addDays(startTime, 1)
+						handleAssignToTimeline(droppedWl, groupId, startTime, endTime)
+					} catch (error) {
+						console.error("Error processing dropped item:", error)
+					}
+				}}
+			>
+				<Timeline
+					groups={groups}
+					items={items}
+					defaultTimeStart={defaultTimeStart}
+					defaultTimeEnd={defaultTimeEnd}
+					canMove
+					canResize="both"
+					canChangeGroup
+					stackItems
+					onItemMove={handleItemMove}
+					onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
+					onItemDoubleClick={handleItemRemove}
+					itemRenderer={({ item, getItemProps, getResizeProps }) => {
+						const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+						return (
+							<div {...getItemProps({ style: { background: '#fbbf24', color: '#222', borderRadius: 6 } })}>
+								<div {...leftResizeProps} />
+								<span>{item.title}</span>
+								<div {...rightResizeProps} />
 							</div>
-						) : (
-							<div
-								className="flex flex-nowrap gap-3 overflow-x-auto pb-16 px-0.5 w-full max-w-full"
-								tabIndex={0}
-								aria-label="unplanned-jobs"
-							>
-								{unplanned.map(wl => (
-									<div
-										key={wl.loadId}
-										draggable={true}
-										onDragStart={(e: DragEvent<HTMLDivElement>) => {
-											e.dataTransfer.setData('application/json', JSON.stringify(wl))
-										}}
-										className="bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors hover:shadow-md flex-shrink-0 cursor-grab"
-									>
-										<div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors">
-											{wl.title || '（無標題）'}
-										</div>
-										<div className="text-xs text-blue-600 dark:text-blue-400 transition-colors">
-											{Array.isArray(wl.executor) && wl.executor.length > 0 ? wl.executor.join(', ') : '（無執行者）'}
-										</div>
-									</div>
-								))}
-							</div>
-						)}
-					</div>
-				</div>
-				<AdminBottomNav />
+						)
+					}}
+				/>
 			</div>
+			<div>
+				<h2>未排班工作</h2>
+				{unplanned.length === 0 ? (
+					<div>（無）</div>
+				) : unplanned.map(wl => (
+					<div
+						key={wl.loadId}
+						draggable={true}
+						onDragStart={(e: DragEvent<HTMLDivElement>) => {
+							e.dataTransfer.setData('application/json', JSON.stringify(wl))
+						}}
+						style={{ cursor: 'grab', padding: '8px', border: '1px solid #ccc', margin: '4px', backgroundColor: 'white', borderRadius: '4px' }}
+						className="flex flex-col p-2 m-1 border rounded shadow hover:shadow-md"
+					>
+						<span className="font-semibold">{wl.title || '（無標題）'}</span>
+						<span className="text-sm text-gray-600">{Array.isArray(wl.executor) && wl.executor.length > 0 ? wl.executor.join(', ') : '（無執行者）'}</span>
+						<span className="mt-1 text-xs text-blue-500">拖曳以排程</span>
+					</div>
+				))}
+			</div>
+			<AdminBottomNav />
 		</div>
 	)
 }
