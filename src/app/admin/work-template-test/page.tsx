@@ -18,6 +18,7 @@ import { getAllWorkZones } from "@/app/actions/workzone.action";
 import { AdminBottomNav } from "@/modules/shared/interfaces/navigation/admin-bottom-nav";
 import React, { useEffect, useRef, useState } from "react";
 
+/** 多語字串，方便日後外部化 */
 const STRINGS = {
     title: "模板",
     addTypePlaceholder: "新種類標題",
@@ -39,21 +40,24 @@ const STRINGS = {
     validationError: "請確保所有項目都已選擇！",
     addToEpic: "加入標的",
     addToEpicSuccess: "成功加入標的"
-};
+} as const;
 
 /** 產生短ID */
-const shortId = (prefix = "") =>
+const shortId = (prefix = ""): string =>
     `${prefix}${Math.random().toString(36).slice(2, 8)}`;
 
 /** 轉為 ISO 日期字串 */
-const toIso = (date: string | number | Date | undefined | null): string => {
+const toIso = (date?: string | number | Date | null): string => {
     if (!date) return "";
     const d = new Date(date);
     return isNaN(d.getTime()) ? "" : d.toISOString();
 };
 
+/** 通用 select class */
 const selectBase =
-    "bg-background text-foreground border border-gray-300 dark:border-neutral-700 outline-none rounded min-w-[180px] max-w-full w-full px-3 py-2 transition-colors duration-150 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500";
+    "bg-background text-foreground border border-gray-300 dark:border-neutral-700 outline-none rounded min-w-[180px] max-w-full w-full px-3 py-2 transition-colors duration-150 focus:ring-2 focus:ring-blue-500";
+
+/** tab 樣式 */
 const tabBase =
     "px-4 py-2 font-medium text-sm rounded-t border-b-2 transition-all duration-150 focus:outline-none";
 const tabActive =
@@ -61,8 +65,14 @@ const tabActive =
 const tabInactive =
     "border-transparent text-gray-500 dark:text-neutral-400 hover:text-blue-500 hover:border-blue-300 bg-gray-100 dark:bg-neutral-800";
 
-const SimpleModal = ({ open, onClose, message }: { open: boolean; onClose: () => void; message: string }) =>
-    !open ? null : (
+/**
+ * 彈窗
+ */
+const SimpleModal: React.FC<{ open: boolean; onClose: () => void; message: string }> = ({
+    open, onClose, message
+}) => {
+    if (!open) return null;
+    return (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-20 z-50" onClick={onClose}>
             <div className="bg-white dark:bg-neutral-900 rounded shadow-lg p-6 min-w-[200px] text-center" onClick={e => e.stopPropagation()}>
                 <div className="text-green-600 dark:text-green-400 mb-4">{message}</div>
@@ -70,7 +80,11 @@ const SimpleModal = ({ open, onClose, message }: { open: boolean; onClose: () =>
             </div>
         </div>
     );
+};
 
+/**
+ * 主元件
+ */
 const WorkTemplatePage: React.FC = () => {
     const [workTypes, setWorkTypes] = useState<WorkTypeEntity[]>([]);
     const [newWorkTypeTitle, setNewWorkTypeTitle] = useState("");
@@ -81,7 +95,7 @@ const WorkTemplatePage: React.FC = () => {
     const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
     const [selectedWorkEpicId, setSelectedWorkEpicId] = useState("");
     const [selectedWorkZoneId, setSelectedWorkZoneId] = useState("");
-    const [selectedRegion, setSelectedRegion] = useState<"北部" | "中部" | "南部" | "東部" | "離島">("北部");
+    const [selectedRegion, setSelectedRegion] = useState<typeof STRINGS.region[number]>("北部");
     const [selectedWorkFlowIds, setSelectedWorkFlowIds] = useState<string[]>([]);
     const [flowQuantities, setFlowQuantities] = useState<Record<string, number>>({});
     const [workloadCounts, setWorkloadCounts] = useState<Record<string, number>>({});
@@ -92,27 +106,53 @@ const WorkTemplatePage: React.FC = () => {
 
     useEffect(() => {
         (async () => {
-            setWorkTypes(await getAllWorkTypes(true) as WorkTypeEntity[]);
-            setWorkEpics(await getAllWorkEpics(false) as WorkEpicEntity[]);
-            setAllWorkZones(await getAllWorkZones() as WorkZoneEntity[]);
+            const [types, epics, zones] = await Promise.all([
+                getAllWorkTypes(true),
+                getAllWorkEpics(false),
+                getAllWorkZones()
+            ]);
+            setWorkTypes(types as WorkTypeEntity[]);
+            setWorkEpics(epics as WorkEpicEntity[]);
+            setAllWorkZones(zones as WorkZoneEntity[]);
         })();
     }, []);
 
-    const handleAddWorkType = async () => {
+    const filteredFlows = workTypes.find(t => t.typeId === selectedWorkTypeId)?.flows || [];
+    const selectedEpic = workEpics.find(e => e.epicId === selectedWorkEpicId);
+    const workZones = selectedEpic?.workZones?.length ? selectedEpic.workZones : allWorkZones;
+    const allSelected = filteredFlows.length > 0 && filteredFlows.every(f => selectedWorkFlowIds.includes(f.flowId));
+    const someSelected = filteredFlows.some(f => selectedWorkFlowIds.includes(f.flowId));
+    const selectAllRef = useRef<HTMLInputElement>(null);
+    useEffect(() => {
+        if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected && !allSelected;
+    }, [someSelected, allSelected, filteredFlows.length]);
+
+    const handleAddWorkType = async (): Promise<void> => {
         const title = newWorkTypeTitle.trim();
-        if (!title) return alert("請輸入標題！");
-        const newWorkType: WorkTypeEntity = { typeId: shortId("wt-"), title, requiredSkills: [], flows: [] };
+        if (!title) {
+            alert("請輸入標題！");
+            return;
+        }
+        const newWorkType: WorkTypeEntity = {
+            typeId: shortId("wt-"),
+            title,
+            requiredSkills: [],
+            flows: []
+        };
         await addWorkType(newWorkType);
         setWorkTypes(prev => [...prev, newWorkType]);
         setNewWorkTypeTitle("");
     };
 
-    const handleAddStep = async () => {
+    const handleAddStep = async (): Promise<void> => {
         if (!selectedWorkTypeId || !newStepName.trim()) return;
         const workType = workTypes.find(t => t.typeId === selectedWorkTypeId);
         if (!workType) return;
         const steps = (workType.flows || []).flatMap(f => f.steps);
-        if (steps.some(s => s.order === newStepOrder)) return alert("順序重複");
+        if (steps.some(s => s.order === newStepOrder)) {
+            alert("順序重複");
+            return;
+        }
         const newFlow: WorkFlowEntity = {
             flowId: shortId("fl-"),
             workTypeId: selectedWorkTypeId,
@@ -130,7 +170,7 @@ const WorkTemplatePage: React.FC = () => {
         setNewStepOrder(newStepOrder + 1);
     };
 
-    const handleAddToWorkEpic = async () => {
+    const handleAddToWorkEpic = async (): Promise<void> => {
         if (!selectedWorkEpicId || !selectedWorkTypeId || selectedWorkFlowIds.length === 0) {
             setShowValidationError(true);
             return;
@@ -155,18 +195,36 @@ const WorkTemplatePage: React.FC = () => {
         }
         const flows = type.flows.filter(f => selectedWorkFlowIds.includes(f.flowId));
         if (!flows.length) return;
-        const tasks: WorkTaskEntity[] = [], loads: WorkLoadEntity[] = [];
+        const tasks: WorkTaskEntity[] = [];
+        const loads: WorkLoadEntity[] = [];
         flows.forEach(flow => {
-            const qty = flowQuantities[flow.flowId] || 1, split = workloadCounts[flow.flowId] || 1, stepName = flow.steps[0]?.stepName || "", taskId = shortId("tk-");
+            const qty = flowQuantities[flow.flowId] || 1;
+            const split = workloadCounts[flow.flowId] || 1;
+            const stepName = flow.steps[0]?.stepName || "";
+            const taskId = shortId("tk-");
             tasks.push({
-                taskId, flowId: flow.flowId, targetQuantity: qty, unit: "單位", completedQuantity: 0, status: "待分配", title: `${epic.title}-${stepName}`
+                taskId,
+                flowId: flow.flowId,
+                targetQuantity: qty,
+                unit: "單位",
+                completedQuantity: 0,
+                status: "待分配",
+                title: `${epic.title}-${stepName}`
             });
+            const baseQty = Math.floor(qty / split);
             for (let j = 0; j < split; j++) {
                 const loadId = shortId("ld-");
                 loads.push({
-                    loadId, taskId, plannedQuantity: Math.floor(qty / split), unit: "單位",
-                    plannedStartTime: "", plannedEndTime: "", actualQuantity: 0, executor: [],
-                    title: `${epic.title}-${stepName}`, epicIds: [epic.epicId]
+                    loadId,
+                    taskId,
+                    plannedQuantity: baseQty,
+                    unit: "單位",
+                    plannedStartTime: "",
+                    plannedEndTime: "",
+                    actualQuantity: 0,
+                    executor: [],
+                    title: `${epic.title}-${stepName}`,
+                    epicIds: [epic.epicId]
                 });
             }
         });
@@ -185,47 +243,71 @@ const WorkTemplatePage: React.FC = () => {
         setShowSuccessModal(true);
     };
 
-    const filteredFlows = workTypes.find(t => t.typeId === selectedWorkTypeId)?.flows || [];
-    const selectedEpic = workEpics.find(e => e.epicId === selectedWorkEpicId);
-    const workZones = selectedEpic?.workZones?.length ? selectedEpic.workZones : allWorkZones;
-    const allSelected = filteredFlows.length > 0 && filteredFlows.every(f => selectedWorkFlowIds.includes(f.flowId));
-    const someSelected = filteredFlows.some(f => selectedWorkFlowIds.includes(f.flowId));
-    const selectAllRef = useRef<HTMLInputElement>(null);
-    useEffect(() => {
-        if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected && !allSelected;
-    }, [someSelected, allSelected, filteredFlows.length]);
-
     return (
         <>
             <main className="p-4 bg-gray-100 dark:bg-neutral-900 min-h-screen text-foreground dark:text-neutral-100">
                 <h1 className="text-xl font-bold mb-4">{STRINGS.title}</h1>
                 <div className="flex border-b border-gray-300 dark:border-neutral-700 mb-4 space-x-2">
-                    <button type="button" className={`${tabBase} ${tab === "epic" ? tabActive : tabInactive}`} onClick={() => setTab("epic")} tabIndex={0}>{STRINGS.addToEpicTitle}</button>
-                    <button type="button" className={`${tabBase} ${tab === "template" ? tabActive : tabInactive}`} onClick={() => setTab("template")} tabIndex={0}>{STRINGS.title}</button>
+                    <button
+                        type="button"
+                        className={`${tabBase} ${tab === "epic" ? tabActive : tabInactive}`}
+                        onClick={() => setTab("epic")}
+                        tabIndex={0}
+                    >
+                        {STRINGS.addToEpicTitle}
+                    </button>
+                    <button
+                        type="button"
+                        className={`${tabBase} ${tab === "template" ? tabActive : tabInactive}`}
+                        onClick={() => setTab("template")}
+                        tabIndex={0}
+                    >
+                        {STRINGS.title}
+                    </button>
                 </div>
                 {tab === "epic" && (
                     <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
                         <h2 className="font-bold mb-2">{STRINGS.addToEpicTitle}</h2>
                         <div className="flex flex-wrap gap-2 mb-2">
                             <div className="flex-1 min-w-[180px] max-w-xs">
-                                <select value={selectedWorkEpicId} onChange={e => { setSelectedWorkEpicId(e.target.value); setSelectedWorkZoneId(""); }} className={selectBase} aria-label={STRINGS.selectEpic}>
+                                <select
+                                    value={selectedWorkEpicId}
+                                    onChange={e => { setSelectedWorkEpicId(e.target.value); setSelectedWorkZoneId(""); }}
+                                    className={selectBase}
+                                    aria-label={STRINGS.selectEpic}
+                                >
                                     <option value="">{STRINGS.selectEpic}</option>
                                     {workEpics.map(e => <option value={e.epicId} key={e.epicId}>{e.title}</option>)}
                                 </select>
                             </div>
                             <div className="flex-1 min-w-[120px] max-w-xs">
-                                <select value={selectedRegion} onChange={e => setSelectedRegion(e.target.value as typeof selectedRegion)} className={selectBase} aria-label="region">
+                                <select
+                                    value={selectedRegion}
+                                    onChange={e => setSelectedRegion(e.target.value as typeof selectedRegion)}
+                                    className={selectBase}
+                                    aria-label="region"
+                                >
                                     {STRINGS.region.map(region => <option key={region} value={region}>{region}</option>)}
                                 </select>
                             </div>
                             <div className="flex-1 min-w-[180px] max-w-xs relative">
-                                <select value={selectedWorkZoneId} onChange={e => setSelectedWorkZoneId(e.target.value)} className={selectBase + " pr-10"} aria-label={STRINGS.selectZone}>
+                                <select
+                                    value={selectedWorkZoneId}
+                                    onChange={e => setSelectedWorkZoneId(e.target.value)}
+                                    className={selectBase + " pr-10"}
+                                    aria-label={STRINGS.selectZone}
+                                >
                                     <option value="">{STRINGS.useDefaultZone}</option>
                                     {workZones.map(z => <option key={z.zoneId} value={z.zoneId}>{z.title || "（未命名工作區）"}</option>)}
                                 </select>
                             </div>
                             <div className="flex-1 min-w-[120px] max-w-xs">
-                                <select value={selectedWorkTypeId} onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }} className={selectBase} aria-label={STRINGS.selectType}>
+                                <select
+                                    value={selectedWorkTypeId}
+                                    onChange={e => { setSelectedWorkTypeId(e.target.value); setSelectedWorkFlowIds([]); }}
+                                    className={selectBase}
+                                    aria-label={STRINGS.selectType}
+                                >
                                     <option value="">{STRINGS.selectType}</option>
                                     {workTypes.map(t => <option value={t.typeId} key={t.typeId}>{t.title}</option>)}
                                 </select>
@@ -271,10 +353,28 @@ const WorkTemplatePage: React.FC = () => {
                         <div className="flex gap-2 overflow-auto">
                             {filteredFlows.map(f => (
                                 <div key={f.flowId} className="bg-gray-50 dark:bg-neutral-700 rounded shadow px-3 py-2 flex items-center gap-2 mb-2 min-w-[220px]">
-                                    <input type="checkbox" checked={selectedWorkFlowIds.includes(f.flowId)} onChange={e => setSelectedWorkFlowIds(ids => e.target.checked ? [...ids, f.flowId] : ids.filter(id => id !== f.flowId))} />
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedWorkFlowIds.includes(f.flowId)}
+                                        onChange={e => setSelectedWorkFlowIds(ids => e.target.checked ? [...ids, f.flowId] : ids.filter(id => id !== f.flowId))}
+                                    />
                                     <span className="flex-1">{f.steps[0]?.stepName || ""}</span>
-                                    <input type="number" value={flowQuantities[f.flowId] ?? ""} min={1} onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))} placeholder={STRINGS.quantity} className="border w-16 mx-1 p-1 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100" />
-                                    <input type="number" value={workloadCounts[f.flowId] ?? 1} min={1} onChange={e => setWorkloadCounts(c => ({ ...c, [f.flowId]: Number(e.target.value) || 1 }))} placeholder={STRINGS.split} className="border w-12 p-1 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100" />
+                                    <input
+                                        type="number"
+                                        value={flowQuantities[f.flowId] ?? ""}
+                                        min={1}
+                                        onChange={e => setFlowQuantities(q => ({ ...q, [f.flowId]: Number(e.target.value) }))}
+                                        placeholder={STRINGS.quantity}
+                                        className="border w-16 p-1 rounded"
+                                    />
+                                    <input
+                                        type="number"
+                                        value={workloadCounts[f.flowId] ?? 1}
+                                        min={1}
+                                        onChange={e => setWorkloadCounts(c => ({ ...c, [f.flowId]: Number(e.target.value) || 1 }))}
+                                        placeholder={STRINGS.split}
+                                        className="border w-16 p-1 rounded"
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -286,7 +386,12 @@ const WorkTemplatePage: React.FC = () => {
                     <>
                         <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
                             <div className="flex items-center mb-2">
-                                <input value={newWorkTypeTitle} onChange={e => setNewWorkTypeTitle(e.target.value)} placeholder={STRINGS.addTypePlaceholder} className="border p-2 rounded mr-2 flex-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100" />
+                                <input
+                                    value={newWorkTypeTitle}
+                                    onChange={e => setNewWorkTypeTitle(e.target.value)}
+                                    placeholder={STRINGS.addTypePlaceholder}
+                                    className="border p-2 rounded mr-2 flex-1 bg-white dark:bg-neutral-900"
+                                />
                                 <button onClick={handleAddWorkType} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">{STRINGS.add}</button>
                             </div>
                             <ul className="flex flex-wrap gap-2">
@@ -296,15 +401,35 @@ const WorkTemplatePage: React.FC = () => {
                         <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-md p-4 mb-6">
                             <h2 className="font-bold mb-2">{STRINGS.workflowTitle}</h2>
                             <div className="flex gap-2 mb-2">
-                                <select value={selectedWorkTypeId} onChange={e => setSelectedWorkTypeId(e.target.value)} className={selectBase}>
+                                <select
+                                    value={selectedWorkTypeId}
+                                    onChange={e => setSelectedWorkTypeId(e.target.value)}
+                                    className={selectBase}
+                                >
                                     <option value="">{STRINGS.selectType}</option>
                                     {workTypes.map(t => <option value={t.typeId} key={t.typeId}>{t.title}</option>)}
                                 </select>
                             </div>
                             <div className="flex flex-wrap gap-2 mb-2">
-                                <input value={newStepName} onChange={e => setNewStepName(e.target.value)} placeholder={STRINGS.stepName} className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100" />
-                                <input type="number" value={newStepOrder} min={1} onChange={e => setNewStepOrder(Number(e.target.value))} className="border w-20 p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100" />
-                                <input value={newStepSkills} onChange={e => setNewStepSkills(e.target.value)} placeholder={STRINGS.skills} className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100" />
+                                <input
+                                    value={newStepName}
+                                    onChange={e => setNewStepName(e.target.value)}
+                                    placeholder={STRINGS.stepName}
+                                    className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900"
+                                />
+                                <input
+                                    type="number"
+                                    value={newStepOrder}
+                                    min={1}
+                                    onChange={e => setNewStepOrder(Number(e.target.value))}
+                                    className="border w-20 p-2 rounded mr-1 bg-white dark:bg-neutral-900"
+                                />
+                                <input
+                                    value={newStepSkills}
+                                    onChange={e => setNewStepSkills(e.target.value)}
+                                    placeholder={STRINGS.skills}
+                                    className="border p-2 rounded mr-1 bg-white dark:bg-neutral-900"
+                                />
                                 <button onClick={handleAddStep} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">{STRINGS.addStep}</button>
                             </div>
                             <div className="flex flex-wrap gap-2">
