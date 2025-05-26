@@ -233,9 +233,39 @@ const WorkTemplatePage: React.FC = () => {
                         </div>
                         {filteredFlows.length > 0 && (
                             <div className="mb-2">
-                                <label className="mr-2">
-                                    <input ref={selectAllRef} type="checkbox" checked={allSelected} onChange={e => setSelectedWorkFlowIds(e.target.checked ? filteredFlows.map(f => f.flowId) : [])} /> {STRINGS.selectAll}
-                                </label>
+                                {filteredFlows.map(f => (
+                                    <div key={f.flowId} className="flex items-center gap-2 mb-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedWorkFlowIds.includes(f.flowId)}
+                                            onChange={e =>
+                                                setSelectedWorkFlowIds(ids =>
+                                                    e.target.checked
+                                                        ? [...ids, f.flowId]
+                                                        : ids.filter(id => id !== f.flowId)
+                                                )
+                                            }
+                                        />
+                                        <span>{f.steps[0]?.stepName || ""}</span>
+                                    </div>
+                                ))}
+                                <div>
+                                    <label>
+                                        <input
+                                            ref={selectAllRef}
+                                            type="checkbox"
+                                            checked={allSelected}
+                                            onChange={e =>
+                                                setSelectedWorkFlowIds(
+                                                    e.target.checked
+                                                        ? filteredFlows.map(f => f.flowId)
+                                                        : []
+                                                )
+                                            }
+                                        />{" "}
+                                        {STRINGS.selectAll}
+                                    </label>
+                                </div>
                             </div>
                         )}
                         <div className="flex gap-2 overflow-auto">
