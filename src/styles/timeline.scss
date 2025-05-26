@@ -58,7 +58,7 @@ $date-header-color: #8B8C98 !default; // Future Dusk 文字色
     }
 
     .rct-sidebar {
-        min-width: 100px; // 設定最小寬度
+        min-width: 200px; // 設定最小寬度
         width: auto; // 自適應寬度
         max-width: 300px; // 設定最大寬度，避免過寬
         overflow: hidden;
