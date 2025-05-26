@@ -13,14 +13,16 @@ import {
 	subDays
 } from 'date-fns'
 import { zhTW } from 'date-fns/locale'
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Timeline from 'react-calendar-timeline'
 import {
 	getAllWorkEpics,
 	updateWorkEpicWorkLoads
 } from './work-schedule-admin.action'
 
-/** 工作負載資料結構 */
+/**
+ * 工作負載資料結構
+ */
 interface WorkLoadEntity {
 	loadId: string
 	title: string
@@ -29,16 +31,24 @@ interface WorkLoadEntity {
 	plannedEndTime: string
 }
 
-/** 工作Epic資料結構 */
+/**
+ * 工作Epic資料結構
+ */
 interface WorkEpicEntity {
 	epicId: string
 	title: string
 	workLoads?: WorkLoadEntity[]
 }
 
+/**
+ * 加入 Epic 資訊的未排班工作型別
+ */
 type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
 
-/** 解析Epic資料快照 */
+/**
+ * 解析 Epic 資料快照
+ * @param docs Epic 資料陣列
+ */
 const parseEpicSnapshot = (
 	docs: WorkEpicEntity[]
 ): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } => {
@@ -51,31 +61,41 @@ const parseEpicSnapshot = (
 	return { epics, unplanned }
 }
 
-/** 顯示工作負載資訊內容 */
+/**
+ * 顯示工作負載資訊內容
+ * @param wl 工作負載資料
+ */
 const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) => {
-	const title = wl.title || t('No Title')
+	const title = wl.title || t("No Title")
 	const executor = Array.isArray(wl.executor) && wl.executor.length > 0
 		? wl.executor.join(', ')
-		: t('No Executor')
+		: t("No Executor")
 	return `${title} | ${executor}`
 }
 
-/** i18n 字串轉換器（請根據專案實際整合） */
+/**
+ * i18n 字串轉換器（請根據專案實際整合）
+ * @param str 字串
+ */
 function t(str: string): string {
 	return str
 }
 
+/**
+ * 行事曆管理元件（支援 Tailwind CSS v4 深淺模式、拖曳未排班工作至日曆）
+ */
 const WorkScheduleAdminPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
 	const [unplanned, setUnplanned] = useState<LooseWorkLoad[]>([])
 
-	const fetchEpics = async (): Promise<void> => {
+	const fetchEpics = useCallback(async (): Promise<void> => {
 		const docs = await getAllWorkEpics()
 		const { epics: newEpics, unplanned: newUnplanned } = parseEpicSnapshot(docs as WorkEpicEntity[])
 		setEpics(newEpics)
 		setUnplanned(newUnplanned)
-	}
-	useEffect(() => { fetchEpics() }, [])
+	}, [])
+
+	useEffect(() => { fetchEpics() }, [fetchEpics])
 
 	const groupCount = 10
 	const groups = useMemo(() => {
@@ -110,7 +130,10 @@ const WorkScheduleAdminPage: React.FC = () => {
 		), [epics]
 	)
 
-	const handleItemMove = async (itemId: string, dragTime: number, newGroupOrder: number): Promise<void> => {
+	/**
+	 * Timeline 上拖曳移動工作
+	 */
+	const handleItemMove = useCallback(async (itemId: string, dragTime: number, newGroupOrder: number): Promise<void> => {
 		const item = items.find(i => i.id === itemId)
 		if (!item) return
 		const oldEpic = epics.find(e => (e.workLoads ?? []).some(wl => wl.loadId === itemId))
@@ -144,9 +167,12 @@ const WorkScheduleAdminPage: React.FC = () => {
 			await updateWorkEpicWorkLoads(oldEpic.epicId, newWorkLoads)
 		}
 		await fetchEpics()
-	}
+	}, [epics, groups, items, fetchEpics])
 
-	const handleItemResize = async (itemId: string, time: number, edge: 'left' | 'right'): Promise<void> => {
+	/**
+	 * Timeline 上調整工作時間
+	 */
+	const handleItemResize = useCallback(async (itemId: string, time: number, edge: 'left' | 'right'): Promise<void> => {
 		const epic = epics.find(e => (e.workLoads ?? []).some(wl => wl.loadId === itemId))
 		if (!epic) return
 		const wlIdx = (epic.workLoads ?? []).findIndex(wl => wl.loadId === itemId)
@@ -164,9 +190,12 @@ const WorkScheduleAdminPage: React.FC = () => {
 		}
 		await updateWorkEpicWorkLoads(epic.epicId, newWorkLoads)
 		await fetchEpics()
-	}
+	}, [epics, fetchEpics])
 
-	const handleItemRemove = async (itemId: string): Promise<void> => {
+	/**
+	 * Timeline 上移除工作
+	 */
+	const handleItemRemove = useCallback(async (itemId: string): Promise<void> => {
 		const epic = epics.find(e => (e.workLoads ?? []).some(wl => wl.loadId === itemId))
 		if (!epic) return
 		const wlIdx = (epic.workLoads ?? []).findIndex(wl => wl.loadId === itemId)
@@ -175,22 +204,32 @@ const WorkScheduleAdminPage: React.FC = () => {
 		newWorkLoads[wlIdx] = { ...newWorkLoads[wlIdx], plannedStartTime: '', plannedEndTime: '' }
 		await updateWorkEpicWorkLoads(epic.epicId, newWorkLoads)
 		await fetchEpics()
-	}
+	}, [epics, fetchEpics])
 
 	const now = new Date()
 	const defaultTimeStart = subDays(startOfDay(now), 7)
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
-	const handleDragStart = (e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad): void => {
-		e.dataTransfer.setData('application/json', JSON.stringify(wl))
-	}
-
 	const timelineRef = useRef<HTMLDivElement>(null)
 
-	const handleTimelineDragOver = (e: React.DragEvent<HTMLDivElement>): void => {
+	/**
+	 * 拖曳開始：將未排班工作資訊放入 DataTransfer
+	 */
+	const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad): void => {
+		e.dataTransfer.setData('application/json', JSON.stringify(wl))
+	}, [])
+
+	/**
+	 * Timeline 可拖曳區：避免預設行為
+	 */
+	const handleTimelineDragOver = useCallback((e: React.DragEvent<HTMLDivElement>): void => {
 		e.preventDefault()
-	}
-	const handleTimelineDrop = async (e: React.DragEvent<HTMLDivElement>): Promise<void> => {
+	}, [])
+
+	/**
+	 * Timeline 放下：將未排班工作新增至指定日期
+	 */
+	const handleTimelineDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
 		e.preventDefault()
 		const data = e.dataTransfer.getData('application/json')
 		if (!data) return
@@ -218,14 +257,14 @@ const WorkScheduleAdminPage: React.FC = () => {
 		}]
 		await updateWorkEpicWorkLoads(epic.epicId, newWorkLoads)
 		await fetchEpics()
-	}
+	}, [groups, defaultTimeEnd, defaultTimeStart, epics, fetchEpics])
 
 	return (
-		<div className="min-h-screen w-full bg-white dark:bg-neutral-900 flex flex-col">
-			<div className="flex-1 w-full flex items-center justify-center relative overflow-hidden">
+		<div className="min-h-screen w-[100vw] bg-white dark:bg-neutral-900 flex flex-col">
+			<div className="flex-1 w-full flex items-center justify-center relative overflow-visible">
 				<div
 					ref={timelineRef}
-					className="w-full h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-hidden"
+					className="w-[100vw] h-full rounded-2xl bg-white dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 shadow overflow-x-auto"
 					style={{ minWidth: '100vw', height: '100%' }}
 					onDragOver={handleTimelineDragOver}
 					onDrop={handleTimelineDrop}
@@ -267,12 +306,12 @@ const WorkScheduleAdminPage: React.FC = () => {
 			<div className="flex-none min-h-[25vh] max-h-[35vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors">
 				<div className="w-full h-full flex flex-col p-4 mx-auto">
 					<h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors">
-						{t('Unplanned Work')}
+						{t("Unplanned Work")}
 					</h2>
 					{unplanned.length === 0 ? (
 						<div className="flex items-center justify-center w-full h-full min-h-[60px]">
 							<span className="text-gray-400 dark:text-gray-500 text-center transition-colors">
-								{t('No Unplanned Work')}
+								{t("No Unplanned Work")}
 							</span>
 						</div>
 					) : (
@@ -280,18 +319,18 @@ const WorkScheduleAdminPage: React.FC = () => {
 							{unplanned.map(wl => (
 								<div
 									key={wl.loadId}
-									className="bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors hover:shadow-md flex flex-col min-w-[160px] max-w-[240px] cursor-grab"
-									title={`${t('From')} ${wl.epicTitle}`}
+									className="bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors hover:shadow-md flex flex-col min-w-[180px] cursor-grab"
+									title={`${t("From")} ${wl.epicTitle}`}
 									draggable
 									onDragStart={e => handleDragStart(e, wl)}
 								>
 									<div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors">
-										{wl.title || t('No Title')}
+										{wl.title || t("No Title")}
 									</div>
 									<div className="text-xs text-blue-600 dark:text-blue-400 transition-colors">
 										{Array.isArray(wl.executor) && wl.executor.length > 0
 											? wl.executor.join(', ')
-											: t('No Executor')}
+											: t("No Executor")}
 									</div>
 								</div>
 							))}

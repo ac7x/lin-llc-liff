@@ -5,7 +5,7 @@ import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/
 import { UserBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav'
 import { addDays, subDays } from 'date-fns'
 import { collection, CollectionReference, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
-import * as React from "react";
+import * as React from "react"
 import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataSet, Timeline } from 'vis-timeline/standalone'
@@ -133,27 +133,24 @@ const WorkSchedulePage = (): React.ReactElement => {
   }, [epics])
 
   return (
-    <div className="h-screen bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col overflow-hidden">
-      {/* Timeline 區塊 */}
-      <div className="flex flex-1" style={{ minHeight: 320, maxHeight: 600, paddingBottom: 140 }}>
+    <div className="min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-hidden">
+      <div className="flex flex-1 min-h-[320px] max-h-[600px] pb-[140px]">
         <div
           ref={timelineRef}
-          className="bg-white dark:bg-gray-900 border rounded-md shadow"
+          className="bg-white dark:bg-gray-950 border rounded-md shadow"
           style={{ width: '100vw', minWidth: '100vw', height: '65vh' }}
         />
       </div>
-
-      {/* 未排班工作區塊 */}
-      <div className="fixed left-0 right-0 bottom-0 bg-blue-50/90 dark:bg-gray-800/90 rounded-t-2xl shadow border-t z-30">
+      <div className="fixed left-0 right-0 bottom-0 bg-blue-50/90 dark:bg-gray-900/90 rounded-t-2xl shadow border-t z-30 w-screen max-w-none">
         <div className="p-4">
-          <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-2">{"未排班工作"}</h2>
+          <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-2">未排班工作</h2>
           {unplanned.length === 0 ? (
-            <div className="flex justify-center items-center h-12 text-gray-400 dark:text-gray-500">{"（無未排班工作）"}</div>
+            <div className="flex justify-center items-center h-12 text-gray-400 dark:text-gray-500">（無未排班工作）</div>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-8">
               {unplanned.map(wl => (
-                <div key={wl.loadId} className="bg-white dark:bg-gray-900 border rounded-xl px-3 py-2 flex flex-col min-w-[180px]">
-                  <div className="font-medium text-gray-700 dark:text-gray-300 text-sm">{wl.title || "（無標題）"}</div>
+                <div key={wl.loadId} className="bg-white dark:bg-gray-950 border rounded-xl px-3 py-2 flex flex-col min-w-[180px]">
+                  <div className="font-medium text-gray-700 dark:text-gray-200 text-sm">{wl.title || "（無標題）"}</div>
                   <div className="text-xs text-blue-600 dark:text-blue-400">{wl.executor.length > 0 ? wl.executor.join(", ") : "（無執行者）"}</div>
                 </div>
               ))}
@@ -161,9 +158,7 @@ const WorkSchedulePage = (): React.ReactElement => {
           )}
         </div>
       </div>
-
-      {/* 底部導航 */}
-      <div className="fixed left-0 right-0 bottom-0 z-40">
+      <div className="fixed left-0 right-0 bottom-0 z-40 w-screen max-w-none">
         <UserBottomNav />
       </div>
     </div>
