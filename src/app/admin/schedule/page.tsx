@@ -322,14 +322,14 @@ const WorkScheduleManagementPage: React.FC = () => {
 						</div>
 					</div>
 				</div>
-				<div className="flex-none min-h-[15vh] max-h-[25vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors">
+				<div className="flex-none min-h-[15vh] max-h-[25vh] w-full bg-neutral-100 dark:bg-neutral-800/90 rounded-t-3xl shadow-inner transition-colors">
 					<div className="w-full h-full flex flex-col p-4 mx-auto">
-						<h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors">
+						<h2 className="text-lg font-bold text-center text-neutral-800 dark:text-neutral-200 mb-4 tracking-wide transition-colors">
 							未排程工作
 						</h2>
 						{unplanned.length === 0 ? (
 							<div className="flex items-center justify-center w-full h-full min-h-[60px]">
-								<span className="text-gray-400 dark:text-gray-500 text-center transition-colors">
+								<span className="text-neutral-400 dark:text-neutral-500 text-center transition-colors">
 									（無未排程工作）
 								</span>
 							</div>
@@ -346,13 +346,13 @@ const WorkScheduleManagementPage: React.FC = () => {
 										onDragStart={(e: DragEvent<HTMLDivElement>) => {
 											e.dataTransfer.setData('application/json', JSON.stringify(wl))
 										}}
-										className="bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors hover:shadow-md flex-shrink-0 cursor-grab"
+										className="bg-white/90 dark:bg-neutral-900/90 border border-neutral-200 dark:border-neutral-700 rounded-xl px-3 py-2.5 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors hover:shadow-md flex-shrink-0 cursor-grab"
 										title={`來自 ${wl.epicTitle}`}
 									>
-										<div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors">
+										<div className="font-medium text-neutral-700 dark:text-neutral-300 text-sm line-clamp-2 transition-colors">
 											{wl.title || '（無標題）'}
 										</div>
-										<div className="text-xs text-blue-600 dark:text-blue-400 transition-colors">
+										<div className="text-xs text-neutral-600 dark:text-neutral-400 transition-colors">
 											{Array.isArray(wl.executor) && wl.executor.length > 0 ? wl.executor.join(', ') : '（無執行者）'}
 										</div>
 									</div>
