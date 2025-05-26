@@ -333,6 +333,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 											e.dataTransfer.setData('application/json', JSON.stringify(wl))
 										}}
 										className="bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors hover:shadow-md flex-shrink-0 cursor-grab"
+										title={`來自 ${wl.epicTitle}`}
 									>
 										<div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors">
 											{wl.title || '（無標題）'}
