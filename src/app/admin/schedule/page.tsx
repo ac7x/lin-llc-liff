@@ -311,7 +311,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 								itemRenderer={({ item, getItemProps, getResizeProps }) => {
 									const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
 									return (
-										<div {...getItemProps({ style: { background: '#fbbf24', color: '#222' } })}>
+										<div {...getItemProps({ style: { background: '#fde047', color: '#222' } })}>
 											<div {...leftResizeProps} />
 											<span className="line-clamp-2">{item.title}</span>
 											<div {...rightResizeProps} />
@@ -322,7 +322,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 						</div>
 					</div>
 				</div>
-				<div className="flex-none min-h-[15vh] max-h-[25vh] w-full bg-neutral-100 dark:bg-neutral-800/90 rounded-t-3xl shadow-inner transition-colors">
+				<div className="flex-none min-h-[15vh] max-h-[25vh] w-full bg-white dark:bg-neutral-800 rounded-t-3xl shadow-inner transition-colors">
 					<div className="w-full h-full flex flex-col p-4 mx-auto">
 						<h2 className="text-lg font-bold text-center text-neutral-800 dark:text-neutral-200 mb-4 tracking-wide transition-colors">
 							未排程工作
