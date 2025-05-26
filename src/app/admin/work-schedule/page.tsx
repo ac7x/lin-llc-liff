@@ -242,7 +242,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 				</div>
 			</main>
 			<section className="w-full bg-black dark:bg-neutral-900 px-4 py-2" style={{ minHeight: 180 }}>
-				<div className="max-w-7xl mx-auto h-full flex flex-col">
+				<div className="w-full h-full flex flex-col">
 					<h2 className="text-lg font-bold text-center text-white dark:text-neutral-100 mb-2">未排班工作</h2>
 					<div className="flex flex-wrap gap-2 justify-center overflow-auto max-h-full">
 						{unplanned.length === 0 ? (
