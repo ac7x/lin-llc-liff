@@ -21,6 +21,7 @@ const navItems = [
             { label: '工作任務', href: '/admin/work-task' },
             { label: '工作標的', href: '/admin/work-epic-test' },
             { label: '工作標的', href: '/admin/work-epic' },
+            { label: '工作範本', href: '/admin/work-template-test' },
             { label: '工作範本', href: '/admin/work-template' },
         ],
     },
