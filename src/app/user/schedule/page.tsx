@@ -24,6 +24,9 @@ interface LooseWorkLoad extends WorkLoadEntity {
   epicTitle: string
 }
 
+/**
+ * 解析 Epic 資料快照，取得 Epic 列表與未排班工作
+ */
 function parseEpicSnapshot(
   docs: QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[]
 ): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } {
@@ -53,14 +56,18 @@ const WorkSchedulePage = (): React.ReactElement => {
   )
 
   useEffect(() => {
-    if (!epicSnapshot) return
+    if (!epicSnapshot) {
+      return
+    }
     const { epics, unplanned } = parseEpicSnapshot(epicSnapshot.docs as QueryDocumentSnapshot<WorkEpicEntity, DocumentData>[])
     setEpics(epics)
     setUnplanned(unplanned)
   }, [epicSnapshot])
 
   useEffect(() => {
-    if (!timelineRef.current || epics.length === 0) return
+    if (!timelineRef.current || epics.length === 0) {
+      return
+    }
 
     if (timelineInstance.current) {
       timelineInstance.current.destroy()
@@ -133,34 +140,46 @@ const WorkSchedulePage = (): React.ReactElement => {
   }, [epics])
 
   return (
-    <div className="min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-hidden">
-      <div className="flex flex-1 min-h-[320px] max-h-[600px] pb-[140px]">
-        <div
-          ref={timelineRef}
-          className="bg-white dark:bg-gray-950 border rounded-md shadow"
-          style={{ width: '100vw', minWidth: '100vw', height: '65vh' }}
-        />
-      </div>
+    <div className="relative min-h-screen w-screen max-w-none bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-950 dark:via-gray-800 dark:to-gray-950 flex flex-col overflow-hidden">
+      {/* 固定在上方的 timeline，滿屏 */}
+      <div
+        ref={timelineRef}
+        className="fixed top-0 left-0 w-screen h-[65vh] bg-white dark:bg-gray-950 border-b z-20 rounded-b-2xl shadow"
+        style={{ minWidth: '100vw' }}
+      />
+      {/* 固定在下方的未排班工作，滿屏 */}
       <div className="fixed left-0 right-0 bottom-0 bg-blue-50/90 dark:bg-gray-900/90 rounded-t-2xl shadow border-t z-30 w-screen max-w-none">
         <div className="p-4">
-          <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-2">未排班工作</h2>
+          <h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-2">
+            未排班工作
+          </h2>
           {unplanned.length === 0 ? (
-            <div className="flex justify-center items-center h-12 text-gray-400 dark:text-gray-500">（無未排班工作）</div>
+            <div className="flex justify-center items-center h-12 text-gray-400 dark:text-gray-500">
+              （無未排班工作）
+            </div>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-8">
               {unplanned.map(wl => (
                 <div key={wl.loadId} className="bg-white dark:bg-gray-950 border rounded-xl px-3 py-2 flex flex-col min-w-[180px]">
-                  <div className="font-medium text-gray-700 dark:text-gray-200 text-sm">{wl.title || "（無標題）"}</div>
-                  <div className="text-xs text-blue-600 dark:text-blue-400">{wl.executor.length > 0 ? wl.executor.join(", ") : "（無執行者）"}</div>
+                  <div className="font-medium text-gray-700 dark:text-gray-200 text-sm">
+                    {wl.title || "（無標題）"}
+                  </div>
+                  <div className="text-xs text-blue-600 dark:text-blue-400">
+                    {wl.executor.length > 0 ? wl.executor.join(", ") : "（無執行者）"}
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
-      <div className="fixed left-0 right-0 bottom-0 z-40 w-screen max-w-none">
+      {/* 固定底部導航 */}
+      <div className="fixed left-0 right-0 bottom-0 z-40 w-screen max-w-none pointer-events-none">
         <UserBottomNav />
       </div>
+      {/* 佔位空間，避免內容被固定區塊遮蓋 */}
+      <div className="h-[65vh]" />
+      <div className="h-[220px]" />
     </div>
   )
 }

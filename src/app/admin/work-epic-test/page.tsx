@@ -1,24 +1,32 @@
 'use client';
 
-import {
-    addWorkEpic,
-    deleteWorkEpic,
-    getAllWorkEpics,
-    updateWorkEpic,
-    WorkEpicEntity
-} from '@/app/actions/workepic.action';
-import { getAllWorkMembers, WorkMember } from '@/app/actions/workmember.action';
-import { WorkZoneEntity } from '@/app/actions/workzone.action';
-import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav';
 import { useEffect, useState } from 'react';
 
-type MemberSimple = { memberId: string; name: string };
+type Member = { memberId: string; name: string };
+type WorkZone = { zoneId: string; title: string; region: string };
+type WorkTask = { targetQuantity: number; completedQuantity: number };
+type WorkEpic = {
+    epicId: string;
+    title: string;
+    startDate: string;
+    endDate: string;
+    owner: Member;
+    siteSupervisors: Member[];
+    safetyOfficers: Member[];
+    status: string;
+    priority: number;
+    region: string;
+    address: string;
+    workZones: WorkZone[];
+    workTasks: WorkTask[];
+};
+
 const regionOptions = ['北部', '中部', '南部', '東部', '離島'] as const;
 
-const shortId = (prefix = ''): string =>
+const shortId = (prefix = '') =>
     `${prefix}${Math.random().toString(36).slice(2, 8)}`;
 
-const toISO = (date?: string | null): string => {
+const toISO = (date?: string): string => {
     if (!date) return '';
     if (date.includes('T')) {
         const d = new Date(date);
@@ -33,7 +41,10 @@ const ProgressBar = ({ completed, total }: { completed: number; total: number })
     return (
         <div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded h-2">
-                <div className="bg-green-500 dark:bg-green-600 h-2 rounded" style={{ width: `${percent}%` }} />
+                <div
+                    className="bg-green-500 dark:bg-green-600 h-2 rounded"
+                    style={{ width: `${percent}%` }}
+                />
             </div>
             <div className="text-xs text-right text-gray-500 dark:text-gray-300">
                 {completed}/{total}（{percent}%）
@@ -43,11 +54,14 @@ const ProgressBar = ({ completed, total }: { completed: number; total: number })
 };
 
 const SingleSelect = ({
-    value, onChange, options, placeholder
+    value,
+    onChange,
+    options,
+    placeholder,
 }: {
     value: string;
     onChange: (val: string) => void;
-    options: WorkMember[];
+    options: Member[];
     placeholder: string;
 }) => (
     <select
@@ -57,17 +71,22 @@ const SingleSelect = ({
     >
         <option value="">{placeholder}</option>
         {options.map(opt => (
-            <option key={opt.memberId} value={opt.memberId}>{opt.name}</option>
+            <option key={opt.memberId} value={opt.memberId}>
+                {opt.name}
+            </option>
         ))}
     </select>
 );
 
 const MultiSelect = ({
-    value, onChange, options, placeholder
+    value,
+    onChange,
+    options,
+    placeholder,
 }: {
     value: string[];
     onChange: (selected: string[]) => void;
-    options: WorkMember[];
+    options: Member[];
     placeholder: string;
 }) => (
     <select
@@ -79,116 +98,107 @@ const MultiSelect = ({
         }}
         className="border rounded px-2 py-1 min-w-[100px] h-20 bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
     >
-        <option disabled value="">{placeholder}</option>
+        <option disabled value="">
+            {placeholder}
+        </option>
         {options.map(opt => (
-            <option key={opt.memberId} value={opt.memberId}>{opt.name}</option>
+            <option key={opt.memberId} value={opt.memberId}>
+                {opt.name}
+            </option>
         ))}
     </select>
 );
 
+// 假資料與假 API，請替換為實際實作
+const fakeMembers: Member[] = [
+    { memberId: '1', name: 'Alice' },
+    { memberId: '2', name: 'Bob' },
+];
+
+const fakeFetchEpics = async (): Promise<WorkEpic[]> => [];
+const fakeAddEpic = async (_epic: WorkEpic): Promise<void> => { };
+const fakeUpdateEpic = async (_id: string, _updates: Partial<WorkEpic>): Promise<void> => { };
+const fakeDeleteEpic = async (_id: string): Promise<void> => { };
+
 export default function WorkEpicPage() {
-    const [workEpics, setWorkEpics] = useState<WorkEpicEntity[]>([]);
-    const [members, setMembers] = useState<WorkMember[]>([]);
+    const [workEpics, setWorkEpics] = useState<WorkEpic[]>([]);
+    const [members, setMembers] = useState<Member[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [editFields, setEditFields] = useState<Partial<WorkEpicEntity>>({});
+    const [editFields, setEditFields] = useState<Partial<WorkEpic>>({});
     const [newTitle, setNewTitle] = useState('');
-    const [newOwner, setNewOwner] = useState<MemberSimple | null>(null);
+    const [newOwner, setNewOwner] = useState<Member | null>(null);
     const [newAddress, setNewAddress] = useState('');
     const [newSiteSupervisors, setNewSiteSupervisors] = useState<string[]>([]);
     const [newSafetyOfficers, setNewSafetyOfficers] = useState<string[]>([]);
     const [newRegion, setNewRegion] = useState<typeof regionOptions[number]>('北部');
 
     useEffect(() => {
-        const fetchData = async () => {
-            const [epics, allMembers] = await Promise.all([
-                getAllWorkEpics(false) as Promise<WorkEpicEntity[]>,
-                getAllWorkMembers()
-            ]);
-            setWorkEpics(epics);
-            setMembers(allMembers);
-        };
-        fetchData();
+        setMembers(fakeMembers);
+        fakeFetchEpics().then(setWorkEpics);
     }, []);
 
-    const getProgress = (epic: WorkEpicEntity) => {
-        let total = 0, completed = 0;
-        if (epic.workTasks) {
-            epic.workTasks.forEach(t => {
-                total += t.targetQuantity;
-                completed += t.completedQuantity;
-            });
-        }
+    const getProgress = (epic: WorkEpic) => {
+        let total = 0,
+            completed = 0;
+        epic.workTasks?.forEach(t => {
+            total += t.targetQuantity;
+            completed += t.completedQuantity;
+        });
         return { completed, total };
     };
 
     const handleAdd = async () => {
         if (!newTitle.trim() || !newOwner || !newAddress.trim()) {
-            alert("請完整填寫標題、負責人、地址");
+            alert('請完整填寫標題、負責人、地址');
             return;
         }
-        const siteSupervisors = members.filter(m => newSiteSupervisors.includes(m.memberId)).map(m => ({
-            memberId: m.memberId, name: m.name
-        }));
-        const safetyOfficers = members.filter(m => newSafetyOfficers.includes(m.memberId)).map(m => ({
-            memberId: m.memberId, name: m.name
-        }));
-        const defaultZone: WorkZoneEntity = {
+        const siteSupervisors = members.filter(m => newSiteSupervisors.includes(m.memberId));
+        const safetyOfficers = members.filter(m => newSafetyOfficers.includes(m.memberId));
+        const defaultZone: WorkZone = {
             zoneId: shortId('zone-'),
-            title: "預設區域",
-            address: "",
-            createdAt: new Date().toISOString(),
-            status: "啟用",
-            region: newRegion
+            title: '預設區域',
+            region: newRegion,
         };
-        const newEpic: WorkEpicEntity = {
+        const newEpic: WorkEpic = {
             epicId: shortId('epic-'),
             title: newTitle,
-            startDate: "",
-            endDate: "",
-            insuranceStatus: "無",
+            startDate: '',
+            endDate: '',
             owner: newOwner,
             siteSupervisors,
             safetyOfficers,
-            status: "待開始",
+            status: '待開始',
             priority: 1,
             region: newRegion,
             address: newAddress,
-            createdAt: new Date().toISOString(),
             workZones: [defaultZone],
-            workTypes: [],
-            workFlows: [],
             workTasks: [],
-            workLoads: []
         };
-        try {
-            await addWorkEpic(newEpic);
-            setWorkEpics(prev => [...prev, newEpic]);
-            setNewTitle('');
-            setNewOwner(null);
-            setNewAddress('');
-            setNewSiteSupervisors([]);
-            setNewSafetyOfficers([]);
-            setNewRegion('北部');
-        } catch {
-            alert("建立失敗，請稍後再試");
-        }
+        await fakeAddEpic(newEpic);
+        setWorkEpics(prev => [...prev, newEpic]);
+        setNewTitle('');
+        setNewOwner(null);
+        setNewAddress('');
+        setNewSiteSupervisors([]);
+        setNewSafetyOfficers([]);
+        setNewRegion('北部');
     };
 
-    const handleEdit = (epic: WorkEpicEntity) => {
+    const handleEdit = (epic: WorkEpic) => {
         setEditingId(epic.epicId);
         setEditFields({ ...epic });
     };
-    const handleEditField = (field: keyof WorkEpicEntity, value: unknown) => {
+    const handleEditField = (field: keyof WorkEpic, value: unknown) => {
         setEditFields(prev => ({ ...prev, [field]: value }));
     };
     const handleSave = async (epicId: string) => {
-        const updates: Partial<WorkEpicEntity> = {
+        const updates: Partial<WorkEpic> = {
             ...editFields,
             startDate: toISO(editFields.startDate as string),
-            endDate: toISO(editFields.endDate as string)
+            endDate: toISO(editFields.endDate as string),
         };
-        await updateWorkEpic(epicId, updates);
-        setWorkEpics(prev => prev.map(e => e.epicId === epicId ? { ...e, ...updates } : e));
+        await fakeUpdateEpic(epicId, updates);
+        setWorkEpics(prev => prev.map(e => (e.epicId === epicId ? { ...e, ...updates } : e)));
         setEditingId(null);
     };
     const handleCancel = () => {
@@ -196,8 +206,8 @@ export default function WorkEpicPage() {
         setEditFields({});
     };
     const handleDelete = async (epicId: string) => {
-        if (window.confirm("確定要刪除這個標的嗎？")) {
-            await deleteWorkEpic(epicId);
+        if (window.confirm('確定要刪除這個標的嗎？')) {
+            await fakeDeleteEpic(epicId);
             setWorkEpics(prev => prev.filter(e => e.epicId !== epicId));
         }
     };
@@ -216,7 +226,7 @@ export default function WorkEpicPage() {
                     value={newOwner?.memberId || ''}
                     onChange={val => {
                         const m = members.find(mm => mm.memberId === val);
-                        setNewOwner(m ? { memberId: m.memberId, name: m.name } : null);
+                        setNewOwner(m ?? null);
                     }}
                     options={members}
                     placeholder="負責人"
@@ -239,7 +249,9 @@ export default function WorkEpicPage() {
                     className="border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
                 >
                     {regionOptions.map(r => (
-                        <option key={r} value={r}>{r}</option>
+                        <option key={r} value={r}>
+                            {r}
+                        </option>
                     ))}
                 </select>
                 <input
@@ -270,7 +282,6 @@ export default function WorkEpicPage() {
                             <th className="px-2 py-2 text-left">優先</th>
                             <th className="px-2 py-2 text-left">區域</th>
                             <th className="px-2 py-2 text-left">地址</th>
-                            <th className="px-2 py-2 text-left">工作區</th>
                             <th className="px-2 py-2">操作</th>
                         </tr>
                     </thead>
@@ -282,7 +293,9 @@ export default function WorkEpicPage() {
                                 <tr key={epic.epicId} className="border-b border-gray-200 dark:border-gray-800">
                                     {editing ? (
                                         <>
-                                            <td className="px-2 py-1"><ProgressBar {...progress} /></td>
+                                            <td className="px-2 py-1">
+                                                <ProgressBar {...progress} />
+                                            </td>
                                             <td className="px-2 py-1">
                                                 <input
                                                     value={editFields.title || ''}
@@ -311,7 +324,7 @@ export default function WorkEpicPage() {
                                                     value={editFields.owner?.memberId || ''}
                                                     onChange={val => {
                                                         const m = members.find(mm => mm.memberId === val);
-                                                        handleEditField('owner', m ? { memberId: m.memberId, name: m.name } : undefined);
+                                                        handleEditField('owner', m);
                                                     }}
                                                     options={members}
                                                     placeholder="負責人"
@@ -319,12 +332,13 @@ export default function WorkEpicPage() {
                                             </td>
                                             <td className="px-2 py-1">
                                                 <MultiSelect
-                                                    value={Array.isArray(editFields.siteSupervisors) ? editFields.siteSupervisors.map(s => s.memberId) : []}
+                                                    value={
+                                                        Array.isArray(editFields.siteSupervisors)
+                                                            ? editFields.siteSupervisors.map(s => s.memberId)
+                                                            : []
+                                                    }
                                                     onChange={selected => {
-                                                        const selectedMembers = members.filter(m => selected.includes(m.memberId)).map(m => ({
-                                                            memberId: m.memberId,
-                                                            name: m.name
-                                                        }));
+                                                        const selectedMembers = members.filter(m => selected.includes(m.memberId));
                                                         handleEditField('siteSupervisors', selectedMembers);
                                                     }}
                                                     options={members}
@@ -333,12 +347,13 @@ export default function WorkEpicPage() {
                                             </td>
                                             <td className="px-2 py-1">
                                                 <MultiSelect
-                                                    value={Array.isArray(editFields.safetyOfficers) ? editFields.safetyOfficers.map(s => s.memberId) : []}
+                                                    value={
+                                                        Array.isArray(editFields.safetyOfficers)
+                                                            ? editFields.safetyOfficers.map(s => s.memberId)
+                                                            : []
+                                                    }
                                                     onChange={selected => {
-                                                        const selectedMembers = members.filter(m => selected.includes(m.memberId)).map(m => ({
-                                                            memberId: m.memberId,
-                                                            name: m.name
-                                                        }));
+                                                        const selectedMembers = members.filter(m => selected.includes(m.memberId));
                                                         handleEditField('safetyOfficers', selectedMembers);
                                                     }}
                                                     options={members}
@@ -372,7 +387,9 @@ export default function WorkEpicPage() {
                                                     className="border rounded px-2 py-1 w-full bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
                                                 >
                                                     {regionOptions.map(r => (
-                                                        <option key={r} value={r}>{r}</option>
+                                                        <option key={r} value={r}>
+                                                            {r}
+                                                        </option>
                                                     ))}
                                                 </select>
                                             </td>
@@ -383,36 +400,37 @@ export default function WorkEpicPage() {
                                                     className="border rounded px-2 py-1 w-full bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
                                                 />
                                             </td>
-                                            <td className="px-2 py-1">
-                                                {(editFields.workZones && editFields.workZones.length > 0)
-                                                    ? editFields.workZones.map(z => z.title).join(', ')
-                                                    : '—'}
-                                            </td>
                                             <td className="px-2 py-1 flex gap-2">
                                                 <button
                                                     onClick={() => handleSave(epic.epicId)}
                                                     className="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded transition"
-                                                >儲存</button>
+                                                >
+                                                    儲存
+                                                </button>
                                                 <button
                                                     onClick={handleCancel}
                                                     className="bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:text-white px-2 py-1 rounded transition"
-                                                >取消</button>
+                                                >
+                                                    取消
+                                                </button>
                                             </td>
                                         </>
                                     ) : (
                                         <>
-                                            <td className="px-2 py-1"><ProgressBar {...progress} /></td>
+                                            <td className="px-2 py-1">
+                                                <ProgressBar {...progress} />
+                                            </td>
                                             <td className="px-2 py-1">{epic.title}</td>
                                             <td className="px-2 py-1">{epic.startDate?.slice(0, 10)}</td>
                                             <td className="px-2 py-1">{epic.endDate?.slice(0, 10)}</td>
                                             <td className="px-2 py-1">{epic.owner?.name}</td>
                                             <td className="px-2 py-1">
-                                                {(epic.siteSupervisors && epic.siteSupervisors.length > 0)
+                                                {epic.siteSupervisors.length > 0
                                                     ? epic.siteSupervisors.map(s => s.name).join(', ')
                                                     : '—'}
                                             </td>
                                             <td className="px-2 py-1">
-                                                {(epic.safetyOfficers && epic.safetyOfficers.length > 0)
+                                                {epic.safetyOfficers.length > 0
                                                     ? epic.safetyOfficers.map(s => s.name).join(', ')
                                                     : '—'}
                                             </td>
@@ -420,20 +438,19 @@ export default function WorkEpicPage() {
                                             <td className="px-2 py-1">{epic.priority}</td>
                                             <td className="px-2 py-1">{epic.region}</td>
                                             <td className="px-2 py-1">{epic.address}</td>
-                                            <td className="px-2 py-1">
-                                                {(epic.workZones && epic.workZones.length > 0)
-                                                    ? epic.workZones.map(z => z.title).join(', ')
-                                                    : '—'}
-                                            </td>
                                             <td className="px-2 py-1 flex gap-2">
                                                 <button
                                                     onClick={() => handleEdit(epic)}
                                                     className="bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded transition"
-                                                >編輯</button>
+                                                >
+                                                    編輯
+                                                </button>
                                                 <button
                                                     onClick={() => handleDelete(epic.epicId)}
                                                     className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition"
-                                                >刪除</button>
+                                                >
+                                                    刪除
+                                                </button>
                                             </td>
                                         </>
                                     )}
@@ -443,7 +460,6 @@ export default function WorkEpicPage() {
                     </tbody>
                 </table>
             </div>
-            <AdminBottomNav />
         </main>
     );
 }

@@ -3,12 +3,7 @@
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
 import { addDays, differenceInMilliseconds, parseISO } from 'date-fns'
 import { getApp, getApps, initializeApp } from 'firebase/app'
-import {
-	collection,
-	doc,
-	getFirestore,
-	updateDoc
-} from 'firebase/firestore'
+import { collection, doc, getFirestore, updateDoc } from 'firebase/firestore'
 import React, { useEffect, useMemo, useState } from 'react'
 import Timeline, { TimelineGroupBase, TimelineItemBase } from 'react-calendar-timeline'
 import 'react-calendar-timeline/style.css'
@@ -28,6 +23,7 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
 const firestore = getFirestore(app)
 
 /**
+ * @typedef WorkLoadEntity
  * 工作負載實體
  */
 interface WorkLoadEntity {
@@ -39,6 +35,7 @@ interface WorkLoadEntity {
 }
 
 /**
+ * @typedef WorkEpicEntity
  * 史詩實體
  */
 interface WorkEpicEntity {
@@ -59,31 +56,31 @@ const WorkScheduleManagementPage: React.FC = () => {
 		setEpics(es)
 	}, [epicSnapshot])
 
-	const groups: TimelineGroupBase[] = useMemo(
+	const groups = useMemo<TimelineGroupBase[]>(
 		() => epics.map(e => ({ id: e.epicId, title: e.title })),
 		[epics]
 	)
 
-	const items: TimelineItemBase<Date>[] = useMemo(() =>
-		epics.flatMap(e =>
-			(e.workLoads || [])
-				.filter(l => l.plannedStartTime)
-				.map(l => {
-					const start = parseISO(l.plannedStartTime)
-					const end = l.plannedEndTime ? parseISO(l.plannedEndTime) : addDays(start, 1)
-					return {
-						id: l.loadId,
-						group: e.epicId,
-						title: l.title,
-						start_time: start,
-						end_time: end
-					}
-				})
-		), [epics])
+	const items = useMemo<TimelineItemBase<Date>[]>(
+		() =>
+			epics.flatMap(e =>
+				(e.workLoads || [])
+					.filter(l => l.plannedStartTime)
+					.map(l => {
+						const start = parseISO(l.plannedStartTime)
+						const end = l.plannedEndTime ? parseISO(l.plannedEndTime) : addDays(start, 1)
+						return {
+							id: l.loadId,
+							group: e.epicId,
+							title: l.title,
+							start_time: start,
+							end_time: end
+						}
+					})
+			),
+		[epics]
+	)
 
-	/**
-	 * 計算時間軸的預設顯示範圍
-	 */
 	const { defaultTimeStart, defaultTimeEnd } = useMemo(() => {
 		if (items.length === 0) {
 			const now = new Date()
@@ -102,10 +99,11 @@ const WorkScheduleManagementPage: React.FC = () => {
 		}
 	}, [items])
 
-	/**
-	 * 移動項目時的處理
-	 */
-	const handleItemMove = async (itemId: string, dragTime: number, newGroupOrder: number): Promise<void> => {
+	const handleItemMove = async (
+		itemId: string,
+		dragTime: number,
+		newGroupOrder: number
+	): Promise<void> => {
 		const item = items.find(i => i.id === itemId)
 		if (!item) return
 		const oldEpic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
@@ -141,8 +139,8 @@ const WorkScheduleManagementPage: React.FC = () => {
 	}
 
 	return (
-		<div style={{ minHeight: '100vh', background: '#111' }}>
-			<main style={{ width: '100%', height: 500, background: '#fff' }}>
+		<div className="min-h-screen bg-white dark:bg-neutral-900 transition-colors">
+			<main className="w-full h-[500px] bg-white dark:bg-neutral-800">
 				<Timeline
 					groups={groups}
 					items={items}
