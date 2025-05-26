@@ -5,7 +5,7 @@ import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/
 import { UserBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav'
 import { addDays, subDays } from 'date-fns'
 import { collection, CollectionReference, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
-import * as React from "react"; // 必須加這行
+import * as React from "react";
 import { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataSet, Timeline } from 'vis-timeline/standalone'
@@ -133,13 +133,13 @@ const WorkSchedulePage = (): React.ReactElement => {
   }, [epics])
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col">
+    <div className="h-screen bg-gradient-to-b from-blue-100 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex flex-col overflow-hidden">
       {/* Timeline 區塊 */}
-      <div className="w-full flex-grow flex items-center justify-center" style={{ minHeight: 320, maxHeight: 600 }}>
+      <div className="flex flex-1" style={{ minHeight: 320, maxHeight: 600, paddingBottom: 140 }}>
         <div
           ref={timelineRef}
-          className="bg-white dark:bg-gray-900 border rounded-md shadow w-full"
-          style={{ height: '65vh' }}
+          className="bg-white dark:bg-gray-900 border rounded-md shadow"
+          style={{ width: '100vw', minWidth: '100vw', height: '65vh' }}
         />
       </div>
 

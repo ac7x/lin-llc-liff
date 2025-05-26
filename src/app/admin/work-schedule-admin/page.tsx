@@ -20,6 +20,7 @@ import {
 	updateWorkEpicWorkLoads
 } from './work-schedule-admin.action'
 
+/** 工作負載資料結構 */
 interface WorkLoadEntity {
 	loadId: string
 	title: string
@@ -27,27 +28,42 @@ interface WorkLoadEntity {
 	plannedStartTime: string
 	plannedEndTime: string
 }
+
+/** 工作Epic資料結構 */
 interface WorkEpicEntity {
 	epicId: string
 	title: string
 	workLoads?: WorkLoadEntity[]
 }
+
 type LooseWorkLoad = WorkLoadEntity & { epicId: string; epicTitle: string }
 
+/** 解析Epic資料快照 */
 const parseEpicSnapshot = (
 	docs: WorkEpicEntity[]
 ): { epics: WorkEpicEntity[]; unplanned: LooseWorkLoad[] } => {
 	const epics = docs.map(doc => ({ ...doc, epicId: doc.epicId }))
 	const unplanned = epics.flatMap(e =>
-		(e.workLoads || [])
+		(e.workLoads ?? [])
 			.filter(l => !l.plannedStartTime)
 			.map(l => ({ ...l, epicId: e.epicId, epicTitle: e.title }))
 	)
 	return { epics, unplanned }
 }
 
-const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) =>
-	`${wl.title || '（無標題）'} | ${Array.isArray(wl.executor) ? wl.executor.join(', ') : wl.executor || '（無執行者）'}`
+/** 顯示工作負載資訊內容 */
+const getWorkloadContent = (wl: Pick<WorkLoadEntity, 'title' | 'executor'>) => {
+	const title = wl.title || t('No Title')
+	const executor = Array.isArray(wl.executor) && wl.executor.length > 0
+		? wl.executor.join(', ')
+		: t('No Executor')
+	return `${title} | ${executor}`
+}
+
+/** i18n 字串轉換器（請根據專案實際整合） */
+function t(str: string): string {
+	return str
+}
 
 const WorkScheduleAdminPage: React.FC = () => {
 	const [epics, setEpics] = useState<WorkEpicEntity[]>([])
@@ -55,9 +71,9 @@ const WorkScheduleAdminPage: React.FC = () => {
 
 	const fetchEpics = async (): Promise<void> => {
 		const docs = await getAllWorkEpics()
-		const { epics, unplanned } = parseEpicSnapshot(docs as WorkEpicEntity[])
-		setEpics(epics)
-		setUnplanned(unplanned)
+		const { epics: newEpics, unplanned: newUnplanned } = parseEpicSnapshot(docs as WorkEpicEntity[])
+		setEpics(newEpics)
+		setUnplanned(newUnplanned)
 	}
 	useEffect(() => { fetchEpics() }, [])
 
@@ -78,7 +94,7 @@ const WorkScheduleAdminPage: React.FC = () => {
 
 	const items = useMemo(() =>
 		epics.flatMap(e =>
-			(e.workLoads || [])
+			(e.workLoads ?? [])
 				.filter(l => l.plannedStartTime)
 				.map(l => {
 					const start = parseISO(l.plannedStartTime)
@@ -97,9 +113,9 @@ const WorkScheduleAdminPage: React.FC = () => {
 	const handleItemMove = async (itemId: string, dragTime: number, newGroupOrder: number): Promise<void> => {
 		const item = items.find(i => i.id === itemId)
 		if (!item) return
-		const oldEpic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+		const oldEpic = epics.find(e => (e.workLoads ?? []).some(wl => wl.loadId === itemId))
 		if (!oldEpic) return
-		const wlIdx = (oldEpic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+		const wlIdx = (oldEpic.workLoads ?? []).findIndex(wl => wl.loadId === itemId)
 		if (wlIdx === -1) return
 		const newGroupId = groups[newGroupOrder].id
 		const newEpic = epics.find(e => e.epicId === newGroupId)
@@ -108,18 +124,18 @@ const WorkScheduleAdminPage: React.FC = () => {
 		const duration = differenceInMilliseconds(item.end_time, item.start_time)
 		const newEnd = new Date(newStart.getTime() + duration)
 		if (oldEpic.epicId !== newEpic.epicId) {
-			const updatedOldWorkLoads = (oldEpic.workLoads || []).filter(wl => wl.loadId !== itemId)
+			const updatedOldWorkLoads = (oldEpic.workLoads ?? []).filter(wl => wl.loadId !== itemId)
 			await updateWorkEpicWorkLoads(oldEpic.epicId, updatedOldWorkLoads)
-			const oldWorkload = (oldEpic.workLoads || [])[wlIdx]
+			const oldWorkload = (oldEpic.workLoads ?? [])[wlIdx]
 			const newWorkLoad: WorkLoadEntity = {
 				...oldWorkload,
 				plannedStartTime: newStart.toISOString(),
 				plannedEndTime: newEnd.toISOString()
 			}
-			const updatedNewWorkLoads = [...(newEpic.workLoads || []), newWorkLoad]
+			const updatedNewWorkLoads = [...(newEpic.workLoads ?? []), newWorkLoad]
 			await updateWorkEpicWorkLoads(newEpic.epicId, updatedNewWorkLoads)
 		} else {
-			const newWorkLoads = [...(oldEpic.workLoads || [])]
+			const newWorkLoads = [...(oldEpic.workLoads ?? [])]
 			newWorkLoads[wlIdx] = {
 				...newWorkLoads[wlIdx],
 				plannedStartTime: newStart.toISOString(),
@@ -131,16 +147,16 @@ const WorkScheduleAdminPage: React.FC = () => {
 	}
 
 	const handleItemResize = async (itemId: string, time: number, edge: 'left' | 'right'): Promise<void> => {
-		const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+		const epic = epics.find(e => (e.workLoads ?? []).some(wl => wl.loadId === itemId))
 		if (!epic) return
-		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+		const wlIdx = (epic.workLoads ?? []).findIndex(wl => wl.loadId === itemId)
 		if (wlIdx === -1) return
-		const wl = (epic.workLoads || [])[wlIdx]
+		const wl = (epic.workLoads ?? [])[wlIdx]
 		let newStart = parseISO(wl.plannedStartTime)
 		let newEnd = wl.plannedEndTime ? parseISO(wl.plannedEndTime) : undefined
 		if (edge === 'left') newStart = new Date(time)
 		if (edge === 'right') newEnd = new Date(time)
-		const newWorkLoads = [...(epic.workLoads || [])]
+		const newWorkLoads = [...(epic.workLoads ?? [])]
 		newWorkLoads[wlIdx] = {
 			...wl,
 			plannedStartTime: newStart.toISOString(),
@@ -151,11 +167,11 @@ const WorkScheduleAdminPage: React.FC = () => {
 	}
 
 	const handleItemRemove = async (itemId: string): Promise<void> => {
-		const epic = epics.find(e => (e.workLoads || []).some(wl => wl.loadId === itemId))
+		const epic = epics.find(e => (e.workLoads ?? []).some(wl => wl.loadId === itemId))
 		if (!epic) return
-		const wlIdx = (epic.workLoads || []).findIndex(wl => wl.loadId === itemId)
+		const wlIdx = (epic.workLoads ?? []).findIndex(wl => wl.loadId === itemId)
 		if (wlIdx === -1) return
-		const newWorkLoads = [...(epic.workLoads || [])]
+		const newWorkLoads = [...(epic.workLoads ?? [])]
 		newWorkLoads[wlIdx] = { ...newWorkLoads[wlIdx], plannedStartTime: '', plannedEndTime: '' }
 		await updateWorkEpicWorkLoads(epic.epicId, newWorkLoads)
 		await fetchEpics()
@@ -165,16 +181,16 @@ const WorkScheduleAdminPage: React.FC = () => {
 	const defaultTimeStart = subDays(startOfDay(now), 7)
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
-	const handleDragStart = (e: React.DragEvent, wl: LooseWorkLoad): void => {
+	const handleDragStart = (e: React.DragEvent<HTMLDivElement>, wl: LooseWorkLoad): void => {
 		e.dataTransfer.setData('application/json', JSON.stringify(wl))
 	}
 
 	const timelineRef = useRef<HTMLDivElement>(null)
 
-	const handleTimelineDragOver = (e: React.DragEvent): void => {
+	const handleTimelineDragOver = (e: React.DragEvent<HTMLDivElement>): void => {
 		e.preventDefault()
 	}
-	const handleTimelineDrop = async (e: React.DragEvent): Promise<void> => {
+	const handleTimelineDrop = async (e: React.DragEvent<HTMLDivElement>): Promise<void> => {
 		e.preventDefault()
 		const data = e.dataTransfer.getData('application/json')
 		if (!data) return
@@ -195,7 +211,7 @@ const WorkScheduleAdminPage: React.FC = () => {
 		const end = addDays(start, 1)
 		const epic = epics.find(e => e.epicId === group.id)
 		if (!epic) return
-		const newWorkLoads = [...(epic.workLoads || []), {
+		const newWorkLoads = [...(epic.workLoads ?? []), {
 			...wl,
 			plannedStartTime: start.toISOString(),
 			plannedEndTime: end.toISOString()
@@ -205,7 +221,7 @@ const WorkScheduleAdminPage: React.FC = () => {
 	}
 
 	return (
-		<div className="min-h-screen w-full bg-black dark:bg-neutral-900 flex flex-col">
+		<div className="min-h-screen w-full bg-white dark:bg-neutral-900 flex flex-col">
 			<div className="flex-1 w-full flex items-center justify-center relative overflow-hidden">
 				<div
 					ref={timelineRef}
@@ -251,12 +267,12 @@ const WorkScheduleAdminPage: React.FC = () => {
 			<div className="flex-none min-h-[25vh] max-h-[35vh] w-full bg-blue-50/80 dark:bg-gray-800/80 rounded-t-3xl shadow-inner transition-colors">
 				<div className="w-full h-full flex flex-col p-4 mx-auto">
 					<h2 className="text-lg font-bold text-center text-blue-800 dark:text-blue-300 mb-4 tracking-wide transition-colors">
-						{"未排班工作"}
+						{t('Unplanned Work')}
 					</h2>
 					{unplanned.length === 0 ? (
 						<div className="flex items-center justify-center w-full h-full min-h-[60px]">
 							<span className="text-gray-400 dark:text-gray-500 text-center transition-colors">
-								（無未排班工作）
+								{t('No Unplanned Work')}
 							</span>
 						</div>
 					) : (
@@ -264,16 +280,18 @@ const WorkScheduleAdminPage: React.FC = () => {
 							{unplanned.map(wl => (
 								<div
 									key={wl.loadId}
-									className="bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors hover:shadow-md flex flex-col gap-2 min-w-[180px] max-w-full"
-									title={`來自 ${wl.epicTitle}`}
+									className="bg-white/90 dark:bg-gray-900/90 border border-blue-200 dark:border-blue-700 rounded-xl px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors hover:shadow-md flex flex-col min-w-[160px] max-w-[240px] cursor-grab"
+									title={`${t('From')} ${wl.epicTitle}`}
 									draggable
 									onDragStart={e => handleDragStart(e, wl)}
 								>
 									<div className="font-medium text-gray-700 dark:text-gray-300 text-sm line-clamp-2 transition-colors">
-										{wl.title || "（無標題）"}
+										{wl.title || t('No Title')}
 									</div>
 									<div className="text-xs text-blue-600 dark:text-blue-400 transition-colors">
-										{Array.isArray(wl.executor) ? wl.executor.join(", ") : wl.executor || "（無執行者）"}
+										{Array.isArray(wl.executor) && wl.executor.length > 0
+											? wl.executor.join(', ')
+											: t('No Executor')}
 									</div>
 								</div>
 							))}
