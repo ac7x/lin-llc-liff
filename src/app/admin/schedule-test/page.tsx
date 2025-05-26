@@ -204,33 +204,35 @@ const WorkScheduleManagementPage: React.FC = () => {
 	const defaultTimeEnd = addDays(endOfDay(now), 14)
 
 	return (
-		<div>
+		<div className="w-full h-full">
 			<h1>工作排程管理</h1>
-			<Timeline
-				groups={groups}
-				items={items}
-				defaultTimeStart={defaultTimeStart}
-				defaultTimeEnd={defaultTimeEnd}
-				canMove
-				canResize="both"
-				canChangeGroup
-				stackItems
-				onItemMove={handleItemMove}
-				onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
-				onItemDoubleClick={handleItemRemove}
-				itemRenderer={({ item, getItemProps, getResizeProps }) => {
-					const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
-					const dateStr = `${format(item.start_time as Date, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time as Date, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
-					return (
-						<div {...getItemProps({ style: { background: '#fbbf24', color: '#222', borderRadius: 6 } })}>
-							<div {...leftResizeProps} />
-							<span>{item.title}</span>
-							<div>{dateStr}</div>
-							<div {...rightResizeProps} />
-						</div>
-					)
-				}}
-			/>
+			<div className="w-full h-full">
+				<Timeline
+					groups={groups}
+					items={items}
+					defaultTimeStart={defaultTimeStart}
+					defaultTimeEnd={defaultTimeEnd}
+					canMove
+					canResize="both"
+					canChangeGroup
+					stackItems
+					onItemMove={handleItemMove}
+					onItemResize={(itemId, time, edge) => handleItemResize(itemId as string, time, edge)}
+					onItemDoubleClick={handleItemRemove}
+					itemRenderer={({ item, getItemProps, getResizeProps }) => {
+						const { left: leftResizeProps, right: rightResizeProps } = getResizeProps()
+						const dateStr = `${format(item.start_time as Date, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })} - ${format(item.end_time as Date, 'yyyy/MM/dd (EEE) HH:mm', { locale: zhTW })}`
+						return (
+							<div {...getItemProps({ style: { background: '#fbbf24', color: '#222', borderRadius: 6 } })}>
+								<div {...leftResizeProps} />
+								<span>{item.title}</span>
+								<div>{dateStr}</div>
+								<div {...rightResizeProps} />
+							</div>
+						)
+					}}
+				/>
+			</div>
 			<div>
 				<h2>未排班工作</h2>
 				{unplanned.length === 0 ? (
