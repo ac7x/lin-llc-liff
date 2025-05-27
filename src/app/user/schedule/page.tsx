@@ -2,7 +2,6 @@
 
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client'
 import { UserBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav'
-import '@/styles/timeline.scss'
 import '@/styles/vis-timeline.css'
 import { addDays, subDays } from 'date-fns'
 import { collection, CollectionReference, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
