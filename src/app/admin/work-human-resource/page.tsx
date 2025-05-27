@@ -193,10 +193,10 @@ export default function WorkHumanPage() {
                                 </select>
                             </label>
                         </div>
-                        {errorMembers && <div className='text-red-600'>錯誤：{errorMembers.message}</div>}
-                        <div className='flex flex-row flex-wrap gap-4 justify-start items-stretch'>
+                        {/* 這裡 flex-col 保證一行一個卡片，w-full 讓卡片寬度佔滿 */}
+                        <div className='flex flex-col gap-4 justify-start items-stretch'>
                             {filteredMembers.map(member => (
-                                <div key={member.memberId} className='p-4 bg-card rounded-lg shadow border border-border min-w-[320px] flex-1' style={{ maxWidth: 350 }}>
+                                <div key={member.memberId} className='p-4 bg-card rounded-lg shadow border border-border w-full'>
                                     {editingMember === member.memberId ? (
                                         <div className='flex flex-col gap-2'>
                                             <input type='text' value={updatedFields.name ?? member.name}
