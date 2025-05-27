@@ -3,12 +3,12 @@
 import { firestore } from '@/modules/shared/infrastructure/persistence/firebase/firebase-client'
 import { UserBottomNav } from '@/modules/shared/interfaces/navigation/user-bottom-nav'
 import '@/styles/timeline.scss'
+import '@/styles/vis-timeline.css'
 import { addDays, subDays } from 'date-fns'
 import { collection, CollectionReference, DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
 import React, { useEffect, useRef, useState } from 'react'
 import { useCollection } from 'react-firebase-hooks/firestore'
 import { DataSet, Timeline } from 'vis-timeline/standalone'
-import 'vis-timeline/styles/vis-timeline-graph2d.min.css'
 
 interface WorkLoadEntity {
   loadId: string
