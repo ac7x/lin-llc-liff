@@ -136,6 +136,24 @@ export default function WorkHumanPage() {
         setSelectedMembers([])
     }
 
+    /**
+     * Handle adding a virtual user
+     */
+    async function handleAddVirtualUser(): Promise<void> {
+        const virtualUser: WorkMember = {
+            memberId: `virtual-${Date.now()}`,
+            name: '虛擬用戶',
+            role: '未指定',
+            skills: [],
+            availability: '空閒',
+            status: '在職',
+            isActive: true,
+            lastActiveTime: new Date().toISOString(),
+            contactInfo: {}
+        }
+        await addDoc(membersRef, virtualUser)
+    }
+
     const skills: WorkSkill[] = skillsSnap?.docs.map(d => d.data() as WorkSkill) ?? []
     const members: WorkMember[] = membersSnap?.docs.map(d => d.data() as WorkMember) ?? []
 
@@ -193,6 +211,12 @@ export default function WorkHumanPage() {
                                 </select>
                             </label>
                         </div>
+                        <button
+                            onClick={handleAddVirtualUser}
+                            className='bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded mb-4'
+                        >
+                            新增虛擬用戶
+                        </button>
                         {/* 這裡 flex-col 保證一行一個卡片，w-full 讓卡片寬度佔滿 */}
                         <div className='flex flex-col gap-4 justify-start items-stretch'>
                             {filteredMembers.map(member => (
