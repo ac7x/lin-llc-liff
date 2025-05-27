@@ -1,7 +1,7 @@
 'use client'
 
 import { AdminBottomNav } from '@/modules/shared/interfaces/navigation/admin-bottom-nav'
-import '@/styles/timeline.scss'
+import '@/styles/react-calendar-timeline.scss'
 import {
 	addDays,
 	differenceInMilliseconds,
