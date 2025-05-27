@@ -76,7 +76,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 		setUnplanned(unplanned)
 	}, [epicSnapshot])
 
-	const groupCount = 15
+	const groupCount = 5
 	const groups: TimelineGroupBase[] = useMemo(() => {
 		const filledEpics: WorkEpicEntity[] = [...epics]
 		while (filledEpics.length < groupCount) {
