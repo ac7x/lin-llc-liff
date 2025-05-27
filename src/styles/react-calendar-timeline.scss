@@ -67,6 +67,7 @@ $date-header-color: #fff !default;
         position: relative;
         box-sizing: border-box;
         border-right: $border-width solid $border-color;
+        width: 75px; // 原本約 150px，改為一半
 
         &.rct-sidebar-right {
             border-right: 0;
@@ -151,6 +152,7 @@ $date-header-color: #fff !default;
         font-size: 14px;
         background-color: $date-header-background;
         border-left: 2px solid $border-color;
+        min-width: 160px; // 加大一倍
     }
 
     .rct-dateHeader-primary {

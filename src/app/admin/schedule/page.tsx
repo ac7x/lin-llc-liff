@@ -276,7 +276,7 @@ const WorkScheduleManagementPage: React.FC = () => {
 							minZoom={7 * 24 * 60 * 60 * 1000}
 							maxZoom={30 * 24 * 60 * 60 * 1000}
 							lineHeight={40}
-							sidebarWidth={150}
+							sidebarWidth={75} // 原本 150，改為一半
 							timeSteps={{
 								second: 1,
 								minute: 1,
