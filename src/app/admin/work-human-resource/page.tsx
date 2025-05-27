@@ -193,10 +193,10 @@ export default function WorkHumanPage() {
                                 </select>
                             </label>
                         </div>
-                        {/* 這裡 flex-col 保證一行一個卡片，w-full 讓卡片寬度佔滿 */}
-                        <div className='flex flex-col gap-4 justify-start items-stretch'>
+                        {errorMembers && <div className='text-red-600'>錯誤：{errorMembers.message}</div>}
+                        <div className='flex flex-row flex-wrap gap-4 justify-start items-stretch'>
                             {filteredMembers.map(member => (
-                                <div key={member.memberId} className='p-4 bg-card rounded-lg shadow border border-border w-full'>
+                                <div key={member.memberId} className='p-4 bg-card rounded-lg shadow border border-border min-w-[320px] flex-1' style={{ maxWidth: 350 }}>
                                     {editingMember === member.memberId ? (
                                         <div className='flex flex-col gap-2'>
                                             <input type='text' value={updatedFields.name ?? member.name}
@@ -228,18 +228,16 @@ export default function WorkHumanPage() {
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className='flex flex-col gap-1'>
-                                            <div className='font-semibold text-lg'>{member.name}</div>
-                                            <div>角色: {member.role}</div>
-                                            <div>技能: {member.skills.map(skillId => skillsMap[skillId] || skillId).join(', ')}</div>
-                                            <div className='flex gap-2 mt-2'>
-                                                <button onClick={() => setEditingMember(member.memberId)} className='text-blue-600 hover:underline' type="button">編輯</button>
-                                                <button className='text-red-600 hover:underline' onClick={async () => {
-                                                    if (window.confirm('確定要刪除嗎？')) {
-                                                        await deleteDoc(doc(firestore, 'workMember', member.memberId))
-                                                    }
-                                                }} type="button">刪除</button>
-                                            </div>
+                                        <div className='flex flex-row gap-4 items-center mb-2'>
+                                            <span className='font-semibold text-lg'>{member.name}</span>
+                                            <span>角色: {member.role}</span>
+                                            <span>技能: {member.skills.map(skillId => skillsMap[skillId] || skillId).join(', ')}</span>
+                                            <button onClick={() => setEditingMember(member.memberId)} className='text-blue-600 hover:underline' type="button">編輯</button>
+                                            <button className='text-red-600 hover:underline' onClick={async () => {
+                                                if (window.confirm('確定要刪除嗎？')) {
+                                                    await deleteDoc(doc(firestore, 'workMember', member.memberId))
+                                                }
+                                            }} type="button">刪除</button>
                                         </div>
                                     )}
                                 </div>
