@@ -1,23 +1,23 @@
 $item-color: white !default;
-$item-background: #8B8C98 !default; // Future Dusk 主色
-$item-border: 1px solid #767783 !default; // Future Dusk 深色邊框
+$item-background: #2196f3 !default;
+$item-border: 1px solid #1a6fb3 !default;
 $item-selected-color: white !default;
-$item-selected-background: #06C755 !default; // LINE 綠色作為強調色
-$item-selected-border: 1px solid #05b34c !default; // LINE 綠色深色邊框
+$item-selected-background: #ffc107 !default;
+$item-selected-border: 1px solid #ff9800 !default;
 
 $row-background-even: transparent !default;
-$row-background-odd: rgba(139, 140, 152, 0.05) !default; // Future Dusk 淡色
+$row-background-odd: rgba(0, 0, 0, 0.05) !default;
 
-$border-color: #e9e9ec !default; // Future Dusk 淺色系
+$border-color: #bbb !default;
 $border-width: 1px;
 $thick-border-width: 2px;
 $sidebar-color: #ffffff !default;
-$sidebar-background-color: #8B8C98 !default; // Future Dusk 主色
+$sidebar-background-color: #c52020 !default;
 $list-item-padding: 0 4px;
-$weekend: rgba(139, 140, 152, 0.08) !default; // Future Dusk 週末背景
+$weekend: rgba(250, 246, 225, 0.5) !default;
 
-$date-header-background: #000000 !default; // Future Dusk 表頭背景
-$date-header-color: #8B8C98 !default; // Future Dusk 文字色
+$date-header-background: rgb(240, 240, 240) !default;
+$date-header-color: #fff !default;
 
 .react-calendar-timeline {
     * {
@@ -32,7 +32,7 @@ $date-header-color: #8B8C98 !default; // Future Dusk 文字色
 
     .rct-scroll {
         display: inline-block;
-        white-space: normal;
+        white-space: normal; // was set to nowrap in .rct-outer
         vertical-align: top;
         overflow-x: scroll;
         overflow-y: hidden;
@@ -40,67 +40,74 @@ $date-header-color: #8B8C98 !default; // Future Dusk 文字色
         touch-action: none;
     }
 
-    .rct-item:hover {
-        z-index: 88;
-    }
+    .rct-item {
 
-    .rct-item .rct-item-content {
-        position: sticky;
-        position: -webkit-sticky;
-        left: 0;
-        overflow: hidden;
-        display: inline-block;
-        border-radius: 2px;
-        padding: 0 6px;
-        height: 100%;
+
+        &:hover {
+            z-index: 88;
+        }
+
+        .rct-item-content {
+            position: sticky;
+            position: -webkit-sticky;
+            left: 0px;
+            overflow: hidden;
+            display: inline-block;
+            border-radius: 2px;
+            padding: 0 6px;
+            height: 100%;
+        }
     }
 
     .rct-sidebar {
         overflow: hidden;
-        white-space: normal;
+        white-space: normal; // was set to nowrap in .rct-outer
         display: inline-block;
         vertical-align: top;
         position: relative;
         box-sizing: border-box;
-        border-right: 1px solid #444; // 深色邊框
+        border-right: $border-width solid $border-color;
 
         &.rct-sidebar-right {
             border-right: 0;
-            border-left: 1px solid #444;
+            border-left: $border-width solid $border-color;
         }
 
         .rct-sidebar-row {
-            padding: 0 4px;
+            padding: $list-item-padding;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
             box-sizing: border-box;
             margin: 0;
-            border-bottom: 1px solid #444;
-            color: #ededed; // 亮色字體
+            border-bottom: $border-width solid $border-color;
 
             &.rct-sidebar-row-odd {
-                background: #222; // 深色
+                background: $row-background-odd;
             }
 
             &.rct-sidebar-row-even {
-                background: transparent;
+                background: $row-background-even;
             }
         }
     }
 
-    .rct-vertical-lines .rct-vl {
-        position: absolute;
-        border-left: 1px solid #444;
-        z-index: 30;
+    // TODO: rename or remove once we make breaking change to rename vertical lines
+    // to columns
+    .rct-vertical-lines {
+        .rct-vl {
+            position: absolute;
+            border-left: 1px solid $border-color;
+            z-index: 30;
 
-        &.rct-vl-first {
-            border-left-width: 2px;
-        }
+            &.rct-vl-first {
+                border-left-width: 2px;
+            }
 
-        &.rct-day-6,
-        &.rct-day-0 {
-            background: #222; // 週末深色
+            &.rct-day-6,
+            &.rct-day-0 {
+                background: $weekend;
+            }
         }
     }
 
@@ -112,53 +119,54 @@ $date-header-color: #8B8C98 !default; // Future Dusk 文字色
 
         .rct-hl-even,
         .rct-hl-odd {
-            border-bottom: 1px solid #444;
+            border-bottom: $border-width solid $border-color;
             box-sizing: border-box;
             z-index: 40;
         }
 
         .rct-hl-odd {
-            background: #222;
+            background: $row-background-odd;
         }
 
         .rct-hl-even {
-            background: transparent;
+            background: $row-background-even;
         }
     }
 
     .rct-cursor-line {
         position: absolute;
         width: 2px;
-        background: #06C755; // LINE 綠
+        background: $item-background;
         z-index: 51;
     }
+
 
     .rct-dateHeader {
         display: flex;
         align-items: center;
         justify-content: center;
         height: 100%;
-        border-bottom: 1px solid #8B4C8B;
+        border-bottom: 1px solid $border-color;
         cursor: pointer;
         font-size: 14px;
-        background-color: #222; // 深色表頭
-        border-left: 2px solid #8B4C8B;
-        color: #ededed;
+        background-color: $date-header-background;
+        border-left: 2px solid $border-color;
     }
 
     .rct-dateHeader-primary {
-        background-color: #06C755; // LINE 綠
-        border-left: 1px solid #8B4C8B;
-        border-right: 1px solid #8B4C8B;
-        color: #fff;
+        background-color: initial;
+        border-left: 1px solid $border-color;
+        border-right: 1px solid $border-color;
+        color: $date-header-color;
     }
 
     .rct-header-root {
-        background: #171717; // 深色
-        border-bottom: 1px solid #8B4C8B;
+        background: $sidebar-background-color;
+        //color: #fff;
+        border-bottom: 1px solid $border-color;
     }
 
     .rct-calendar-header {
-        border: 1px solid #8B4C8B;
+        border: 1px solid $border-color
     }
 }
