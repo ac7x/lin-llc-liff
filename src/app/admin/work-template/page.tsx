@@ -166,7 +166,7 @@ const WorkTemplatePage: React.FC = () => {
                 loads.push({
                     loadId, taskId, plannedQuantity: Math.floor(qty / split), unit: "單位",
                     plannedStartTime: "", plannedEndTime: "", actualQuantity: 0, executor: [],
-                    title: `${epic.title}-${stepName}`, epicIds: [epic.epicId]
+                    title: `${stepName}`, epicIds: [epic.epicId]
                 });
             }
         });
