@@ -195,6 +195,7 @@ export default function WorkEpicPage() {
     return (
         <main className="p-4 min-h-screen bg-white dark:bg-gray-950 transition-colors">
             <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">工作標的列表</h1>
+            {/* 新增表單區塊 */}
             <div className="mb-4 flex flex-wrap gap-2 items-center">
                 <input
                     value={form.title}
@@ -202,29 +203,32 @@ export default function WorkEpicPage() {
                     placeholder="標的標題"
                     className="border rounded px-2 py-1 bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
                 />
-                <Select
-                    value={form.owner?.memberId || ''}
-                    onChange={val => {
-                        const m = members.find(mm => mm.memberId === val);
-                        handleFormChange('owner', m ? { memberId: m.memberId, name: m.name } : null);
-                    }}
-                    options={members}
-                    placeholder="負責人"
-                />
-                <Select
-                    value={form.siteSupervisors}
-                    onChange={selected => handleFormChange('siteSupervisors', selected as string[])}
-                    options={members}
-                    placeholder="現場監工"
-                    multiple
-                />
-                <Select
-                    value={form.safetyOfficers}
-                    onChange={selected => handleFormChange('safetyOfficers', selected as string[])}
-                    options={members}
-                    placeholder="安全人員"
-                    multiple
-                />
+                {/* 將 負責人 現場監工 安全人員 包一起，永遠同排 */}
+                <div className="flex gap-2 flex-nowrap">
+                    <Select
+                        value={form.owner?.memberId || ''}
+                        onChange={val => {
+                            const m = members.find(mm => mm.memberId === val);
+                            handleFormChange('owner', m ? { memberId: m.memberId, name: m.name } : null);
+                        }}
+                        options={members}
+                        placeholder="負責人"
+                    />
+                    <Select
+                        value={form.siteSupervisors}
+                        onChange={selected => handleFormChange('siteSupervisors', selected as string[])}
+                        options={members}
+                        placeholder="現場監工"
+                        multiple
+                    />
+                    <Select
+                        value={form.safetyOfficers}
+                        onChange={selected => handleFormChange('safetyOfficers', selected as string[])}
+                        options={members}
+                        placeholder="安全人員"
+                        multiple
+                    />
+                </div>
                 <select
                     value={form.region}
                     onChange={e => handleFormChange('region', e.target.value as typeof regionOptions[number])}
@@ -288,45 +292,46 @@ export default function WorkEpicPage() {
                                                     className="border rounded px-2 py-1 w-full bg-white dark:bg-gray-900 dark:text-gray-100 focus:outline-none"
                                                 />
                                             </td>
-                                            <td className="px-2 py-1">
-                                                <Select
-                                                    value={editFields.owner?.memberId || ''}
-                                                    onChange={val => {
-                                                        const m = members.find(mm => mm.memberId === val);
-                                                        if (m) handleEditField('owner', { memberId: m.memberId, name: m.name });
-                                                    }}
-                                                    options={members}
-                                                    placeholder="負責人"
-                                                />
+                                            {/* 編輯狀態下也包在同一排 */}
+                                            <td className="px-2 py-1" colSpan={3}>
+                                                <div className="flex gap-2 flex-nowrap">
+                                                    <Select
+                                                        value={editFields.owner?.memberId || ''}
+                                                        onChange={val => {
+                                                            const m = members.find(mm => mm.memberId === val);
+                                                            if (m) handleEditField('owner', { memberId: m.memberId, name: m.name });
+                                                        }}
+                                                        options={members}
+                                                        placeholder="負責人"
+                                                    />
+                                                    <Select
+                                                        value={Array.isArray(editFields.siteSupervisors) ? editFields.siteSupervisors.map(s => s.memberId) : []}
+                                                        onChange={selected => {
+                                                            const selectedMembers = members.filter(m => (selected as string[]).includes(m.memberId)).map(m => ({
+                                                                memberId: m.memberId, name: m.name
+                                                            }));
+                                                            handleEditField('siteSupervisors', selectedMembers);
+                                                        }}
+                                                        options={members}
+                                                        placeholder="現場監工"
+                                                        multiple
+                                                    />
+                                                    <Select
+                                                        value={Array.isArray(editFields.safetyOfficers) ? editFields.safetyOfficers.map(s => s.memberId) : []}
+                                                        onChange={selected => {
+                                                            const selectedMembers = members.filter(m => (selected as string[]).includes(m.memberId)).map(m => ({
+                                                                memberId: m.memberId, name: m.name
+                                                            }));
+                                                            handleEditField('safetyOfficers', selectedMembers);
+                                                        }}
+                                                        options={members}
+                                                        placeholder="安全人員"
+                                                        multiple
+                                                    />
+                                                </div>
                                             </td>
-                                            <td className="px-2 py-1">
-                                                <Select
-                                                    value={Array.isArray(editFields.siteSupervisors) ? editFields.siteSupervisors.map(s => s.memberId) : []}
-                                                    onChange={selected => {
-                                                        const selectedMembers = members.filter(m => (selected as string[]).includes(m.memberId)).map(m => ({
-                                                            memberId: m.memberId, name: m.name
-                                                        }));
-                                                        handleEditField('siteSupervisors', selectedMembers);
-                                                    }}
-                                                    options={members}
-                                                    placeholder="現場監工"
-                                                    multiple
-                                                />
-                                            </td>
-                                            <td className="px-2 py-1">
-                                                <Select
-                                                    value={Array.isArray(editFields.safetyOfficers) ? editFields.safetyOfficers.map(s => s.memberId) : []}
-                                                    onChange={selected => {
-                                                        const selectedMembers = members.filter(m => (selected as string[]).includes(m.memberId)).map(m => ({
-                                                            memberId: m.memberId, name: m.name
-                                                        }));
-                                                        handleEditField('safetyOfficers', selectedMembers);
-                                                    }}
-                                                    options={members}
-                                                    placeholder="安全人員"
-                                                    multiple
-                                                />
-                                            </td>
+                                            {/* 因合併欄位，這裡跳過原本的兩個欄位 */}
+                                            {/* 狀態、優先、區域、地址、工作區、操作 */}
                                             <td className="px-2 py-1">
                                                 <select
                                                     value={editFields.status || '待開始'}
