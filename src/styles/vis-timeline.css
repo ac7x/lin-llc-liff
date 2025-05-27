@@ -91,6 +91,7 @@
   -webkit-transition: height .4s ease-in-out;
   transition:         height .4s ease-in-out;
   */
+  overflow-x: auto !important;
 }
 
 .vis-panel {
@@ -1215,3 +1216,10 @@ input.vis-configuration.vis-config-range:focus::-ms-fill-upper {
   display: inline-block
 }
 /*# sourceMappingURL=vis-timeline-graph2d.css.map */
+.vis-timeline,
+.vis-panel,
+.vis-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+}
